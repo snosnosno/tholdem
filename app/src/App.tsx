@@ -5,7 +5,7 @@ import TableManager from './components/TableManager';
 import ChipBlindManager from './components/ChipBlindManager';
 import PrizeCalculator from './components/PrizeCalculator';
 import ParticipantLivePage from './components/ParticipantLivePage';
-import { auth } from './firebase';
+import StaffManager from './components/StaffManager';
 
 function App() {
   const [user, setUser] = useState(() => auth.currentUser);
@@ -18,7 +18,8 @@ function App() {
     <PrizeCalculator />
     <TournamentHistory />
     <ParticipantLivePage />
-    </>
+    <StaffManager />
+    
   ) : <AdminLogin />;
 }
 
