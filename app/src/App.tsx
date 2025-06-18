@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import AdminLogin from './components/AdminLogin';
 import ParticipantsManager from './components/ParticipantsManager';
-import ChipBlindManager from './components/ChipBlindManager';
+import TableManager from './components/TableManager';
+import PrizeCalculator from './components/PrizeCalculator';
 import { auth } from './firebase';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
       <ParticipantsManager />
       <TableManager />
     <ChipBlindManager />
+    <PrizeCalculator />
     </>
   ) : <AdminLogin />;
 }
