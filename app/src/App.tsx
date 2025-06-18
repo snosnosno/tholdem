@@ -3,7 +3,8 @@ import AdminLogin from './components/AdminLogin';
 import ParticipantsManager from './components/ParticipantsManager';
 import TableManager from './components/TableManager';
 import ChipBlindManager from './components/ChipBlindManager';
-import TournamentHistory from './components/TournamentHistory';
+import PrizeCalculator from './components/PrizeCalculator';
+import ParticipantLivePage from './components/ParticipantLivePage';
 import { auth } from './firebase';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
     <ChipBlindManager />
     <PrizeCalculator />
     <TournamentHistory />
+    <ParticipantLivePage />
     </>
   ) : <AdminLogin />;
 }
