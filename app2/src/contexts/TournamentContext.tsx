@@ -58,7 +58,8 @@ type Action =
   | { type: 'SET_BLIND_LEVEL'; payload: number }
   | { type: 'TICK_TIMER' }
   | { type: 'SET_TIMER_RUNNING'; payload: boolean }
-  | { type: 'SET_USER'; payload: any | null };
+  | { type: 'SET_USER'; payload: any | null }
+  | { type: 'ADD_PARTICIPANT'; payload: { name: string } };
 
 interface TournamentContextProps {
   state: TournamentState;
@@ -129,6 +130,47 @@ const tournamentReducer = (state: TournamentState, action: Action): TournamentSt
         ...state,
         currentUser: action.payload,
       };
+    case 'ADD_PARTICIPANT': {
+      // Create new participant
+      const newParticipant: Participant = {
+        id: `p_${Date.now()}`,
+        name: action.payload.name,
+        chipCount: state.settings.startingChips,
+        status: 'active',
+      };
+
+      // Find available table or create a new one
+      let updatedTables = [...state.tables];
+      let targetTable = updatedTables.find(t => t.players.length < state.settings.seatsPerTable);
+
+      if (!targetTable) {
+        const newTableNumber = updatedTables.length + 1;
+        targetTable = {
+          id: `t_${newTableNumber}`,
+          tableNumber: newTableNumber,
+          players: [],
+        };
+        updatedTables.push(targetTable);
+      }
+
+      // Assign table and seat
+      newParticipant.tableNumber = targetTable.tableNumber;
+      newParticipant.seatNumber = targetTable.players.length + 1; // Assuming seats are filled sequentially
+
+      // Update the target table with the new player
+      const finalTables = updatedTables.map(t => {
+        if (t.id === targetTable!.id) {
+          return { ...t, players: [...t.players, newParticipant] };
+        }
+        return t;
+      });
+
+      return {
+        ...state,
+        participants: [...state.participants, newParticipant],
+        tables: finalTables,
+      };
+    }
     default:
       return state;
   }

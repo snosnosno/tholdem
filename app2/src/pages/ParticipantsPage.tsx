@@ -11,8 +11,7 @@ const ParticipantsPage: React.FC = () => {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newParticipantName.trim()) return;
-    // dispatch({ type: 'ADD_PARTICIPANT', payload: { name: newParticipantName } });
-    console.log(`Dispatching ADD_PARTICIPANT for ${newParticipantName} (not implemented)`);
+    dispatch({ type: 'ADD_PARTICIPANT', payload: { name: newParticipantName } });
     setNewParticipantName('');
   };
 
