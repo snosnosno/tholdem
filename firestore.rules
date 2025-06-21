@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 관리자 UID 목록 (실제 환경에서는 별도의 컬렉션에서 관리하는 것이 더 안전함)
+    function isAdmin() {
+      return request.auth.uid in ['ADMIN_USER_UID_1', 'ADMIN_USER_UID_2'];
+    }
+
+    // Tournaments 컬렉션: 관리자만 모든 권한을 가짐
+    match /tournaments/{tournamentId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Participants 컬렉션:
+    // 관리자는 모든 읽기/쓰기 가능
+    // 플레이어는 자신의 정보만 읽기 가능
+    match /participants/{participantId} {
+      allow read: if isAdmin() || request.auth.uid == resource.data.uid;
+      allow write: if isAdmin();
+    }
+    
+    // Notices 컬렉션:
+    // 관리자는 쓰기 가능, 모든 사용자는 읽기 가능
+    match /notices/{noticeId} {
+        allow read: if true;
+        allow write: if isAdmin();
+    }
+
+    // 기본적으로 다른 모든 경로는 접근을 거부합니다.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
