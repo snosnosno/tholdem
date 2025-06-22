@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import db from '../firebase';
-import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { Participant } from './useParticipants';
 import { logAction } from './useLogger';
 
@@ -9,7 +9,7 @@ export interface Table {
   name: string;
   tableNumber: number;
   seats: (string | null)[]; // participant.id 또는 null
-  status?: 'open' | 'closed';
+  status?: 'open' | 'closed' | 'standby'; // 'standby' 추가
   borderColor?: string;
 }
 
@@ -37,9 +37,17 @@ export const useTables = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [maxSeatsSetting, setMaxSeatsSetting] = useState<number>(9);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(tablesCollection,
+    const settingsDocRef = doc(db, 'tournaments', 'settings');
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists() && docSnap.data().maxSeatsPerTable) {
+            setMaxSeatsSetting(docSnap.data().maxSeatsPerTable);
+        }
+    });
+
+    const unsubscribeTables = onSnapshot(tablesCollection,
       (snapshot) => {
         const tablesData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           id: doc.id,
@@ -54,8 +62,26 @@ export const useTables = () => {
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribeSettings();
+        unsubscribeTables();
+    };
   }, []);
+
+  const updateMaxSeatsSetting = async (newMaxSeats: number) => {
+    if (newMaxSeats < 5 || newMaxSeats > 10) {
+        console.error("Max seats must be between 5 and 10.");
+        return;
+    }
+    const settingsDocRef = doc(db, 'tournaments', 'settings');
+    try {
+        await setDoc(settingsDocRef, { maxSeatsPerTable: newMaxSeats }, { merge: true });
+        logAction('max_seats_updated', { newMaxSeats });
+    } catch (e) {
+        console.error("Error updating max seats setting:", e);
+        setError(e as Error);
+    }
+  };
   
   const updateTableDetails = async (tableId: string, data: { name?: string; borderColor?: string }) => {
     const tableRef = doc(db, 'tables', tableId);
@@ -69,6 +95,18 @@ export const useTables = () => {
     }
   };
 
+  const activateTable = async (tableId: string) => {
+    const tableRef = doc(db, 'tables', tableId);
+    try {
+      await updateDoc(tableRef, { status: 'open' });
+      logAction('table_activated', { tableId });
+    } catch (e) {
+      console.error("Error activating table:", e);
+      setError(e as Error);
+      throw e;
+    }
+  };
+
   const openNewTable = async () => {
     setLoading(true);
     try {
@@ -76,11 +114,11 @@ export const useTables = () => {
       const newTable = {
         name: `Table ${maxTableNumber + 1}`,
         tableNumber: maxTableNumber + 1,
-        seats: Array(9).fill(null),
-        status: 'open',
+        seats: Array(maxSeatsSetting).fill(null),
+        status: 'standby', // 'open'에서 'standby'로 변경
       };
       const docRef = await addDoc(tablesCollection, newTable);
-      logAction('table_opened', { tableId: docRef.id, tableNumber: newTable.tableNumber });
+      logAction('table_created_standby', { tableId: docRef.id, tableNumber: newTable.tableNumber, maxSeats: maxSeatsSetting });
     } catch (e) {
       console.error("Error opening new table:", e);
       setError(e as Error);
@@ -116,14 +154,15 @@ export const useTables = () => {
             return;
         }
 
-        const openTables = allTables.filter(t => t.id !== tableIdToClose && t.status !== 'closed');
-        if (openTables.length === 0 && participantsToMove.length > 0) {
-            throw new Error("No open tables available to move participants.");
+        // 'open' 상태인 테이블만 재배치 대상으로 한정
+        const openTables = allTables.filter(t => t.id !== tableIdToClose && t.status === 'open');
+        if (openTables.length === 0) {
+            throw new Error("참가자를 이동시킬 수 있는 활성화된 테이블이 없습니다.");
         }
         
         const mutableOpenTables = openTables.map(t => ({
           ...t,
-          seats: [...(t.seats || Array(9).fill(null))],
+          seats: [...(t.seats || Array(maxSeatsSetting).fill(null))],
           playerCount: (t.seats || []).filter(s => s !== null).length,
         }));
 
@@ -191,42 +230,37 @@ export const useTables = () => {
     try {
       const batch = writeBatch(db);
       const tablesSnapshot = await getDocs(tablesCollection);
+      
+      // 'open' 상태인 테이블만 배정 대상으로 한정
       const openTables: Table[] = tablesSnapshot.docs
         .map(d => ({id: d.id, ...d.data()} as Table))
-        .filter(t => t.status !== 'closed');
+        .filter(t => t.status === 'open');
 
       if (openTables.length === 0) {
-        throw new Error("좌석을 배정할 수 있는 열린 테이블이 없습니다.");
+        throw new Error("좌석을 배정할 수 있는 활성화된 테이블이 없습니다.");
       }
 
-      const totalSeats = openTables.reduce((sum, table) => sum + (table.seats?.length || 9), 0);
+      const totalSeats = openTables.reduce((sum, table) => sum + (table.seats?.length || maxSeatsSetting), 0);
       if (participants.length > totalSeats) {
         throw new Error(`참가자 수(${participants.length})가 전체 좌석 수(${totalSeats})보다 많아 배정할 수 없습니다.`);
       }
 
-      // 1. 참가자 명단을 무작위로 섞습니다.
       const shuffledParticipants = shuffleArray(participants);
-
-      // 2. 테이블별로 플레이어를 균등하게 분배하기 위한 그룹을 생성합니다.
       const tablePlayerGroups: { [key: string]: Participant[] } = {};
       openTables.forEach(table => {
         tablePlayerGroups[table.id] = [];
       });
 
-      // 3. 섞인 참가자들을 각 테이블에 순서대로(Round-robin) 분배합니다.
       shuffledParticipants.forEach((participant, index) => {
         const tableIndex = index % openTables.length;
         const targetTableId = openTables[tableIndex].id;
         tablePlayerGroups[targetTableId].push(participant);
       });
 
-      // 4. 최종 좌석 배정 정보를 담을 객체를 초기화합니다.
       const newTableSeatArrays: { [key: string]: (string | null)[] } = {};
-
-      // 5. 각 테이블별로 내부 좌석을 무작위로 배정합니다.
       for (const table of openTables) {
         const playersForThisTable = tablePlayerGroups[table.id];
-        const seatCount = table.seats?.length || 9;
+        const seatCount = table.seats?.length || maxSeatsSetting;
         const newSeats: (string | null)[] = Array(seatCount).fill(null);
         
         const seatIndexes = Array.from({ length: seatCount }, (_, i) => i);
@@ -240,7 +274,6 @@ export const useTables = () => {
         newTableSeatArrays[table.id] = newSeats;
       }
 
-      // 6. 변경된 좌석 정보로 모든 테이블을 일괄 업데이트합니다.
       for (const tableId in newTableSeatArrays) {
           const tableRef = doc(db, 'tables', tableId);
           batch.update(tableRef, { seats: newTableSeatArrays[tableId] });
@@ -282,7 +315,8 @@ export const useTables = () => {
             
             const fromSeats = [...fromTableSnap.data().seats];
             const toSeats = from.tableId === to.tableId ? fromSeats : [...toTableSnap.data().seats];
-
+            
+            // UI 단에서 to.tableId가 'open' 상태인 것만 허용해야 함.
             if (toSeats[to.seatIndex] !== null) {
               const otherParticipantId = toSeats[to.seatIndex];
               fromSeats[from.seatIndex] = otherParticipantId;
@@ -323,6 +357,5 @@ export const useTables = () => {
     }
   };
 
-  return { tables, setTables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
+  return { tables, setTables, loading, error, maxSeatsSetting, updateMaxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
 };
-
