@@ -1,22 +1,47 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { TournamentContext, Participant } from '../contexts/TournamentContext';
+import { setupTestData } from '../firebase';
 import { IconType } from 'react-icons';
 import { FaUsers, FaClock, FaTrophy } from 'react-icons/fa';
 
 const TournamentDashboard = () => {
     const context = useContext(TournamentContext);
+    const [isSeeding, setIsSeeding] = useState(false);
 
     if (!context) {
         return <div>Loading...</div>;
     }
 
     const { state } = context;
-    const { participants, tournamentStatus, blindLevel, settings } = state;
+    const { participants, tournamentStatus, blindLevel } = state;
 
-    // Calculate total prize pool (example calculation)
+    const handleSetupTestData = async () => {
+        setIsSeeding(true);
+        try {
+            const result = await setupTestData();
+            switch (result) {
+                case 'SUCCESS':
+                    alert('Test data successfully created! The page will now reload.');
+                    window.location.reload();
+                    break;
+                case 'SKIPPED':
+                    alert('Test data already exists. Skipped.');
+                    break;
+                case 'ERROR':
+                    alert('An error occurred while creating test data.');
+                    break;
+            }
+        } catch (error) {
+            console.error("Error setting up test data:", error);
+            alert('An unexpected error occurred. Check the console for details.');
+        } finally {
+            setIsSeeding(false);
+        }
+    };
+
     const totalBuyIn = participants.reduce((acc: number, p: Participant) => {
-        const entryFee = 100000; // Example entry fee
-        const rebuyCost = 50000; // Example rebuy cost
+        const entryFee = 100000;
+        const rebuyCost = 50000;
         return acc + entryFee + ((p.rebuyCount || 0) * rebuyCost);
     }, 0);
     const totalPrize = totalBuyIn;
@@ -28,21 +53,37 @@ const TournamentDashboard = () => {
         color: string;
     }
 
-    const StatCard = ({ icon: Icon, title, value, color }: StatCardProps) => (
+    const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
         <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
             <div className={`p-3 rounded-full mr-4 ${color}`}>
-                {React.createElement(Icon, { size: 24, className: "text-white" })}
+                <Icon size={24} className="text-white" />
             </div>
             <div>
                 <p className="text-sm text-gray-500">{title}</p>
-                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-2xl font-bold text-gray-800">{value}</p>
             </div>
         </div>
     );
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-4 text-gray-800">
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Tournament Dashboard</h1>
+
+            {process.env.NODE_ENV === 'development' && (
+                <div className="mb-4 p-4 border border-red-400 bg-red-50 rounded-lg">
+                    <h3 className="text-lg font-bold text-red-700 mb-2">Developer Tools</h3>
+                    <button
+                        onClick={handleSetupTestData}
+                        disabled={isSeeding}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
+                    >
+                        {isSeeding ? 'Creating Test Data...' : 'Generate Test Data (10 Tables, 80 Players)'}
+                    </button>
+                    <p className="text-sm text-gray-600 mt-2">
+                        This will populate the database with sample data. Only use this on a fresh database.
+                    </p>
+                </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatCard 
@@ -66,8 +107,8 @@ const TournamentDashboard = () => {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold mb-4">Tournament Status</h2>
-                <p className={`text-lg font-semibold ${tournamentStatus === 'running' ? 'text-green-600' : 'text-red-600'}`}>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Tournament Status</h2>
+                <p className={`text-lg font-semibold ${tournamentStatus === 'running' ? 'text-green-500' : 'text-red-500'}`}>
                     {tournamentStatus.charAt(0).toUpperCase() + tournamentStatus.slice(1)}
                 </p>
                 <p className="text-gray-600 mt-2">
@@ -78,4 +119,4 @@ const TournamentDashboard = () => {
     );
 };
 
-export default TournamentDashboard; 
+export default TournamentDashboard;

@@ -1,7 +1,8 @@
 // Firebase 초기화 및 인증/DB 인스턴스 export
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { getFirestore, doc, collection, getDocs, writeBatch } from "firebase/firestore";
+import { getStorage } from 'firebase/storage';
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -13,37 +14,52 @@ const firebaseConfig = {
   appId: "1:296074758861:web:52498228694af470bcf784",
   measurementId: "G-S5BD0PBT3W"
 };
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const db = getFirestore(app);
+export const storage = getStorage(app);
 
-// --- Service Layer ---
+export const setupTestData = async () => {
+  const tablesCollectionRef = collection(db, 'tables');
+  const snapshot = await getDocs(tablesCollectionRef);
 
-/**
- * 특정 토너먼트의 기본 정보를 가져옵니다.
- * @param tournamentId 토너먼트 ID
- * @returns 토너먼트 데이터
- */
-export const getTournament = async (tournamentId: string) => {
-  const tournamentDocRef = doc(db, 'tournaments', tournamentId);
-  const tournamentSnap = await getDoc(tournamentDocRef);
-  if (tournamentSnap.exists()) {
-    return tournamentSnap.data();
-  } else {
-    console.error("No such tournament!");
-    return null;
+  if (!snapshot.empty) {
+    console.log("Test data already exists. Skipping setup.");
+    return 'SKIPPED';
   }
-};
 
-/**
- * 특정 토너먼트의 모든 참가자 목록을 가져옵니다.
- * @param tournamentId 토너먼트 ID
- * @returns 참가자 목록 배열
- */
-export const getParticipants = async (tournamentId: string) => {
-  const participantsColRef = collection(db, 'tournaments', tournamentId, 'participants');
-  const participantsSnap = await getDocs(participantsColRef);
-  return participantsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const batch = writeBatch(db);
+
+  // Create 10 tables
+  for (let i = 1; i <= 10; i++) {
+    const tableRef = doc(collection(db, 'tables'));
+    batch.set(tableRef, {
+      tableNumber: i,
+      seats: Array(9).fill(null),
+    });
+  }
+
+  // Create 80 participants
+  const participantsCollectionRef = collection(db, 'participants');
+  for (let i = 1; i <= 80; i++) {
+    const participantRef = doc(collection(db, 'participants'));
+    batch.set(participantRef, {
+      name: `Participant ${i}`,
+      chips: 10000,
+      buyInStatus: 'paid',
+      status: 'active',
+    });
+  }
+
+  try {
+    await batch.commit();
+    console.log("Test data successfully written to Firestore.");
+    return 'SUCCESS';
+  } catch (error) {
+    console.error("Error writing test data: ", error);
+    return 'ERROR';
+  }
 };
 
 export default db;

@@ -10,6 +10,8 @@ interface PlayerActionModalProps {
   table: Table | null;
   seatIndex: number | null;
   onBustOut: (participantId: string) => void;
+  onMoveSeatClick: () => void;
+  onDetailClick: () => void;
 }
 
 const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
@@ -19,6 +21,8 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
   table,
   seatIndex,
   onBustOut,
+  onMoveSeatClick,
+  onDetailClick,
 }) => {
   if (!isOpen || !player || !table || seatIndex === null) {
     return null;
@@ -36,7 +40,7 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
       <div>
         <h3 className="text-lg font-bold mb-2">{player.name}</h3>
         <p className="mb-1">
-          <span className="font-semibold">테이블:</span> {table.name}
+          <span className="font-semibold">테이블:</span> {table.name || `Table ${table.tableNumber}`}
         </p>
         <p className="mb-4">
           <span className="font-semibold">좌석:</span> {seatIndex + 1}
@@ -50,16 +54,14 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
                 탈락 처리 (Bust Out)
             </button>
             <button
-                // onClick={() => onMove(player.id)}
+                onClick={onMoveSeatClick}
                 className="w-full btn btn-secondary"
-                disabled // 자리 이동 기능은 다음 단계에서 구현
             >
                 자리 이동 (Move Seat)
             </button>
              <button
-                // onClick={() => onShowInfo(player.id)}
+                onClick={onDetailClick}
                 className="w-full btn btn-info"
-                disabled // 정보 보기 기능은 다음 단계에서 구현
             >
                 상세 정보 보기
             </button>
@@ -69,4 +71,4 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
   );
 };
 
-export default PlayerActionModal; 
+export default PlayerActionModal;

@@ -1,56 +1,142 @@
 {
   "tasks": [
     {
-      "id": "13322707-47b3-42af-a298-ee19d434ba90",
-      "name": "Task 1: TournamentContext 기능 확장 (블라인드 및 타이머)",
-      "description": "기능이 작동하지 않는 문제를 해결하기 위해 `TournamentContext.tsx`의 `tournamentReducer`에 블라인드 레벨 및 타이머 상태를 관리하는 데 필요한 액션 타입과 리듀서 로직을 추가합니다.",
-      "notes": "이 작업은 상태 관리의 핵심 로직을 수정하므로, 다른 기능에 영향을 주지 않도록 주의해야 합니다.",
-      "status": "completed",
+      "id": "91ce251b-e57f-4312-838d-82d05a64ee2e",
+      "name": "[Backend/Data] Firestore에 테이블 설정 필드 추가 및 useTournamentSettings 훅 구현",
+      "description": "Firestore의 `tournaments/{tournamentId}` 문서에 `tableSettings: { maxSeats: number, balanceThreshold: number }` 필드를 추가하고, 이 설정을 읽고 업데이트하는 `useTournamentSettings` 훅을 새로 생성합니다. 훅은 설정 객체, 로딩 상태, 업데이트 함수를 반환해야 합니다.",
+      "status": "pending",
       "dependencies": [],
-      "createdAt": "2025-06-21T00:36:12.621Z",
-      "updatedAt": "2025-06-21T00:38:04.804Z",
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
       "relatedFiles": [
         {
-          "path": "app2/src/contexts/TournamentContext.tsx",
-          "type": "TO_MODIFY",
-          "description": "액션 타입과 리듀서 로직을 추가해야 하는 핵심 파일입니다."
-        }
-      ],
-      "implementationGuide": "1. `Action` 유니온 타입에 `SET_CURRENT_LEVEL`, `SET_REMAINING_TIME`, `TOGGLE_TIMER_STATUS` 액션 타입을 추가합니다.\\n2. `tournamentReducer` 함수 내에 위에서 추가한 각 액션 타입을 처리하는 `case` 문을 구현합니다.\\n3. 예를 들어, `TOGGLE_TIMER_STATUS`는 `state.isTimerRunning` 값을 반전시켜야 합니다.",
-      "verificationCriteria": "1. `TournamentContext.tsx` 파일에 새로운 액션 타입과 리듀서 로직이 성공적으로 추가되어야 합니다.\\n2. 코드에 컴파일 오류가 없어야 합니다.",
-      "analysisResult": "런타임 오류의 근본 원인은 `TournamentContext`의 `tournamentReducer`에 블라인드 레벨 변경, 타이머 제어 등 핵심 기능을 처리하는 로직이 없기 때문입니다. 해결책은 `TournamentContext.tsx`를 수정하여 `SET_BLIND_LEVEL`, `TICK_TIMER`, `TOGGLE_TIMER`와 같은 필수 액션 타입을 정의하고, `tournamentReducer`에 해당 액션을 처리하는 `case` 로직을 구현하는 것입니다.",
-      "summary": "`TournamentContext.tsx` 파일에 `SET_BLIND_LEVEL`, `TICK_TIMER`, `SET_TIMER_RUNNING` 액션 타입과 이를 처리하는 리듀서 로직을 성공적으로 추가했습니다. 또한, `BlindLevel` 인터페이스에 `duration` 속성을 추가하고 초기 상태 데이터도 업데이트하여 보다 견고한 상태 관리가 가능하도록 개선했습니다. 이로써 기능 확장을 위한 기반이 마련되었습니다.",
-      "completedAt": "2025-06-21T00:38:04.804Z"
-    },
-    {
-      "id": "822049ea-3f76-4118-9d33-1126c86d39bb",
-      "name": "Task 2: 블라인드 페이지 UI 기능 연동 및 테스트",
-      "description": "확장된 `TournamentContext`를 사용하여 `BlindsPage.tsx`의 타이머 시작/정지, 레벨 변경 버튼들이 실제 상태와 연동되어 올바르게 작동하도록 수정하고 테스트합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "13322707-47b3-42af-a298-ee19d434ba90"
-        }
-      ],
-      "createdAt": "2025-06-21T00:36:12.621Z",
-      "updatedAt": "2025-06-21T00:38:34.636Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/pages/BlindsPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "UI와 상태 관리 로직을 연결해야 하는 페이지 컴포넌트입니다."
+          "path": "app2/src/hooks/useTournamentSettings.ts",
+          "type": "CREATE",
+          "description": "설정 관리를 위한 새로운 훅 파일"
         },
         {
-          "path": "app2/src/contexts/TournamentContext.tsx",
+          "path": "app2/src/firebase.ts",
           "type": "REFERENCE",
-          "description": "새로 추가된 액션 타입을 참조해야 합니다."
+          "description": "Firestore 인스턴스를 가져오기 위해 참조"
         }
       ],
-      "implementationGuide": "1. `BlindsPage.tsx`에서 `useTournament` 훅을 사용하여 `dispatch` 함수를 가져옵니다.\\n2. 타이머 시작/정지 버튼의 `onClick` 핸들러에서 `TOGGLE_TIMER_STATUS` 액션을 `dispatch`하도록 구현합니다.\\n3. 레벨 변경 버튼의 `onClick` 핸들러에서 `SET_CURRENT_LEVEL` 액션을 `dispatch`하도록 구현합니다.\\n4. 남은 시간을 표시하는 로직이 `state.remainingTime`과 올바르게 연동되었는지 확인합니다.",
-      "verificationCriteria": "1. 블라인드 페이지에서 타이머 시작/정지 버튼을 누르면 타이머의 실행 상태가 변경되어야 합니다.\\n2. 레벨 변경 버튼을 누르면 현재 블라인드 레벨이 변경되어야 합니다.\\n3. 애플리케이션 실행 시 브라우저 콘솔에 오류가 없어야 합니다.",
-      "analysisResult": "런타임 오류의 근본 원인은 `TournamentContext`의 `tournamentReducer`에 블라인드 레벨 변경, 타이머 제어 등 핵심 기능을 처리하는 로직이 없기 때문입니다. 해결책은 `TournamentContext.tsx`를 수정하여 `SET_BLIND_LEVEL`, `TICK_TIMER`, `TOGGLE_TIMER`와 같은 필수 액션 타입을 정의하고, `tournamentReducer`에 해당 액션을 처리하는 `case` 로직을 구현하는 것입니다.",
-      "summary": "`BlindsPage.tsx` 컴포넌트에 `useEffect` 훅을 사용하여 타이머 로직을 구현하고, `useTournament` 훅의 `dispatch`를 버튼 핸들러와 연결했습니다. 이를 통해 타이머 시작/정지, 이전/다음 레벨 이동 기능이 `TournamentContext`의 상태와 올바르게 연동되어 실시간으로 작동하도록 수정했습니다. 또한 UI를 개선하여 사용자 경험을 향상시켰습니다.",
-      "completedAt": "2025-06-21T00:38:34.635Z"
+      "implementationGuide": "1. `useTournamentSettings.ts` 파일을 새로 생성합니다.\n2. React의 `useState`와 `useEffect`를 사용하여 Firestore 문서(`tournaments/{tournamentId}`)를 실시간으로 구독합니다.\n3. 문서가 존재하지 않을 경우 기본값(예: `{ maxSeats: 9, balanceThreshold: 2 }`)을 사용하도록 처리합니다.\n4. `updateSettings` 함수는 `updateDoc`을 사용하여 Firestore 문서를 업데이트해야 합니다.",
+      "verificationCriteria": "1. `useTournamentSettings` 훅을 호출하면 Firestore에 저장된 테이블 설정을 정상적으로 가져와야 합니다.\n2. `updateSettings` 함수를 호출하면 Firestore의 해당 문서가 올바르게 업데이트되어야 합니다.\n3. 설정이 없는 토너먼트의 경우 기본값이 반환되어야 합니다."
+    },
+    {
+      "id": "970f158c-1335-4ec2-a8a8-f2d617ede20c",
+      "name": "[Frontend/UI] TablesPage에 설정 UI 컨트롤 추가",
+      "description": "`TablesPage.tsx`에 전체 테이블의 최대 좌석 수(5-10)와 밸런싱 기준 인원(1-5)을 조절할 수 있는 UI 컨트롤(슬라이더)을 추가합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
+        }
+      ],
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "UI 컨트롤을 추가할 페이지 컴포넌트"
+        }
+      ],
+      "implementationGuide": "1. `TablesPage.tsx`의 기존 컨트롤 영역(카드 크기 조절 슬라이더 근처)에 두 개의 슬라이더와 라벨을 추가합니다.\n2. 각 슬라이더는 `min`, `max`, `value`, `onChange` 속성을 가져야 합니다.\n3. Tailwind CSS를 사용하여 기존 UI와 디자인 일관성을 유지합니다.",
+      "verificationCriteria": "1. `TablesPage`에 '최대 좌석 수'와 '밸런싱 차이'를 위한 슬라이더 두 개가 렌더링되어야 합니다.\n2. 슬라이더를 조작하면 라벨에 표시된 숫자가 실시간으로 변경되어야 합니다."
+    },
+    {
+      "id": "72d69304-7872-4763-8787-f1f5cb2fd37b",
+      "name": "[Frontend/Logic] 설정 값 변경 로직 및 DB 연동 구현",
+      "description": "`TablesPage.tsx`에서 UI 컨트롤로 변경된 설정 값을 로컬 상태로 관리하고, `debounce`를 적용하여 Firestore에 업데이트 요청을 보냅니다. 또한, 현재 테이블 상태에 따라 최대 좌석 수 슬라이더의 최솟값을 동적으로 제한합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "970f158c-1335-4ec2-a8a8-f2d617ede20c"
+        }
+      ],
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "설정 변경 로직을 구현할 컴포넌트"
+        },
+        {
+          "path": "app2/src/hooks/useTournamentSettings.ts",
+          "type": "REFERENCE",
+          "description": "설정값을 업데이트하기 위해 참조"
+        }
+      ],
+      "implementationGuide": "1. `useTournamentSettings` 훅을 사용하여 설정의 초기값을 가져옵니다.\n2. `useState`를 사용하여 UI와 연동될 로컬 상태(`localMaxSeats`, `localBalanceThreshold`)를 관리합니다.\n3. `useCallback`과 `setTimeout`을 사용하여 `debounce` 함수를 구현하고, 슬라이더의 `onChange` 이벤트에서 호출하여 Firestore 업데이트 요청 횟수를 조절합니다.\n4. `useMemo`를 사용하여 현재 모든 테이블에서 가장 많은 플레이어 수를 계산하고, 이 값을 `maxSeats` 슬라이더의 `min` 속성에 바인딩하여 사용자가 플레이어가 있는 좌석을 제거하지 못하도록 방지합니다.",
+      "verificationCriteria": "1. 슬라이더를 조작하고 500ms 후 Firestore 문서의 `tableSettings`가 업데이트되어야 합니다.\n2. 특정 테이블에 7명의 플레이어가 있는 경우, '최대 좌석 수' 슬라이더는 7 미만으로 설정할 수 없어야 합니다."
+    },
+    {
+      "id": "78e93c52-e478-4fe4-98eb-6161db2bd321",
+      "name": "[Backend/Core] `openNewTable` 함수가 새로운 `maxSeats` 설정을 사용하도록 수정",
+      "description": "`useTables.ts`의 `openNewTable` 함수를 수정하여, 테이블 생성 시 `useTournamentSettings`에서 가져온 `maxSeats` 설정에 따라 좌석 수를 결정하도록 합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
+        }
+      ],
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/hooks/useTables.ts",
+          "type": "TO_MODIFY",
+          "description": "테이블 생성 로직을 수정할 훅"
+        }
+      ],
+      "implementationGuide": "1. `useTables` 훅이 `settings` 객체를 인자로 받도록 시그니처를 변경합니다.\n2. `openNewTable` 함수 내에서 새 테이블 객체를 생성할 때, `seats` 배열의 길이를 `settings.maxSeats` 값으로 설정합니다. `Array(settings.maxSeats).fill(null)`",
+      "verificationCriteria": "1. `maxSeats`를 8로 설정한 후 '새 테이블 열기'를 클릭하면, 생성된 테이블의 총 좌석 수가 8개여야 합니다."
+    },
+    {
+      "id": "21f6840c-51eb-4dd8-b5c4-f900937cfbaf",
+      "name": "[Backend/Core] Firestore `writeBatch`를 사용하여 테이블 크기 일괄 조정 기능 구현",
+      "description": "`useTables.ts`에 `adjustTableSizes` 함수를 새로 구현합니다. 이 함수는 `maxSeats` 설정이 변경되었을 때, 모든 테이블의 좌석 수를 Firestore `writeBatch`를 사용하여 원자적으로 일괄 업데이트합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "72d69304-7872-4763-8787-f1f5cb2fd37b"
+        }
+      ],
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/hooks/useTables.ts",
+          "type": "TO_MODIFY",
+          "description": "테이블 일괄 업데이트 로직을 추가할 훅"
+        }
+      ],
+      "implementationGuide": "1. `useTables.ts`에 `adjustTableSizes(newMaxSeats)` 함수를 추가합니다.\n2. 함수 내에서 `writeBatch` 인스턴스를 생성합니다.\n3. `tables` 컬렉션을 조회하여 모든 테이블 문서를 가져옵니다.\n4. 각 테이블에 대해, 좌석 수를 `newMaxSeats`로 조정하고 `batch.update()`를 호출합니다. (단, 좌석을 줄일 때는 빈 좌석만 제거)\n5. 모든 테이블에 대한 업데이트를 추가한 후 `batch.commit()`을 호출합니다.",
+      "verificationCriteria": "1. `maxSeats`를 10으로 변경하면, 모든 기존 테이블의 `seats` 배열 길이가 10으로 업데이트되어야 합니다.\n2. 이 과정에서 Firestore 쓰기 작업은 한 번만 발생해야 합니다."
+    },
+    {
+      "id": "355fee44-e5a7-47dd-ada4-64279ff68d67",
+      "name": "[Frontend/Logic] `needsBalancing` 로직에 `balanceThreshold` 설정 적용",
+      "description": "`TablesPage.tsx`의 `needsBalancing` 계산 로직을 수정하여, 하드코딩된 값(2) 대신 `useTournamentSettings`에서 가져온 `balanceThreshold` 설정을 사용하도록 변경합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
+        }
+      ],
+      "createdAt": "2025-06-22T15:16:49.784Z",
+      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "밸런싱 경고 로직을 수정할 컴포넌트"
+        }
+      ],
+      "implementationGuide": "1. `TablesPage.tsx`의 `useMemo`로 구현된 `needsBalancing` 로직을 찾습니다.\n2. `maxPlayers - minPlayers >= 2` 부분을 `maxPlayers - minPlayers >= settings.balanceThreshold`로 수정합니다.\n3. `useMemo`의 의존성 배열에 `settings.balanceThreshold`를 추가합니다.",
+      "verificationCriteria": "1. `balanceThreshold`를 3으로 설정했을 때, 테이블 간 인원 차이가 2명일 때는 경고가 표시되지 않아야 합니다.\n2. 인원 차이가 3명 이상이 되면 밸런싱 경고가 표시되어야 합니다."
     }
   ]
 }

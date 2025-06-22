@@ -3,44 +3,37 @@ import { Table } from '../hooks/useTables';
 
 interface TableListViewProps {
   tables: Table[];
-  getParticipantName: (id: string | null) => string;
-  onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
+  onTableSelect: (table: Table) => void;
 }
 
-const TableListView: React.FC<TableListViewProps> = ({ tables, getParticipantName, onPlayerSelect }) => {
+const TableListView: React.FC<TableListViewProps> = ({ tables, onTableSelect }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-4 font-bold text-gray-600 px-4 py-2 border-b-2">
+        <span>테이블 이름</span>
+        <span className="text-center">참가자</span>
+        <span className="text-right">빈 좌석</span>
+      </div>
       {tables.map((table) => (
-        <div key={table.id} className="bg-white rounded-lg p-4 shadow-md" style={{ border: `2px solid ${table.borderColor || '#eee'}` }}>
-          <h3 className="font-bold text-lg text-gray-800 mb-2">
-            {table.name}
-            <span className="text-sm font-normal text-gray-500 ml-2">
-              ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
-            </span>
-          </h3>
-          <ul className="divide-y divide-gray-200">
-            {(table.seats || []).map((participantId, index) => {
-              const participantName = getParticipantName(participantId);
-              const hasParticipant = participantId && participantName !== '알수없음';
-              
-              return (
-                <li
-                  key={index}
-                  onClick={() => hasParticipant && onPlayerSelect(participantId, table.id, index)}
-                  className={`flex items-center justify-between p-2 text-sm ${hasParticipant ? 'cursor-pointer hover:bg-gray-50' : ''}`}
-                >
-                  <span className="font-semibold text-gray-600">Seat {index + 1}</span>
-                  <span className={`font-medium ${hasParticipant ? 'text-blue-600' : 'text-gray-400'}`}>
-                    {participantName}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+        <div 
+          key={table.id} 
+          className="grid grid-cols-3 gap-4 items-center bg-white rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-50"
+          style={{ borderLeft: `4px solid ${table.borderColor || '#eee'}` }}
+          onClick={() => onTableSelect(table)}
+        >
+          <span className="font-bold text-lg text-gray-800">
+            {table.name || `Table ${table.tableNumber}`}
+          </span>
+          <span className="text-center font-mono text-blue-600">
+            {(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length}
+          </span>
+          <span className="text-right font-mono text-green-600">
+            {(table.seats || []).filter(s => s === null).length}
+          </span>
         </div>
       ))}
     </div>
   );
 };
 
-export default TableListView; 
+export default TableListView;

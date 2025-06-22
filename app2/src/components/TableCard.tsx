@@ -1,63 +1,66 @@
 import React, { useState } from 'react';
 import { Table } from '../hooks/useTables';
-import { Seat as SeatComponent, SeatProps } from '../pages/TablesPage';
 
 interface TableCardProps {
   table: Table;
-  getParticipantName: (id: string | null) => string;
-  onMoveSeat: (
-    participantId: string,
-    from: { tableId: string; seatIndex: number },
-    to: { tableId: string; seatIndex: number }
-  ) => void;
-  onBustOut: (participantId: string) => void;
   onCloseTable: (tableId: string) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
-  onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
+  onTableSelect: (table: Table) => void;
   isProcessing: boolean;
 }
 
 const PRESET_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#F7D842', '#8A2BE2', '#32CD32', '#FF8C00'
+  '#FFFFFF', '#FF6B6B', '#4ECDC4', '#45B7D1', '#F7D842', '#8A2BE2', '#32CD32', '#FF8C00'
 ];
 
 const TableCard: React.FC<TableCardProps> = ({
   table,
-  getParticipantName,
-  onMoveSeat,
-  onBustOut,
   onCloseTable,
   updateTableDetails,
-  onPlayerSelect,
+  onTableSelect,
   isProcessing
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
-  const [tableName, setTableName] = useState(table.name);
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [tableName, setTableName] = useState(table.name || '');
 
-  const handleNameUpdate = () => {
+  const handleNameUpdate = (e: React.FocusEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
     if (tableName.trim() && tableName !== table.name) {
       updateTableDetails(table.id, { name: tableName.trim() });
     }
     setIsEditingName(false);
   };
 
-  const handleColorSelect = (color: string) => {
+  const handleColorSelect = (e: React.MouseEvent, color: string) => {
+    e.stopPropagation();
     updateTableDetails(table.id, { borderColor: color });
     setShowColorPicker(false);
   }
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditingName(true);
+  }
+
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCloseTable(table.id);
+  }
+
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
   return (
     <div
       key={table.id}
-      className="bg-white rounded-lg p-4 flex flex-col shadow-md transition-all duration-300"
+      className="bg-white rounded-lg p-4 flex flex-col shadow-md transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105"
       style={{ border: `3px solid ${table.borderColor || 'transparent'}` }}
+      onClick={() => onTableSelect(table)}
     >
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
             <div className="relative">
                 <button
-                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                     className="w-6 h-6 rounded-full"
                     style={{ backgroundColor: table.borderColor || '#cccccc' }}
                     title="테두리 색상 변경"
@@ -67,7 +70,7 @@ const TableCard: React.FC<TableCardProps> = ({
                         {PRESET_COLORS.map(color => (
                             <button
                                 key={color}
-                                onClick={() => handleColorSelect(color)}
+                                onClick={(e) => handleColorSelect(e, color)}
                                 className="w-6 h-6 rounded-full"
                                 style={{ backgroundColor: color }}
                             />
@@ -79,18 +82,19 @@ const TableCard: React.FC<TableCardProps> = ({
               <input
                 type="text"
                 value={tableName}
-                onChange={(e) => setTableName(e.target.value)}
+                onChange={(e) => {e.stopPropagation(); setTableName(e.target.value);}}
                 onBlur={handleNameUpdate}
-                onKeyDown={(e) => e.key === 'Enter' && handleNameUpdate()}
+                onKeyDown={(e) => e.key === 'Enter' && handleNameUpdate(e)}
                 className="font-bold text-lg text-gray-800 border-b-2 border-blue-500 focus:outline-none"
                 autoFocus
+                onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <h3
-                className="font-bold text-lg text-gray-800 cursor-pointer"
-                onClick={() => setIsEditingName(true)}
+                className="font-bold text-lg text-gray-800"
+                onClick={handleEditClick}
               >
-                {table.name}
+                {table.name || `Table ${table.tableNumber}`}
               </h3>
             )}
         </div>
@@ -100,7 +104,7 @@ const TableCard: React.FC<TableCardProps> = ({
               ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
             </span>
             <button
-              onClick={() => onCloseTable(table.id)}
+              onClick={handleCloseClick}
               className="text-red-500 hover:text-red-700 font-bold"
               disabled={isProcessing}
               title="테이블 닫기"
@@ -109,22 +113,11 @@ const TableCard: React.FC<TableCardProps> = ({
             </button>
         </div>
       </div>
-      <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
-        {(table.seats || []).map((participantId, i) => (
-          <div key={i} onClick={() => participantId && onPlayerSelect(participantId, table.id, i)}>
-            <SeatComponent
-              table={table}
-              seatIndex={i}
-              participantId={participantId}
-              getParticipantName={getParticipantName}
-              onMoveSeat={onMoveSeat}
-              onBustOut={onBustOut}
-            />
-          </div>
-        ))}
+      <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
+        클릭하여 좌석 보기
       </div>
     </div>
   );
 };
 
-export default TableCard; 
+export default TableCard;
