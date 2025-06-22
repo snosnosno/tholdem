@@ -145,7 +145,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                   seatIndex={i}
                   participantId={participantId}
                   getParticipantName={getParticipantName}
-                  onMoveSeat={onMoveTMoveSeat}
+                  onMoveSeat={onMoveSeat}
                   onBustOut={() => participantId && onBustOut(participantId, table.id)}
                 />
               </div>
