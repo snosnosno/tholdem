@@ -191,45 +191,64 @@ export const useTables = () => {
     try {
       const batch = writeBatch(db);
       const tablesSnapshot = await getDocs(tablesCollection);
-      const currentTables: Table[] = tablesSnapshot.docs
+      const openTables: Table[] = tablesSnapshot.docs
         .map(d => ({id: d.id, ...d.data()} as Table))
         .filter(t => t.status !== 'closed');
 
-      // 1. 모든 테이블의 모든 좌석을 수집합니다.
-      const allSeats = currentTables.flatMap(table => 
-          Array.from({ length: table.seats?.length || 9 }, (_, seatIndex) => ({ tableId: table.id, seatIndex }))
-      );
-
-      // 2. 참가자 수와 좌석 수를 비교합니다.
-      if (participants.length > allSeats.length) {
-        throw new Error(`참가자 수(${participants.length})가 전체 좌석 수(${allSeats.length})보다 많아 배정할 수 없습니다.`);
+      if (openTables.length === 0) {
+        throw new Error("좌석을 배정할 수 있는 열린 테이블이 없습니다.");
       }
 
-      // 3. 참가자와 좌석을 무작위로 섞습니다.
+      const totalSeats = openTables.reduce((sum, table) => sum + (table.seats?.length || 9), 0);
+      if (participants.length > totalSeats) {
+        throw new Error(`참가자 수(${participants.length})가 전체 좌석 수(${totalSeats})보다 많아 배정할 수 없습니다.`);
+      }
+
+      // 1. 참가자 명단을 무작위로 섞습니다.
       const shuffledParticipants = shuffleArray(participants);
-      const shuffledSeats = shuffleArray(allSeats);
 
-      // 4. 모든 테이블의 좌석을 초기화합니다.
-      const newTableSeatArrays: { [key: string]: (string | null)[] } = {};
-      currentTables.forEach(t => {
-          newTableSeatArrays[t.id] = Array(t.seats?.length || 9).fill(null);
+      // 2. 테이블별로 플레이어를 균등하게 분배하기 위한 그룹을 생성합니다.
+      const tablePlayerGroups: { [key: string]: Participant[] } = {};
+      openTables.forEach(table => {
+        tablePlayerGroups[table.id] = [];
       });
 
-      // 5. 섞인 참가자를 섞인 좌석에 배정합니다.
+      // 3. 섞인 참가자들을 각 테이블에 순서대로(Round-robin) 분배합니다.
       shuffledParticipants.forEach((participant, index) => {
-          const seat = shuffledSeats[index];
-          newTableSeatArrays[seat.tableId][seat.seatIndex] = participant.id;
+        const tableIndex = index % openTables.length;
+        const targetTableId = openTables[tableIndex].id;
+        tablePlayerGroups[targetTableId].push(participant);
       });
 
-      // 6. 변경된 좌석 정보로 모든 테이블을 업데이트합니다.
+      // 4. 최종 좌석 배정 정보를 담을 객체를 초기화합니다.
+      const newTableSeatArrays: { [key: string]: (string | null)[] } = {};
+
+      // 5. 각 테이블별로 내부 좌석을 무작위로 배정합니다.
+      for (const table of openTables) {
+        const playersForThisTable = tablePlayerGroups[table.id];
+        const seatCount = table.seats?.length || 9;
+        const newSeats: (string | null)[] = Array(seatCount).fill(null);
+        
+        const seatIndexes = Array.from({ length: seatCount }, (_, i) => i);
+        const shuffledSeatIndexes = shuffleArray(seatIndexes);
+
+        playersForThisTable.forEach((player, index) => {
+          const seatIndex = shuffledSeatIndexes[index];
+          newSeats[seatIndex] = player.id;
+        });
+        
+        newTableSeatArrays[table.id] = newSeats;
+      }
+
+      // 6. 변경된 좌석 정보로 모든 테이블을 일괄 업데이트합니다.
       for (const tableId in newTableSeatArrays) {
           const tableRef = doc(db, 'tables', tableId);
           batch.update(tableRef, { seats: newTableSeatArrays[tableId] });
       }
       
       await batch.commit();
-      console.log("좌석 재배정이 성공적으로 완료되었습니다.");
-      logAction('seats_reassigned', { participantsCount: participants.length });
+      console.log("좌석 밸런싱 재배정이 성공적으로 완료되었습니다.");
+      logAction('seats_reassigned_with_balancing', { participantsCount: participants.length, tableCount: openTables.length });
     } catch (e) {
       console.error("좌석 자동 재배정 중 오류가 발생했습니다:", e);
       alert(`오류 발생: ${e instanceof Error ? e.message : String(e)}`);
@@ -300,6 +319,13 @@ export const useTables = () => {
       logAction('participant_busted', { participantId });
     } catch (e) {
       console.error("탈락 처리 중 오류 발생:", e);
+      setError(e as Error);
+    }
+  };
+
+  return { tables, setTables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
+};
+
       setError(e as Error);
     }
   };
