@@ -326,9 +326,3 @@ export const useTables = () => {
   return { tables, setTables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
 };
 
-      setError(e as Error);
-    }
-  };
-
-  return { tables, setTables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
-};
