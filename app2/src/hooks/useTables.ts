@@ -297,5 +297,5 @@ export const useTables = () => {
     }
   };
 
-  return { tables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
+  return { tables, setTables, loading, error, updateTableDetails, openNewTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
 };
