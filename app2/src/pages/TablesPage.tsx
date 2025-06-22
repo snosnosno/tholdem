@@ -4,13 +4,11 @@ import { useParticipants, Participant } from '../hooks/useParticipants';
 import Modal from '../components/Modal';
 import TableCard from '../components/TableCard';
 import PlayerActionModal from '../components/PlayerActionModal';
-import TableListView from '../components/TableListView';
 import TableDetailModal from '../components/TableDetailModal';
 import ParticipantDetailModal from '../components/ParticipantDetailModal';
 import MoveSeatModal from '../components/MoveSeatModal';
 
 const TablesPage: React.FC = () => {
-    // `activateTable` 함수를 useTables 훅에서 가져옵니다.
     const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, activateTable, updateTableDetails } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
@@ -18,8 +16,7 @@ const TablesPage: React.FC = () => {
     const [isOpeningTable, setIsOpeningTable] = useState(false);
     const [closingTableId, setClosingTableId] = useState<string | null>(null);
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [gridSize] = useState(5); // 카드 크기 5로 고정
+    const [gridSize] = useState(5);
     
     const [selectedPlayer, setSelectedPlayer] = useState<{
         participant: Participant | null;
@@ -177,7 +174,7 @@ const TablesPage: React.FC = () => {
 
     const needsBalancing = useMemo(() => {
         const playerCounts = tables
-            .filter(t => t.status === 'open') // 활성화된 테이블만 계산
+            .filter(t => t.status === 'open')
             .map(t => (t.seats || []).filter(s => s !== null).length)
             .filter(count => count > 0); 
 
@@ -247,28 +244,6 @@ const TablesPage: React.FC = () => {
                 <div className="flex items-center space-x-4">
                     <div className="text-lg font-semibold">테이블: {tables.length} (활성: {tables.filter(t=>t.status==='open').length})</div>
                     <div className="text-lg font-semibold">빈좌석: {emptySeats}</div>
-                    <div className="inline-flex rounded-md shadow-sm">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`px-4 py-2 text-sm font-medium ${
-                                viewMode === 'grid'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-50'
-                            } rounded-l-md border border-gray-300 focus:z-10 focus:ring-2 focus:ring-blue-500`}
-                        >
-                            Grid
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`px-4 py-2 text-sm font-medium ${
-                                viewMode === 'list'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-50'
-                            } rounded-r-md border border-gray-300 focus:z-10 focus:ring-2 focus:ring-blue-500`}
-                        >
-                            List
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -279,26 +254,19 @@ const TablesPage: React.FC = () => {
                 </div>
             )}
 
-            {viewMode === 'grid' ? (
-                <div className={`grid ${gridColsClass} gap-6`}>
-                    {tables.map((table: Table) => (
-                        <TableCard
-                            key={table.id}
-                            table={table}
-                            onCloseTable={handleCloseTable}
-                            updateTableDetails={updateTableDetails}
-                            activateTable={activateTable}
-                            onTableSelect={handleTableSelect}
-                            isProcessing={isClosing || isOpeningTable}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <TableListView
-                    tables={tables}
-                    onTableSelect={handleTableSelect}
-                />
-            )}
+            <div className={`grid ${gridColsClass} gap-6`}>
+                {tables.map((table: Table) => (
+                    <TableCard
+                        key={table.id}
+                        table={table}
+                        onCloseTable={handleCloseTable}
+                        updateTableDetails={updateTableDetails}
+                        activateTable={activateTable}
+                        onTableSelect={handleTableSelect}
+                        isProcessing={isClosing || isOpeningTable}
+                    />
+                ))}
+            </div>
             
             <TableDetailModal
                 isOpen={!!detailModalTable}
