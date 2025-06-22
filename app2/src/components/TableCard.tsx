@@ -103,6 +103,7 @@ const TableCard: React.FC<TableCardProps> = ({
           <button 
             onClick={handleActivateClick}
             className="btn btn-primary btn-xs"
+            style={{ height: 'auto', minHeight: '0', padding: '0.1rem 0.5rem', fontSize: '0.75rem' }}
             disabled={isProcessing}
           >
             활성화
