@@ -10,7 +10,8 @@ import ParticipantDetailModal from '../components/ParticipantDetailModal';
 import MoveSeatModal from '../components/MoveSeatModal';
 
 const TablesPage: React.FC = () => {
-    const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails } = useTables();
+    // `activateTable` 함수를 useTables 훅에서 가져옵니다.
+    const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, activateTable, updateTableDetails } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
     const [isClosing, setIsClosing] = useState(false);
@@ -38,6 +39,7 @@ const TablesPage: React.FC = () => {
     }, [tables]);
 
     const handleTableSelect = (table: Table) => {
+        if (table.status === 'standby') return;
         setDetailModalTable(table);
     };
 
@@ -93,7 +95,7 @@ const TablesPage: React.FC = () => {
     };
 
     const handleAssignSeats = () => {
-        if (!window.confirm('모든 플레이어의 자리를 리드로우합니다 진행하겠습니까?')) {
+        if (!window.confirm('활성화된 테이블의 모든 플레이어의 자리를 재배정합니다. 진행하시겠습니까?')) {
             return;
         }
         const activeParticipants = participants.filter(p => p.status === 'active');
@@ -175,6 +177,7 @@ const TablesPage: React.FC = () => {
 
     const needsBalancing = useMemo(() => {
         const playerCounts = tables
+            .filter(t => t.status === 'open') // 활성화된 테이블만 계산
             .map(t => (t.seats || []).filter(s => s !== null).length)
             .filter(count => count > 0); 
 
@@ -187,7 +190,7 @@ const TablesPage: React.FC = () => {
     }, [tables]);
 
     const emptySeats = useMemo(() => {
-        return tables.reduce((acc, table) => {
+        return tables.filter(t => t.status === 'open').reduce((acc, table) => {
             const empty = (table.seats || []).filter(s => s === null).length;
             return acc + empty;
         }, 0);
@@ -216,7 +219,7 @@ const TablesPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-800">테이블 및 좌석 관리</h2>
                 <div className="flex items-center mt-2 sm:mt-0">
                     <button onClick={handleOpenTable} className="btn bg-green-500 hover:bg-green-600 text-white mr-4" disabled={isOpeningTable}>
-                        {isOpeningTable ? '테이블 여는중...' : '새 테이블 열기'}
+                        {isOpeningTable ? '테이블 생성 중...' : '새 테이블 열기'}
                     </button>
                     <button onClick={handleAssignSeats} className="btn btn-primary">
                         좌석 자동 배정
@@ -242,7 +245,7 @@ const TablesPage: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                    <div className="text-lg font-semibold">테이블: {tables.length}</div>
+                    <div className="text-lg font-semibold">테이블: {tables.length} (활성: {tables.filter(t=>t.status==='open').length})</div>
                     <div className="text-lg font-semibold">빈좌석: {emptySeats}</div>
                     <div className="inline-flex rounded-md shadow-sm">
                         <button
@@ -272,7 +275,7 @@ const TablesPage: React.FC = () => {
             {needsBalancing && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
                     <p className="font-bold">밸런싱 경고</p>
-                    <p>테이블간 인원 수 차이가 2명 이상입니다. 밸런스를 조정하는 것이 좋습니다.</p>
+                    <p>활성화된 테이블간 인원 수 차이가 2명 이상입니다. 밸런스를 조정하는 것이 좋습니다.</p>
                 </div>
             )}
 
@@ -284,6 +287,7 @@ const TablesPage: React.FC = () => {
                             table={table}
                             onCloseTable={handleCloseTable}
                             updateTableDetails={updateTableDetails}
+                            activateTable={activateTable}
                             onTableSelect={handleTableSelect}
                             isProcessing={isClosing || isOpeningTable}
                         />
@@ -314,7 +318,7 @@ const TablesPage: React.FC = () => {
                     onClose={() => setClosingTableId(null)}
                     title="테이블 닫기 확인"
                 >
-                    <p>정말로 해당 테이블을 닫으시겠습니까? 해당 테이블의 모든 참가자는 다른 테이블의 빈자리로 자동 이동됩니다.</p>
+                    <p>정말로 해당 테이블을 닫으시겠습니까? 해당 테이블의 모든 참가자는 다른 활성화된 테이블의 빈자리로 자동 이동됩니다.</p>
                     <div className="flex justify-end mt-4">
                         <button onClick={() => setClosingTableId(null)} className="btn btn-secondary mr-2" disabled={isClosing}>
                             취소
@@ -376,7 +380,7 @@ const TablesPage: React.FC = () => {
             <MoveSeatModal
                 isOpen={isMoveSeatModalOpen}
                 onClose={handleCloseMoveSeatModal}
-                tables={tables}
+                tables={tables.filter(t => t.status === 'open')}
                 movingParticipant={selectedPlayer.participant}
                 onConfirmMove={handleConfirmMove}
                 getParticipantName={getParticipantName}

@@ -5,6 +5,7 @@ interface TableCardProps {
   table: Table;
   onCloseTable: (tableId: string) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
+  activateTable: (tableId: string) => void;
   onTableSelect: (table: Table) => void;
   isProcessing: boolean;
 }
@@ -17,11 +18,14 @@ const TableCard: React.FC<TableCardProps> = ({
   table,
   onCloseTable,
   updateTableDetails,
+  activateTable,
   onTableSelect,
   isProcessing
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tableName, setTableName] = useState(table.name || '');
+
+  const isStandby = table.status === 'standby';
 
   const handleNameUpdate = (e: React.FocusEvent | React.KeyboardEvent) => {
     e.stopPropagation();
@@ -41,6 +45,11 @@ const TableCard: React.FC<TableCardProps> = ({
     e.stopPropagation();
     setIsEditingName(true);
   }
+  
+  const handleActivateClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    activateTable(table.id);
+  }
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,12 +58,18 @@ const TableCard: React.FC<TableCardProps> = ({
 
   const [showColorPicker, setShowColorPicker] = useState(false);
 
+  const cardClasses = `rounded-lg p-4 flex flex-col shadow-md transition-all duration-300 ${
+    isStandby 
+      ? 'bg-gray-100' 
+      : 'bg-white cursor-pointer hover:shadow-lg hover:scale-105'
+  }`;
+
   return (
     <div
       key={table.id}
-      className="bg-white rounded-lg p-4 flex flex-col shadow-md transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105"
-      style={{ border: `3px solid ${table.borderColor || 'transparent'}` }}
-      onClick={() => onTableSelect(table)}
+      className={cardClasses}
+      style={{ border: `3px solid ${isStandby ? '#A0AEC0' : (table.borderColor || 'transparent')}` }}
+      onClick={() => !isStandby && onTableSelect(table)}
     >
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
@@ -62,8 +77,9 @@ const TableCard: React.FC<TableCardProps> = ({
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                     className="w-6 h-6 rounded-full"
-                    style={{ backgroundColor: table.borderColor || '#cccccc' }}
+                    style={{ backgroundColor: isStandby ? '#A0AEC0' : (table.borderColor || '#cccccc') }}
                     title="테두리 색상 변경"
+                    disabled={isStandby}
                 />
                 {showColorPicker && (
                     <div className="absolute z-10 top-8 left-0 bg-white p-2 rounded-md shadow-lg flex gap-2">
@@ -97,6 +113,11 @@ const TableCard: React.FC<TableCardProps> = ({
                 {table.name || `Table ${table.tableNumber}`}
               </h3>
             )}
+            {isStandby && (
+              <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">
+                대기 중
+              </span>
+            )}
         </div>
         
         <div className="flex items-center">
@@ -113,9 +134,22 @@ const TableCard: React.FC<TableCardProps> = ({
             </button>
         </div>
       </div>
-      <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
-        클릭하여 좌석 보기
-      </div>
+      
+      {isStandby ? (
+        <div className="flex-grow flex items-center justify-center">
+          <button 
+            onClick={handleActivateClick}
+            className="btn btn-primary w-full"
+            disabled={isProcessing}
+          >
+            테이블 활성화
+          </button>
+        </div>
+      ) : (
+        <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
+          클릭하여 좌석 보기
+        </div>
+      )}
     </div>
   );
 };
