@@ -105,127 +105,107 @@ export const useTables = () => {
 
         if (!tableToClose) {
           throw new Error(`Table with id ${tableIdToClose} not found.`);
-        }
-
-        const participantsToMove = (tableToClose.seats || [])
-            .map((pId, index) => ({ pId, fromSeatIndex: index}))
-            .filter(item => item.pId !== null) as { pId: string, fromSeatIndex: number }[];
-
-        if (participantsToMove.length === 0) {
-            const tableRef = doc(db, 'tables', tableIdToClose);
-            transaction.delete(tableRef);
-            logAction('table_closed', { tableId: tableIdToClose, tableNumber: tableToClose.tableNumber, movedParticipantsCount: 0 });
-            return;
-        }
+        const closeTable = async (tableIdToClose: string): Promise<BalancingResult[]> => {
+          setLoading(true);
+          try {
+            const balancingResult: BalancingResult[] = [];
+            const movedParticipantsDetails: any[] = [];
         
-        // 지능형 밸런싱 로직 시작
-        const totalPlayers = openTables.reduce((sum, t) => sum + (t.seats || []).filter(s => s).length, 0) + participantsToMove.length;
-        const totalTables = openTables.length;
-        const basePlayersPerTable = Math.floor(totalPlayers / totalTables);
-        let remainder = totalPlayers % totalTables;
-
-        const tablesWithSeats = openTables.map(t => ({
-            ...t,
-            currentPlayerCount: (t.seats || []).filter(s => s).length,
-            targetPlayerCount: basePlayersPerTable + (remainder-- > 0 ? 1 : 0),
-        })).sort((a,b) => a.currentPlayerCount - b.currentPlayerCount);
-
-        const movedParticipantsDetails: any[] = [];
-        let participantIndex = 0;
-
-        for (const table of tablesWithSeats) {
-            const seatsToFill = table.targetPlayerCount - table.currentPlayerCount;
-            for (let i = 0; i < seatsToFill; i++) {
-                if(participantIndex >= participantsToMove.length) break;
-
-                const participantToMove = participantsToMove[participantIndex];
-                const emptySeatIndex = (table.seats || []).indexOf(null);
+            await runTransaction(db, async (transaction) => {
+              const tablesSnapshot = await getDocs(tablesCollection);
+              const allTables: Table[] = tablesSnapshot.docs
+                .map(d => ({ id: d.id, ...d.data() } as Table));
+        
+              const tableToClose = allTables.find(t => t.id === tableIdToClose);
+              if (!tableToClose) {
+                throw new Error(`Table with id ${tableIdToClose} not found.`);
+              }
+        
+              const participantsToMove = (tableToClose.seats || [])
+                  .map((pId, index) => ({ pId, fromSeatIndex: index}))
+                  .filter(item => item.pId !== null) as { pId: string, fromSeatIndex: number }[];
+        
+              if (participantsToMove.length === 0) {
+                  const tableRef = doc(db, 'tables', tableIdToClose);
+                  transaction.delete(tableRef);
+                  logAction('table_closed', { tableId: tableIdToClose, tableNumber: tableToClose.tableNumber, movedParticipantsCount: 0 });
+                  return;
+              }
+        
+              const openTables = allTables.filter(t => t.id !== tableIdToClose && t.status !== 'closed');
+              if (openTables.length === 0 && participantsToMove.length > 0) {
+                  throw new Error("No open tables available to move participants.");
+              }
+              
+              const mutableOpenTables = openTables.map(t => ({
+                ...t,
+                seats: [...(t.seats || Array(9).fill(null))],
+                playerCount: (t.seats || []).filter(s => s !== null).length,
+              }));
+        
+              for (const participantToMove of participantsToMove) {
+                const minPlayerCount = Math.min(...mutableOpenTables.map(t => t.playerCount));
+                const leastPopulatedTables = mutableOpenTables.filter(t => t.playerCount === minPlayerCount);
                 
-                if(emptySeatIndex !== -1) {
-                    const from = { tableNumber: tableToClose.tableNumber, seatIndex: participantToMove.fromSeatIndex };
-                    const to = { tableNumber: table.tableNumber, seatIndex: emptySeatIndex };
-
-                    balancingResult.push({ participantId: participantToMove.pId, fromTableNumber: from.tableNumber, fromSeatIndex: from.seatIndex, toTableNumber: to.tableNumber, toSeatIndex: to.seatIndex });
-                    
-                    const newSeats = [...(table.seats || [])];
-                    newSeats[emptySeatIndex] = participantToMove.pId;
-                    table.seats = newSeats;
-
-                    movedParticipantsDetails.push({
-                        participantId: participantToMove.pId,
-                        from: `${from.tableNumber}-${from.seatIndex + 1}`,
-                        to: `${to.tableNumber}-${to.seatIndex + 1}`,
-                    });
-
-                    participantIndex++;
+                const targetTable = leastPopulatedTables[Math.floor(Math.random() * leastPopulatedTables.length)];
+        
+                const emptySeatIndexes = targetTable.seats
+                  .map((seat, index) => (seat === null ? index : -1))
+                  .filter(index => index !== -1);
+        
+                if (emptySeatIndexes.length === 0) {
+                   // Find another table if the randomly chosen one is full
+                   const alternativeTables = mutableOpenTables.filter(t => t.id !== targetTable.id && t.seats.some(s => s === null));
+                   if(alternativeTables.length === 0) throw new Error(`Balancing failed: No seats available.`);
+                   const newTargetTable = alternativeTables[Math.floor(Math.random() * alternativeTables.length)];
+                   const newEmptySeats = newTargetTable.seats.map((s, i) => s === null ? i : -1).filter(i => i !== -1);
+                   const newTargetSeatIndex = newEmptySeats[Math.floor(Math.random() * newEmptySeats.length)];
+                   
+                   newTargetTable.seats[newTargetSeatIndex] = participantToMove.pId;
+                   newTargetTable.playerCount++;
+                   const from = { tableNumber: tableToClose.tableNumber, seatIndex: participantToMove.fromSeatIndex };
+                   const to = { tableNumber: newTargetTable.tableNumber, seatIndex: newTargetSeatIndex };
+                   balancingResult.push({ participantId: participantToMove.pId, fromTableNumber: from.tableNumber, fromSeatIndex: from.seatIndex, toTableNumber: to.tableNumber, toSeatIndex: to.seatIndex });
+                   movedParticipantsDetails.push({ participantId: participantToMove.pId, from: `${from.tableNumber}-${from.seatIndex+1}`, to: `${to.tableNumber}-${to.seatIndex+1}` });
+        
+                } else {
+                  const targetSeatIndex = emptySeatIndexes[Math.floor(Math.random() * emptySeatIndexes.length)];
+                  targetTable.seats[targetSeatIndex] = participantToMove.pId;
+                  targetTable.playerCount++;
+                  const from = { tableNumber: tableToClose.tableNumber, seatIndex: participantToMove.fromSeatIndex };
+                  const to = { tableNumber: targetTable.tableNumber, seatIndex: targetSeatIndex };
+                  balancingResult.push({ participantId: participantToMove.pId, fromTableNumber: from.tableNumber, fromSeatIndex: from.seatIndex, toTableNumber: to.tableNumber, toSeatIndex: to.seatIndex });
+                  movedParticipantsDetails.push({ participantId: participantToMove.pId, from: `${from.tableNumber}-${from.seatIndex+1}`, to: `${to.tableNumber}-${to.seatIndex+1}` });
                 }
-            }
-        }
+              }
+              
+              mutableOpenTables.forEach(t => {
+                  const tableRef = doc(db, 'tables', t.id);
+                  transaction.update(tableRef, { seats: t.seats });
+              });
         
-        if (participantIndex < participantsToMove.length) {
-            throw new Error("Balancing failed. Not all participants could be seated.");
-        }
-        // 지능형 밸런싱 로직 종료
-
-        // 트랜잭션 업데이트
-        tablesWithSeats.forEach(t => {
-            const tableRef = doc(db, 'tables', t.id);
-            transaction.update(tableRef, { seats: t.seats });
-        });
-
-        const closedTableRef = doc(db, 'tables', tableIdToClose);
-        transaction.delete(closedTableRef);
+              const closedTableRef = doc(db, 'tables', tableIdToClose);
+              transaction.delete(closedTableRef);
+              
+              logAction('table_closed', { 
+                  tableId: tableIdToClose, 
+                  tableNumber: tableToClose.tableNumber,
+                  movedParticipantsCount: participantsToMove.length
+              });
+              logAction('participants_moved', {
+                  details: movedParticipantsDetails
+              });
+            });
         
-        // 로그 기록은 트랜잭션 성공 후
-        logAction('table_closed', { 
-            tableId: tableIdToClose, 
-            tableNumber: tableToClose.tableNumber,
-            movedParticipantsCount: participantsToMove.length
-        });
-        logAction('participants_moved', {
-            details: movedParticipantsDetails
-        });
-
-      });
-      return balancingResult;
-    } catch (e) {
-      console.error("Error closing table:", e);
-      setError(e as Error);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const autoAssignSeats = async (participants: Participant[]) => {
-    if (participants.length === 0) {
-        alert("배정할 참가자가 없습니다.");
-        return;
-    }
-    setLoading(true);
-    try {
-      await runTransaction(db, async (transaction) => {
-        const tablesSnapshot = await getDocs(tablesCollection);
-        const currentTables: Table[] = tablesSnapshot.docs.map(d => ({id: d.id, ...d.data()} as Table)).sort((a, b) => a.tableNumber - b.tableNumber);
-
-        const newTableSeats: { [key: string]: (string | null)[] } = {};
-        currentTables.forEach(t => {
-            const seatCount = t.seats?.length || 9;
-            newTableSeats[t.id] = Array(seatCount).fill(null);
-        });
-
-        const shuffledParticipants = shuffleArray(participants);
-
-        let participantIndex = 0;
-        
-        while (participantIndex < shuffledParticipants.length) {
-            for (const table of currentTables) {
-                if (participantIndex >= shuffledParticipants.length) break;
-                const targetSeatIndex = (newTableSeats[table.id] || []).indexOf(null);
-                if (targetSeatIndex !== -1) {
-                    newTableSeats[table.id][targetSeatIndex] = shuffledParticipants[participantIndex].id;
-                    participantIndex++;
-                }
+            return balancingResult;
+          } catch (e) {
+            console.error("Error closing table:", e);
+            setError(e as Error);
+            throw e;
+          } finally {
+            setLoading(false);
+          }
+        };
             }
         const autoAssignSeats = async (participants: Participant[]) => {
           if (participants.length === 0) {
