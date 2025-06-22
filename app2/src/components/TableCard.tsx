@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table } from '../hooks/useTables';
-import { Seat } from '../pages/TablesPage';
+import { Seat as SeatComponent, SeatProps } from '../pages/TablesPage';
 
 interface TableCardProps {
   table: Table;
@@ -13,6 +13,7 @@ interface TableCardProps {
   onBustOut: (participantId: string) => void;
   onCloseTable: (tableId: string) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
+  onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
   isProcessing: boolean;
 }
 
@@ -27,6 +28,7 @@ const TableCard: React.FC<TableCardProps> = ({
   onBustOut,
   onCloseTable,
   updateTableDetails,
+  onPlayerSelect,
   isProcessing
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -109,15 +111,16 @@ const TableCard: React.FC<TableCardProps> = ({
       </div>
       <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
         {(table.seats || []).map((participantId, i) => (
-          <Seat
-            key={i}
-            table={table}
-            seatIndex={i}
-            participantId={participantId}
-            getParticipantName={getParticipantName}
-            onMoveSeat={onMoveSeat}
-            onBustOut={onBustOut}
-          />
+          <div key={i} onClick={() => participantId && onPlayerSelect(participantId, table.id, i)}>
+            <SeatComponent
+              table={table}
+              seatIndex={i}
+              participantId={participantId}
+              getParticipantName={getParticipantName}
+              onMoveSeat={onMoveSeat}
+              onBustOut={onBustOut}
+            />
+          </div>
         ))}
       </div>
     </div>

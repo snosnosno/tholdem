@@ -5,6 +5,8 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Modal from '../components/Modal';
 import TableCard from '../components/TableCard';
+import PlayerActionModal from '../components/PlayerActionModal';
+import { Participant } from '../hooks/useParticipants';
 
 const ItemTypes = {
   SEAT: 'seat',
@@ -52,24 +54,12 @@ export const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, get
       ref={(node) => drag(drop(node))}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       className={`relative p-2 rounded-md h-20 flex flex-col justify-center items-center text-xs group 
-        ${participantId ? 'bg-blue-100 text-blue-800 cursor-move' : 'bg-gray-200 border-2 border-dashed border-gray-400'}
+        ${participantId ? 'bg-blue-100 text-blue-800 cursor-pointer' : 'bg-gray-200 border-2 border-dashed border-gray-400'}
         ${isOver ? 'ring-2 ring-yellow-400' : ''}
       `}
     >
       <span className="font-bold text-sm mb-1">{seatIndex + 1}</span>
       <span className="font-semibold">{participantName}</span>
-      {participantId && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBustOut(participantId);
-          }}
-          className="absolute top-0 right-0 p-1 bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          title="탈락 처리"
-        >
-          X
-        </button>
-      )}
     </div>
   );
 };
@@ -84,6 +74,21 @@ const TablesPage: React.FC = () => {
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPlayer, setSelectedPlayer] = useState<{
+        participant: Participant | null;
+        table: Table | null;
+        seatIndex: number | null;
+    }>({ participant: null, table: null, seatIndex: null });
+
+    const handlePlayerSelect = (participantId: string, tableId: string, seatIndex: number) => {
+        const participant = participants.find(p => p.id === participantId) || null;
+        const table = tables.find(t => t.id === tableId) || null;
+        setSelectedPlayer({ participant, table, seatIndex });
+    };
+
+    const handleCloseModal = () => {
+        setSelectedPlayer({ participant: null, table: null, seatIndex: null });
+    };
 
     const handleAssignSeats = () => {
         const activeParticipants = participants.filter(p => p.status === 'active');
@@ -121,12 +126,6 @@ const TablesPage: React.FC = () => {
         } finally {
             setIsClosing(false);
             setClosingTableId(null);
-        }
-    };
-
-    const handleBustOut = (participantId: string) => {
-        if(window.confirm("정말로 해당 참가자를 탈락 처리하시겠습니까?")) {
-            bustOutParticipant(participantId);
         }
     };
 
@@ -218,9 +217,10 @@ const TablesPage: React.FC = () => {
                             table={table}
                             getParticipantName={getParticipantName}
                             onMoveSeat={moveSeat}
-                            onBustOut={handleBustOut}
+                            onBustOut={bustOutParticipant}
                             onCloseTable={handleCloseTable}
                             updateTableDetails={updateTableDetails}
+                            onPlayerSelect={handlePlayerSelect}
                             isProcessing={isClosing || isOpeningTable}
                         />
                     ))}
@@ -277,6 +277,15 @@ const TablesPage: React.FC = () => {
                     </div>
                 </Modal>
             )}
+
+            <PlayerActionModal
+                isOpen={!!selectedPlayer.participant}
+                onClose={handleCloseModal}
+                player={selectedPlayer.participant}
+                table={selectedPlayer.table}
+                seatIndex={selectedPlayer.seatIndex}
+                onBustOut={bustOutParticipant}
+            />
         </div>
       </DndProvider>
     );
