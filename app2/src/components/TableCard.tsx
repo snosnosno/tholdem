@@ -75,35 +75,30 @@ const TableCard: React.FC<TableCardProps> = ({
             <span className="text-sm font-normal text-gray-500 ml-2 flex-shrink-0">
               ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
             </span>
-            {isStandby && (
-              <span className="ml-auto mr-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800 flex-shrink-0">
-                대기 중
-              </span>
-            )}
         </div>
         
         <div className="flex items-center gap-1 flex-shrink-0">
-            {!isStandby && (
-              <button 
-                onClick={handleEditClick}
-                className="p-1 text-gray-500 hover:text-gray-800" 
-                disabled={isProcessing}
-                title="테이블 메뉴"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                </svg>
-              </button>
-            )}
+          <button 
+            onClick={handleEditClick}
+            className="p-1 text-gray-500 hover:text-gray-800" 
+            disabled={isProcessing}
+            title="테이블 메뉴"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
         </div>
       </div>
       
       {isStandby && (
-        <div className="flex items-center justify-center mt-2">
+        <div className="flex items-center justify-center mt-2 gap-2">
+          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">
+            대기 중
+          </span>
           <button 
             onClick={handleActivateClick}
-            className="btn btn-primary btn-xs"
-            style={{ height: 'auto', minHeight: '0', padding: '0.1rem 0.5rem', fontSize: '0.75rem' }}
+            className="btn btn-primary btn-xs px-2 py-1 text-xs min-h-0"
             disabled={isProcessing}
           >
             활성화

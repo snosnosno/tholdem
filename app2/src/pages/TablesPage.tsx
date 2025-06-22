@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTables, Table, BalancingResult } from '../hooks/useTables';
 import { useParticipants, Participant } from '../hooks/useParticipants';
 import Modal from '../components/Modal';
@@ -7,16 +7,21 @@ import PlayerActionModal from '../components/PlayerActionModal';
 import TableDetailModal from '../components/TableDetailModal';
 import ParticipantDetailModal from '../components/ParticipantDetailModal';
 import MoveSeatModal from '../components/MoveSeatModal';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 const TablesPage: React.FC = () => {
-    const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, activateTable, updateTableDetails } = useTables();
+    const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, activateTable, updateTableDetails, updateTablePosition } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
+    
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const isMobile = useMediaQuery('(max-width: 768px)');
 
     const [isClosing, setIsClosing] = useState(false);
     const [isOpeningTable, setIsOpeningTable] = useState(false);
     const [closingTableId, setClosingTableId] = useState<string | null>(null);
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
-    const [gridSize] = useState(5);
     
     const [selectedPlayer, setSelectedPlayer] = useState<{
         participant: Participant | null;
@@ -35,8 +40,28 @@ const TablesPage: React.FC = () => {
         }
     }, [tables]);
 
+    const handleDragEnd = (event: DragEndEvent) => {
+        if (isMobile) return;
+        const { active, delta } = event;
+        const tableId = active.id as string;
+    
+        setTables(currentTables => {
+            const newTables = currentTables.map(table => {
+                if (table.id === tableId) {
+                    const newPosition = {
+                        x: (table.position?.x || 0) + delta.x,
+                        y: (table.position?.y || 0) + delta.y,
+                    };
+                    updateTablePosition(tableId, newPosition);
+                    return { ...table, position: newPosition };
+                }
+                return table;
+            });
+            return newTables;
+        });
+    };
+    
     const handleTableSelect = (table: Table) => {
-        if (table.status === 'standby') return;
         setDetailModalTable(table);
     };
 
@@ -123,8 +148,8 @@ const TablesPage: React.FC = () => {
 
         setIsClosing(true);
         try {
-            const result = await closeTable(closingTableId);
-            setBalancingResult(result);
+            await closeTable(closingTableId);
+            setBalancingResult(null); // Clear balancing result after action
             if (detailModalTable?.id === closingTableId) {
                 setDetailModalTable(null);
             }
@@ -192,23 +217,38 @@ const TablesPage: React.FC = () => {
             return acc + empty;
         }, 0);
     }, [tables]);
-    
-    const gridColsClass = useMemo(() => {
-        switch (gridSize) {
-            case 1: return 'grid-cols-1';
-            case 2: return 'grid-cols-1 md:grid-cols-2';
-            case 3: return 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3';
-            case 4: return 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4';
-            case 5: return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
-            default: return 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3';
-        }
-    }, [gridSize]);
 
     if (tablesLoading || participantsLoading) return <div className="card">Loading...</div>;
     if (tablesError) return <div className="card">Error loading tables: {tablesError.message}</div>;
     if (participantsError) return <div className="card">Error loading participants: {participantsError.message}</div>;
 
     const getParticipantNameById = (id: string) => participants.find(p => p.id === id)?.name || 'Unknown';
+
+    const renderTableCards = () => {
+        const tableList = tables.map((table: Table) => (
+            <TableCard
+                key={table.id}
+                table={table}
+                activateTable={activateTable}
+                onTableSelect={handleTableSelect}
+                isProcessing={isClosing || isOpeningTable}
+                isDraggable={!isMobile}
+                style={isMobile ? {} : { position: 'absolute', left: table.position?.x || 0, top: table.position?.y || 0 }}
+            />
+        ));
+
+        if (isMobile) {
+            return <div className="grid grid-cols-2 gap-4">{tableList}</div>;
+        }
+
+        return (
+            <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]}>
+                <div ref={canvasRef} style={{ position: 'relative', width: '100%', height: 'calc(100vh - 300px)' }}>
+                    {tableList}
+                </div>
+            </DndContext>
+        );
+    };
 
     return (
         <div className="card">
@@ -254,19 +294,7 @@ const TablesPage: React.FC = () => {
                 </div>
             )}
 
-            <div className={`grid ${gridColsClass} gap-6`}>
-                {tables.map((table: Table) => (
-                    <TableCard
-                        key={table.id}
-                        table={table}
-                        onCloseTable={handleCloseTable}
-                        updateTableDetails={updateTableDetails}
-                        activateTable={activateTable}
-                        onTableSelect={handleTableSelect}
-                        isProcessing={isClosing || isOpeningTable}
-                    />
-                ))}
-            </div>
+            {renderTableCards()}
             
             <TableDetailModal
                 isOpen={!!detailModalTable}
@@ -277,6 +305,8 @@ const TablesPage: React.FC = () => {
                 onBustOut={handleBustOutOptimistic}
                 onPlayerSelect={handlePlayerSelect}
                 updateTableDetails={updateTableDetails}
+                activateTable={activateTable}
+                onCloseTable={handleCloseTable}
                 isDimmed={!!selectedPlayer.participant || isParticipantDetailModalOpen || isMoveSeatModalOpen}
             />
 
