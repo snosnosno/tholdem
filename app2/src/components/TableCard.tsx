@@ -102,7 +102,7 @@ const TableCard: React.FC<TableCardProps> = ({
         <div className="flex items-center justify-center mt-2">
           <button 
             onClick={handleActivateClick}
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-xs"
             disabled={isProcessing}
           >
             활성화
