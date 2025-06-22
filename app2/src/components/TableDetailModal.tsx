@@ -130,7 +130,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                 </div>
                 <button
                   onClick={handleCloseTableClick}
-                  className="btn btn-error btn-sm text-white"
+                  className="btn btn-sm text-white bg-red-500 hover:bg-red-600 border-none"
                 >
                   테이블 닫기
                 </button>
