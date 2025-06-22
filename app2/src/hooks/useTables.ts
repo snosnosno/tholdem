@@ -227,46 +227,55 @@ export const useTables = () => {
                     participantIndex++;
                 }
             }
-        }
-
-        for (const tableId in newTableSeats) {
-            const tableRef = doc(db, 'tables', tableId);
-            transaction.update(tableRef, { seats: newTableSeats[tableId] });
-        }
-      });
-      console.log("좌석 배정이 성공적으로 완료되었습니다.");
-    } catch (e) {
-      console.error("좌석 배정 중 오류가 발생했습니다:", e);
-      setError(e as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const moveSeat = async (
-    participantId: string,
-    from: { tableId: string; seatIndex: number },
-    to: { tableId: string; seatIndex: number }
-  ) => {
-    if (from.tableId === to.tableId && from.seatIndex === to.seatIndex) return;
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const fromTableRef = doc(db, 'tables', from.tableId);
-            const toTableRef = doc(db, 'tables', to.tableId);
-
-            const [fromTableSnap, toTableSnap] = await Promise.all([
-                transaction.get(fromTableRef),
-                transaction.get(toTableRef)
-            ]);
-
-            if (!fromTableSnap.exists() || !toTableSnap.exists()) {
-                throw new Error("테이블 정보를 찾을 수 없습니다.");
-            }
-            
-            const fromSeats = [...fromTableSnap.data().seats];
-            const toSeats = from.tableId === to.tableId ? fromSeats : [...toTableSnap.data().seats];
-
+        const autoAssignSeats = async (participants: Participant[]) => {
+          if (participants.length === 0) {
+              alert("배정할 참가자가 없습니다.");
+              return;
+          }
+          setLoading(true);
+          try {
+            await runTransaction(db, async (transaction) => {
+              const tablesSnapshot = await getDocs(tablesCollection);
+              const currentTables: Table[] = tablesSnapshot.docs.map(d => ({id: d.id, ...d.data()} as Table));
+        
+              const allEmptySeats = currentTables.flatMap(table => 
+                  Array.from({ length: table.seats?.length || 9 }, (_, i) => i)
+                      .filter(seatIndex => !(table.seats || [])[seatIndex])
+                      .map(seatIndex => ({ tableId: table.id, seatIndex }))
+              );
+        
+              const shuffledParticipants = shuffleArray(participants);
+              const shuffledSeats = shuffleArray(allEmptySeats);
+        
+              if (shuffledParticipants.length > shuffledSeats.length) {
+                throw new Error(`Not enough empty seats. ${shuffledParticipants.length} participants, ${shuffledSeats.length} seats.`);
+              }
+              
+              const newTableSeatArrays: { [key: string]: (string | null)[] } = {};
+              currentTables.forEach(t => {
+                  newTableSeatArrays[t.id] = [...(t.seats || Array(9).fill(null))];
+              });
+        
+              shuffledParticipants.forEach((participant, index) => {
+                  const seat = shuffledSeats[index];
+                  newTableSeatArrays[seat.tableId][seat.seatIndex] = participant.id;
+              });
+        
+              for (const tableId in newTableSeatArrays) {
+                  const tableRef = doc(db, 'tables', tableId);
+                  transaction.update(tableRef, { seats: newTableSeatArrays[tableId] });
+              }
+            });
+            console.log("좌석 배정이 성공적으로 완료되었습니다.");
+            logAction('seats_auto_assigned', { participantsCount: participants.length });
+          } catch (e) {
+            console.error("좌석 배정 중 오류가 발생했습니다:", e);
+            setError(e as Error);
+            throw e; // re-throw for the component to catch
+          } finally {
+            setLoading(false);
+          }
+        };
             if (toSeats[to.seatIndex] !== null) {
               const otherParticipantId = toSeats[to.seatIndex];
               fromSeats[from.seatIndex] = otherParticipantId;
@@ -309,5 +318,5 @@ export const useTables = () => {
   };
 
 
-  return { tables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails };
+  return { tables, setTables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails };
 };
