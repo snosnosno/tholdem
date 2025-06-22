@@ -191,41 +191,48 @@ export const useTables = () => {
     try {
       const batch = writeBatch(db);
       const tablesSnapshot = await getDocs(tablesCollection);
-      const currentTables: Table[] = tablesSnapshot.docs.map(d => ({id: d.id, ...d.data()} as Table));
+      const currentTables: Table[] = tablesSnapshot.docs
+        .map(d => ({id: d.id, ...d.data()} as Table))
+        .filter(t => t.status !== 'closed');
 
-      const allEmptySeats = currentTables.flatMap(table => 
-          Array.from({ length: table.seats?.length || 9 }, (_, i) => i)
-              .filter(seatIndex => !(table.seats || [])[seatIndex])
-              .map(seatIndex => ({ tableId: table.id, seatIndex }))
+      // 1. 모든 테이블의 모든 좌석을 수집합니다.
+      const allSeats = currentTables.flatMap(table => 
+          Array.from({ length: table.seats?.length || 9 }, (_, seatIndex) => ({ tableId: table.id, seatIndex }))
       );
 
-      const shuffledParticipants = shuffleArray(participants);
-      const shuffledSeats = shuffleArray(allEmptySeats);
-
-      if (shuffledParticipants.length > shuffledSeats.length) {
-        throw new Error(`Not enough empty seats. ${shuffledParticipants.length} participants, ${shuffledSeats.length} seats.`);
+      // 2. 참가자 수와 좌석 수를 비교합니다.
+      if (participants.length > allSeats.length) {
+        throw new Error(`참가자 수(${participants.length})가 전체 좌석 수(${allSeats.length})보다 많아 배정할 수 없습니다.`);
       }
-      
+
+      // 3. 참가자와 좌석을 무작위로 섞습니다.
+      const shuffledParticipants = shuffleArray(participants);
+      const shuffledSeats = shuffleArray(allSeats);
+
+      // 4. 모든 테이블의 좌석을 초기화합니다.
       const newTableSeatArrays: { [key: string]: (string | null)[] } = {};
       currentTables.forEach(t => {
-          newTableSeatArrays[t.id] = [...(t.seats || Array(9).fill(null))];
+          newTableSeatArrays[t.id] = Array(t.seats?.length || 9).fill(null);
       });
 
+      // 5. 섞인 참가자를 섞인 좌석에 배정합니다.
       shuffledParticipants.forEach((participant, index) => {
           const seat = shuffledSeats[index];
           newTableSeatArrays[seat.tableId][seat.seatIndex] = participant.id;
       });
 
+      // 6. 변경된 좌석 정보로 모든 테이블을 업데이트합니다.
       for (const tableId in newTableSeatArrays) {
           const tableRef = doc(db, 'tables', tableId);
           batch.update(tableRef, { seats: newTableSeatArrays[tableId] });
       }
       
       await batch.commit();
-      console.log("좌석 배정이 성공적으로 완료되었습니다.");
-      logAction('seats_auto_assigned', { participantsCount: participants.length });
+      console.log("좌석 재배정이 성공적으로 완료되었습니다.");
+      logAction('seats_reassigned', { participantsCount: participants.length });
     } catch (e) {
-      console.error("좌석 배정 중 오류가 발생했습니다:", e);
+      console.error("좌석 자동 재배정 중 오류가 발생했습니다:", e);
+      alert(`오류 발생: ${e instanceof Error ? e.message : String(e)}`);
       setError(e as Error);
       throw e;
     } finally {
