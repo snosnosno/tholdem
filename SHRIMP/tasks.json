@@ -1,142 +1,113 @@
 {
   "tasks": [
     {
-      "id": "91ce251b-e57f-4312-838d-82d05a64ee2e",
-      "name": "[Backend/Data] Firestore에 테이블 설정 필드 추가 및 useTournamentSettings 훅 구현",
-      "description": "Firestore의 `tournaments/{tournamentId}` 문서에 `tableSettings: { maxSeats: number, balanceThreshold: number }` 필드를 추가하고, 이 설정을 읽고 업데이트하는 `useTournamentSettings` 훅을 새로 생성합니다. 훅은 설정 객체, 로딩 상태, 업데이트 함수를 반환해야 합니다.",
+      "id": "79fe9272-4e76-45ed-b9ed-a582bb9cce45",
+      "name": "1. [Setup] dnd-kit 라이브러리 설치",
+      "description": "테이블 드래그 앤 드롭 기능을 구현하는 데 필요한 @dnd-kit 관련 라이브러리를 설치합니다.",
       "status": "pending",
       "dependencies": [],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/hooks/useTournamentSettings.ts",
-          "type": "CREATE",
-          "description": "설정 관리를 위한 새로운 훅 파일"
-        },
-        {
-          "path": "app2/src/firebase.ts",
-          "type": "REFERENCE",
-          "description": "Firestore 인스턴스를 가져오기 위해 참조"
-        }
-      ],
-      "implementationGuide": "1. `useTournamentSettings.ts` 파일을 새로 생성합니다.\n2. React의 `useState`와 `useEffect`를 사용하여 Firestore 문서(`tournaments/{tournamentId}`)를 실시간으로 구독합니다.\n3. 문서가 존재하지 않을 경우 기본값(예: `{ maxSeats: 9, balanceThreshold: 2 }`)을 사용하도록 처리합니다.\n4. `updateSettings` 함수는 `updateDoc`을 사용하여 Firestore 문서를 업데이트해야 합니다.",
-      "verificationCriteria": "1. `useTournamentSettings` 훅을 호출하면 Firestore에 저장된 테이블 설정을 정상적으로 가져와야 합니다.\n2. `updateSettings` 함수를 호출하면 Firestore의 해당 문서가 올바르게 업데이트되어야 합니다.\n3. 설정이 없는 토너먼트의 경우 기본값이 반환되어야 합니다."
+      "createdAt": "2025-06-22T17:49:28.651Z",
+      "updatedAt": "2025-06-22T17:49:28.651Z",
+      "implementationGuide": "프로젝트의 루트 디렉토리에서 다음 명령어를 실행하여 dnd-kit 라이브러리들을 설치합니다: npm install @dnd-kit/core @dnd-kit/modifiers @dnd-kit/utilities",
+      "verificationCriteria": "`package.json` 파일의 `dependencies`에 `@dnd-kit/core`, `@dnd-kit/modifiers`, `@dnd-kit/utilities`가 추가되었는지 확인합니다.",
+      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
     },
     {
-      "id": "970f158c-1335-4ec2-a8a8-f2d617ede20c",
-      "name": "[Frontend/UI] TablesPage에 설정 UI 컨트롤 추가",
-      "description": "`TablesPage.tsx`에 전체 테이블의 최대 좌석 수(5-10)와 밸런싱 기준 인원(1-5)을 조절할 수 있는 UI 컨트롤(슬라이더)을 추가합니다.",
+      "id": "8e77d342-1010-475d-b375-66f22b1d84d8",
+      "name": "2. [Backend] 테이블 위치 데이터 모델 및 로직 구현",
+      "description": "`useTables.ts` 훅을 수정하여 테이블의 위치(`position`) 정보를 관리할 수 있는 기반을 마련합니다.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
+          "taskId": "79fe9272-4e76-45ed-b9ed-a582bb9cce45"
         }
       ],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/pages/TablesPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "UI 컨트롤을 추가할 페이지 컴포넌트"
-        }
-      ],
-      "implementationGuide": "1. `TablesPage.tsx`의 기존 컨트롤 영역(카드 크기 조절 슬라이더 근처)에 두 개의 슬라이더와 라벨을 추가합니다.\n2. 각 슬라이더는 `min`, `max`, `value`, `onChange` 속성을 가져야 합니다.\n3. Tailwind CSS를 사용하여 기존 UI와 디자인 일관성을 유지합니다.",
-      "verificationCriteria": "1. `TablesPage`에 '최대 좌석 수'와 '밸런싱 차이'를 위한 슬라이더 두 개가 렌더링되어야 합니다.\n2. 슬라이더를 조작하면 라벨에 표시된 숫자가 실시간으로 변경되어야 합니다."
-    },
-    {
-      "id": "72d69304-7872-4763-8787-f1f5cb2fd37b",
-      "name": "[Frontend/Logic] 설정 값 변경 로직 및 DB 연동 구현",
-      "description": "`TablesPage.tsx`에서 UI 컨트롤로 변경된 설정 값을 로컬 상태로 관리하고, `debounce`를 적용하여 Firestore에 업데이트 요청을 보냅니다. 또한, 현재 테이블 상태에 따라 최대 좌석 수 슬라이더의 최솟값을 동적으로 제한합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "970f158c-1335-4ec2-a8a8-f2d617ede20c"
-        }
-      ],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/pages/TablesPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "설정 변경 로직을 구현할 컴포넌트"
-        },
-        {
-          "path": "app2/src/hooks/useTournamentSettings.ts",
-          "type": "REFERENCE",
-          "description": "설정값을 업데이트하기 위해 참조"
-        }
-      ],
-      "implementationGuide": "1. `useTournamentSettings` 훅을 사용하여 설정의 초기값을 가져옵니다.\n2. `useState`를 사용하여 UI와 연동될 로컬 상태(`localMaxSeats`, `localBalanceThreshold`)를 관리합니다.\n3. `useCallback`과 `setTimeout`을 사용하여 `debounce` 함수를 구현하고, 슬라이더의 `onChange` 이벤트에서 호출하여 Firestore 업데이트 요청 횟수를 조절합니다.\n4. `useMemo`를 사용하여 현재 모든 테이블에서 가장 많은 플레이어 수를 계산하고, 이 값을 `maxSeats` 슬라이더의 `min` 속성에 바인딩하여 사용자가 플레이어가 있는 좌석을 제거하지 못하도록 방지합니다.",
-      "verificationCriteria": "1. 슬라이더를 조작하고 500ms 후 Firestore 문서의 `tableSettings`가 업데이트되어야 합니다.\n2. 특정 테이블에 7명의 플레이어가 있는 경우, '최대 좌석 수' 슬라이더는 7 미만으로 설정할 수 없어야 합니다."
-    },
-    {
-      "id": "78e93c52-e478-4fe4-98eb-6161db2bd321",
-      "name": "[Backend/Core] `openNewTable` 함수가 새로운 `maxSeats` 설정을 사용하도록 수정",
-      "description": "`useTables.ts`의 `openNewTable` 함수를 수정하여, 테이블 생성 시 `useTournamentSettings`에서 가져온 `maxSeats` 설정에 따라 좌석 수를 결정하도록 합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
-        }
-      ],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "createdAt": "2025-06-22T17:49:28.651Z",
+      "updatedAt": "2025-06-22T17:49:28.651Z",
       "relatedFiles": [
         {
           "path": "app2/src/hooks/useTables.ts",
           "type": "TO_MODIFY",
-          "description": "테이블 생성 로직을 수정할 훅"
+          "description": "Table 인터페이스에 position 필드를 추가하고, 위치 업데이트 및 초기화 로직을 구현합니다."
         }
       ],
-      "implementationGuide": "1. `useTables` 훅이 `settings` 객체를 인자로 받도록 시그니처를 변경합니다.\n2. `openNewTable` 함수 내에서 새 테이블 객체를 생성할 때, `seats` 배열의 길이를 `settings.maxSeats` 값으로 설정합니다. `Array(settings.maxSeats).fill(null)`",
-      "verificationCriteria": "1. `maxSeats`를 8로 설정한 후 '새 테이블 열기'를 클릭하면, 생성된 테이블의 총 좌석 수가 8개여야 합니다."
+      "implementationGuide": "1. `app2/src/hooks/useTables.ts` 파일의 `Table` 인터페이스에 `position?: { x: number; y: number }` 필드를 추가합니다.\n2. `openNewTable` 함수를 수정하여, 새 테이블을 생성할 때 기존 테이블들과 겹치지 않는 초기 `position` 값을 할당하도록 로직을 추가합니다.\n3. `updateTablePosition(tableId: string, position: { x: number; y: number })` 함수를 새로 추가하여 Firestore의 해당 테이블 문서에 `position` 필드만 업데이트합니다.\n4. 새로 만든 `updateTablePosition` 함수를 `useTables` 훅의 반환 객체에 포함시킵니다.",
+      "verificationCriteria": "1. `Table` 인터페이스에 `position` 필드가 추가되었는지 확인합니다.\n2. 새 테이블 생성 시 Firestore 문서에 `position` 필드가 정상적으로 저장되는지 확인합니다.\n3. `updateTablePosition` 함수 호출 시 Firestore의 해당 테이블 `position` 필드가 정확하게 업데이트되는지 확인합니다.",
+      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
     },
     {
-      "id": "21f6840c-51eb-4dd8-b5c4-f900937cfbaf",
-      "name": "[Backend/Core] Firestore `writeBatch`를 사용하여 테이블 크기 일괄 조정 기능 구현",
-      "description": "`useTables.ts`에 `adjustTableSizes` 함수를 새로 구현합니다. 이 함수는 `maxSeats` 설정이 변경되었을 때, 모든 테이블의 좌석 수를 Firestore `writeBatch`를 사용하여 원자적으로 일괄 업데이트합니다.",
+      "id": "18d37dc6-b32d-434b-94bd-bb2763c3f7cd",
+      "name": "3. [Frontend] 테이블 페이지 UI 레이아웃 변경",
+      "description": "`TablesPage.tsx`의 레이아웃을 기존 CSS Grid 방식에서 자유로운 위치 지정을 위한 '캔버스' 방식으로 변경합니다.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "72d69304-7872-4763-8787-f1f5cb2fd37b"
+          "taskId": "8e77d342-1010-475d-b375-66f22b1d84d8"
         }
       ],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/hooks/useTables.ts",
-          "type": "TO_MODIFY",
-          "description": "테이블 일괄 업데이트 로직을 추가할 훅"
-        }
-      ],
-      "implementationGuide": "1. `useTables.ts`에 `adjustTableSizes(newMaxSeats)` 함수를 추가합니다.\n2. 함수 내에서 `writeBatch` 인스턴스를 생성합니다.\n3. `tables` 컬렉션을 조회하여 모든 테이블 문서를 가져옵니다.\n4. 각 테이블에 대해, 좌석 수를 `newMaxSeats`로 조정하고 `batch.update()`를 호출합니다. (단, 좌석을 줄일 때는 빈 좌석만 제거)\n5. 모든 테이블에 대한 업데이트를 추가한 후 `batch.commit()`을 호출합니다.",
-      "verificationCriteria": "1. `maxSeats`를 10으로 변경하면, 모든 기존 테이블의 `seats` 배열 길이가 10으로 업데이트되어야 합니다.\n2. 이 과정에서 Firestore 쓰기 작업은 한 번만 발생해야 합니다."
-    },
-    {
-      "id": "355fee44-e5a7-47dd-ada4-64279ff68d67",
-      "name": "[Frontend/Logic] `needsBalancing` 로직에 `balanceThreshold` 설정 적용",
-      "description": "`TablesPage.tsx`의 `needsBalancing` 계산 로직을 수정하여, 하드코딩된 값(2) 대신 `useTournamentSettings`에서 가져온 `balanceThreshold` 설정을 사용하도록 변경합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "91ce251b-e57f-4312-838d-82d05a64ee2e"
-        }
-      ],
-      "createdAt": "2025-06-22T15:16:49.784Z",
-      "updatedAt": "2025-06-22T15:16:49.784Z",
+      "createdAt": "2025-06-22T17:49:28.651Z",
+      "updatedAt": "2025-06-22T17:49:28.651Z",
       "relatedFiles": [
         {
           "path": "app2/src/pages/TablesPage.tsx",
           "type": "TO_MODIFY",
-          "description": "밸런싱 경고 로직을 수정할 컴포넌트"
+          "description": "기존 그리드 레이아웃을 position:relative 속성을 가진 캔버스 div로 교체합니다."
         }
       ],
-      "implementationGuide": "1. `TablesPage.tsx`의 `useMemo`로 구현된 `needsBalancing` 로직을 찾습니다.\n2. `maxPlayers - minPlayers >= 2` 부분을 `maxPlayers - minPlayers >= settings.balanceThreshold`로 수정합니다.\n3. `useMemo`의 의존성 배열에 `settings.balanceThreshold`를 추가합니다.",
-      "verificationCriteria": "1. `balanceThreshold`를 3으로 설정했을 때, 테이블 간 인원 차이가 2명일 때는 경고가 표시되지 않아야 합니다.\n2. 인원 차이가 3명 이상이 되면 밸런싱 경고가 표시되어야 합니다."
+      "implementationGuide": "1. `app2/src/pages/TablesPage.tsx`에서 테이블 목록을 감싸고 있는 `<div class='grid ...'>` 요소를 제거합니다.\n2. 대신, `position: 'relative', width: '100%', height: 'calc(100vh - 200px)'` 스타일을 가진 새로운 `div` (캔버스)를 생성합니다. \n3. 캔버스 div 안에 `tables.map(...)`을 위치시킵니다.",
+      "verificationCriteria": "1. `TablesPage` 렌더링 시 테이블들이 그리드 형태로 정렬되지 않고 좌측 상단에 겹쳐서 보이는지 확인합니다.\n2. 브라우저 개발자 도구에서 그리드 관련 CSS 클래스가 사라지고, `position: relative`를 가진 캔버스 `div`가 생성되었는지 확인합니다.",
+      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
+    },
+    {
+      "id": "b62ba7e1-2131-403f-aa6d-6857afe0674d",
+      "name": "4. [Frontend] dnd-kit 컨텍스트 및 이벤트 핸들러 설정",
+      "description": "`TablesPage.tsx`에 `dnd-kit`의 `DndContext`를 설정하고, 드래그 종료 이벤트를 처리하여 테이블 위치를 업데이트하는 로직을 구현합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "18d37dc6-b32d-434b-94bd-bb2763c3f7cd"
+        }
+      ],
+      "createdAt": "2025-06-22T17:49:28.651Z",
+      "updatedAt": "2025-06-22T17:49:28.651Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "DndContext를 설정하고 onDragEnd 이벤트 핸들러를 구현하여 위치 업데이트 로직을 연동합니다."
+        }
+      ],
+      "implementationGuide": "1. `useTables` 훅에서 `updateTablePosition` 함수를 가져옵니다.\n2. `DndContext`로 캔버스 div와 그 안의 `TableCard`들을 감쌉니다.\n3. `onDragEnd` 핸들러 함수 `handleDragEnd`를 구현하여 `delta`와 `active.id`를 가져옵니다.\n4. `handleDragEnd` 내부에서 새로운 `position`을 계산하고, `updateTablePosition` 함수를 호출하여 Firestore에 저장합니다.\n5. (최적화) `DndContext`에 `modifiers`를 추가하여 카드가 화면 밖으로 나가는 것을 방지합니다.",
+      "verificationCriteria": "1. 테이블 카드를 드래그했다 놓았을 때 Firestore의 `position` 데이터가 업데이트되는지 확인합니다.\n2. (최적화) 테이블 카드를 화면 가장자리 밖으로 드래그할 수 없는지 확인합니다.",
+      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
+    },
+    {
+      "id": "8978459e-7e72-40a3-8b12-13df32b1db51",
+      "name": "5. [Frontend] 테이블 카드를 Draggable 컴포넌트로 구현",
+      "description": "`TableCard.tsx`를 `dnd-kit`의 `useDraggable` 훅을 사용하여 드래그 가능한 컴포넌트로 만들고, 절대 위치에 렌더링되도록 수정합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "b62ba7e1-2131-403f-aa6d-6857afe0674d"
+        }
+      ],
+      "createdAt": "2025-06-22T17:49:28.651Z",
+      "updatedAt": "2025-06-22T17:49:28.651Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/components/TableCard.tsx",
+          "type": "TO_MODIFY",
+          "description": "useDraggable 훅을 적용하여 드래그 기능을 활성화하고, 절대 위치 스타일을 받도록 수정합니다."
+        },
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "TableCard에 절대 위치를 지정하는 style prop을 전달합니다."
+        }
+      ],
+      "implementationGuide": "1. `TableCard.tsx`에서 `useDraggable` 훅을 호출하고 `attributes`, `listeners`, `setNodeRef`, `transform`을 사용합니다.\n2. 최상위 `div`에 `ref={setNodeRef}`, `{...listeners}`, `{...attributes}`를 적용합니다.\n3. `transform`이 존재할 경우 `style`에 `transform` css를 추가합니다.\n4. `TablesPage.tsx`에서 `TableCard` 렌더링 시 `style` prop으로 `{ position: 'absolute', left: table.position?.x || 0, top: table.position?.y || 0 }`를 전달합니다.\n5. `TableCard.tsx`는 `props`로 받은 `style`을 최상위 `div`에 병합합니다.",
+      "verificationCriteria": "1. 테이블 카드가 마우스로 드래그되는지 확인합니다.\n2. 페이지 로드 시 각 테이블 카드가 Firestore에 저장된 `position` 좌표에 따라 올바르게 배치되는지 확인합니다.\n3. 드래그가 끝나면 카드가 새로운 위치에 고정되는지 확인합니다.",
+      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
     }
   ]
 }
