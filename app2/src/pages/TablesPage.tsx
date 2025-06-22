@@ -74,13 +74,15 @@ const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, getPartici
 };
 
 const TablesPage: React.FC = () => {
-    const { tables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable } = useTables();
+    const { tables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
     const [isClosing, setIsClosing] = useState(false);
     const [isOpeningTable, setIsOpeningTable] = useState(false);
     const [closingTableId, setClosingTableId] = useState<string | null>(null);
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleAssignSeats = () => {
         const activeParticipants = participants.filter(p => p.status === 'active');
@@ -159,12 +161,44 @@ const TablesPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">테이블 및 좌석 관리</h2>
                 <div className="flex items-center mt-2 sm:mt-0">
-                    <button onClick={handleOpenTable} className="btn btn-success mr-2" disabled={isOpeningTable}>
+                    <button onClick={handleOpenTable} className="btn btn-success mr-4" disabled={isOpeningTable}>
                         {isOpeningTable ? '테이블 여는중...' : '새 테이블 열기'}
                     </button>
                     <button onClick={handleAssignSeats} className="btn btn-primary">
                         좌석 자동 배정
                     </button>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-4">
+                {/* 검색 기능은 다음 Task에서 구현 */}
+                <div className="w-1/3">
+                    {/* Placeholder for search */}
+                </div>
+                <div className="flex items-center">
+                    <span className="mr-2 text-sm font-medium text-gray-700">보기:</span>
+                    <div className="inline-flex rounded-md shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`px-4 py-2 text-sm font-medium ${
+                                viewMode === 'grid'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'
+                            } rounded-l-md border border-gray-300 focus:z-10 focus:ring-2 focus:ring-blue-500`}
+                        >
+                            Grid
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`px-4 py-2 text-sm font-medium ${
+                                viewMode === 'list'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'
+                            } rounded-r-md border border-gray-300 focus:z-10 focus:ring-2 focus:ring-blue-500`}
+                        >
+                            List
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -175,41 +209,48 @@ const TablesPage: React.FC = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {tables.map((table: Table) => (
-                    <div key={table.id} className="bg-white rounded-lg p-4 flex flex-col shadow-md">
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-bold text-lg text-gray-800">
-                                Table {table.tableNumber}
-                                <span className="text-sm font-normal text-gray-500 ml-2">
-                                    ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
-                                </span>
-                            </h3>
-                            <button
-                                onClick={() => handleCloseTable(table.id)}
-                                className="text-red-500 hover:text-red-700 font-bold"
-                                disabled={isClosing || isOpeningTable}
-                                title="테이블 닫기"
-                            >
-                                X
-                            </button>
+            {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {tables.map((table: Table) => (
+                        <div key={table.id} className="bg-white rounded-lg p-4 flex flex-col shadow-md">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="font-bold text-lg text-gray-800">
+                                    {table.name}
+                                    <span className="text-sm font-normal text-gray-500 ml-2">
+                                        ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
+                                    </span>
+                                </h3>
+                                <button
+                                    onClick={() => handleCloseTable(table.id)}
+                                    className="text-red-500 hover:text-red-700 font-bold"
+                                    disabled={isClosing || isOpeningTable}
+                                    title="테이블 닫기"
+                                >
+                                    X
+                                </button>
+                            </div>
+                            <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
+                                {(table.seats || []).map((participantId, i) => (
+                                    <Seat
+                                      key={i}
+                                      table={table}
+                                      seatIndex={i}
+                                      participantId={participantId}
+                                      getParticipantName={getParticipantName}
+                                      onMoveSeat={moveSeat}
+                                      onBustOut={handleBustOut}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
-                            {(table.seats || []).map((participantId, i) => (
-                                <Seat
-                                  key={i}
-                                  table={table}
-                                  seatIndex={i}
-                                  participantId={participantId}
-                                  getParticipantName={getParticipantName}
-                                  onMoveSeat={moveSeat}
-                                  onBustOut={handleBustOut}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">List View (Placeholder)</h3>
+                    {/* 리스트 뷰는 다음 Task에서 구현 */}
+                </div>
+            )}
 
             {closingTableId && (
                 <Modal
