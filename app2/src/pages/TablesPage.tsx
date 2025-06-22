@@ -4,12 +4,13 @@ import { useParticipants } from '../hooks/useParticipants';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Modal from '../components/Modal';
+import TableCard from '../components/TableCard';
 
 const ItemTypes = {
   SEAT: 'seat',
 };
 
-interface SeatProps {
+export interface SeatProps {
   table: Table;
   seatIndex: number;
   participantId: string | null;
@@ -22,7 +23,7 @@ interface SeatProps {
   onBustOut: (participantId: string) => void;
 }
 
-const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, getParticipantName, onMoveSeat, onBustOut }) => {
+export const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, getParticipantName, onMoveSeat, onBustOut }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.SEAT,
     item: { participantId, from: { tableId: table.id, seatIndex } },
@@ -212,37 +213,16 @@ const TablesPage: React.FC = () => {
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {tables.map((table: Table) => (
-                        <div key={table.id} className="bg-white rounded-lg p-4 flex flex-col shadow-md">
-                            <div className="flex justify-between items-center mb-3">
-                                <h3 className="font-bold text-lg text-gray-800">
-                                    {table.name}
-                                    <span className="text-sm font-normal text-gray-500 ml-2">
-                                        ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
-                                    </span>
-                                </h3>
-                                <button
-                                    onClick={() => handleCloseTable(table.id)}
-                                    className="text-red-500 hover:text-red-700 font-bold"
-                                    disabled={isClosing || isOpeningTable}
-                                    title="테이블 닫기"
-                                >
-                                    X
-                                </button>
-                            </div>
-                            <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
-                                {(table.seats || []).map((participantId, i) => (
-                                    <Seat
-                                      key={i}
-                                      table={table}
-                                      seatIndex={i}
-                                      participantId={participantId}
-                                      getParticipantName={getParticipantName}
-                                      onMoveSeat={moveSeat}
-                                      onBustOut={handleBustOut}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                        <TableCard
+                            key={table.id}
+                            table={table}
+                            getParticipantName={getParticipantName}
+                            onMoveSeat={moveSeat}
+                            onBustOut={handleBustOut}
+                            onCloseTable={handleCloseTable}
+                            updateTableDetails={updateTableDetails}
+                            isProcessing={isClosing || isOpeningTable}
+                        />
                     ))}
                 </div>
             ) : (
