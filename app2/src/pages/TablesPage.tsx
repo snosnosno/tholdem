@@ -10,7 +10,7 @@ import ParticipantDetailModal from '../components/ParticipantDetailModal';
 import MoveSeatModal from '../components/MoveSeatModal';
 
 const TablesPage: React.FC = () => {
-    const { tables, setTables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails } = useTables();
+    const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
     const [isClosing, setIsClosing] = useState(false);
@@ -18,7 +18,7 @@ const TablesPage: React.FC = () => {
     const [closingTableId, setClosingTableId] = useState<string | null>(null);
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [gridSize, setGridSize] = useState(3);
+    const [gridSize] = useState(5); // 카드 크기 5로 고정
     
     const [selectedPlayer, setSelectedPlayer] = useState<{
         participant: Participant | null;
@@ -224,26 +224,26 @@ const TablesPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex justify-between items-center mb-4">
-                {viewMode === 'grid' ? (
-                    <div className="flex items-center w-1/3">
-                        <label htmlFor="grid-size-slider" className="mr-2 text-sm font-medium text-gray-700">카드 크기:</label>
-                        <input
-                            id="grid-size-slider"
-                            type="range"
-                            min="1"
-                            max="5"
-                            value={gridSize}
-                            onChange={(e) => setGridSize(Number(e.target.value))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                        <label htmlFor="max-seats-select" className="mr-2 text-sm font-medium text-gray-700">최대 좌석:</label>
+                        <select
+                            id="max-seats-select"
+                            value={maxSeatsSetting}
+                            onChange={(e) => updateMaxSeatsSetting(Number(e.target.value))}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
+                        >
+                            {[...Array(6)].map((_, i) => (
+                                <option key={i + 5} value={i + 5}>{i + 5}</option>
+                            ))}
+                        </select>
                     </div>
-                ) : <div className="w-1/3"></div>}
+                </div>
                 
                 <div className="flex items-center space-x-4">
                     <div className="text-lg font-semibold">테이블: {tables.length}</div>
-                                        <div className="text-lg font-semibold">빈좌석: {emptySeats}</div>
-                    <span className="mr-2 text-sm font-medium text-gray-700">보기:</span>
+                    <div className="text-lg font-semibold">빈좌석: {emptySeats}</div>
                     <div className="inline-flex rounded-md shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
