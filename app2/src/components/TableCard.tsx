@@ -58,7 +58,7 @@ const TableCard: React.FC<TableCardProps> = ({
 
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const cardClasses = `rounded-lg p-4 flex flex-col shadow-md transition-all duration-300 ${
+  const cardClasses = `rounded-lg p-3 flex flex-col shadow-md transition-all duration-300 ${ // p-4 -> p-3
     isStandby 
       ? 'bg-gray-100' 
       : 'bg-white cursor-pointer hover:shadow-lg hover:scale-105'
@@ -71,7 +71,7 @@ const TableCard: React.FC<TableCardProps> = ({
       style={{ border: `3px solid ${isStandby ? '#A0AEC0' : (table.borderColor || 'transparent')}` }}
       onClick={() => !isStandby && onTableSelect(table)}
     >
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-2"> 
         <div className="flex items-center gap-2">
             <div className="relative">
                 <button
@@ -135,19 +135,15 @@ const TableCard: React.FC<TableCardProps> = ({
         </div>
       </div>
       
-      {isStandby ? (
-        <div className="flex-grow flex items-center justify-center">
+      {isStandby && (
+        <div className="flex items-center justify-center mt-1">
           <button 
             onClick={handleActivateClick}
-            className="btn btn-primary w-full"
+            className="btn btn-primary w-full btn-sm"
             disabled={isProcessing}
           >
             테이블 활성화
           </button>
-        </div>
-      ) : (
-        <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
-          클릭하여 좌석 보기
         </div>
       )}
     </div>
