@@ -6,7 +6,7 @@ interface ParticipantDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   participant: Participant | null;
-  tableNumber?: number | null;
+  tableName?: string | null; // tableNumber에서 tableName으로 변경
   seatNumber?: number | null;
 }
 
@@ -14,7 +14,7 @@ const ParticipantDetailModal: React.FC<ParticipantDetailModalProps> = ({
   isOpen,
   onClose,
   participant,
-  tableNumber,
+  tableName, // tableNumber에서 tableName으로 변경
   seatNumber,
 }) => {
   if (!isOpen || !participant) {
@@ -50,10 +50,11 @@ const ParticipantDetailModal: React.FC<ParticipantDetailModalProps> = ({
             {participant.status}
           </span>
         </div>
+        {/* 테이블 정보 표시 로직 수정 */}
         <div>
           <span className="font-semibold">테이블:</span> 
-          {typeof tableNumber === 'number' && typeof seatNumber === 'number' 
-            ? `T${tableNumber} - S${seatNumber + 1}` 
+          {tableName && typeof seatNumber === 'number' 
+            ? `${tableName} - S${seatNumber + 1}` 
             : 'N/A'}
         </div>
       </div>

@@ -369,7 +369,7 @@ const TablesPage: React.FC = () => {
                 isOpen={isParticipantDetailModalOpen}
                 onClose={handleCloseParticipantDetailModal}
                 participant={selectedPlayer.participant}
-                tableNumber={selectedPlayer.table?.tableNumber}
+                tableName={selectedPlayer.table?.name}
                 seatNumber={selectedPlayer.seatIndex}
             />
 
