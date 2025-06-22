@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import db from '../firebase';
-import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc } from 'firebase/firestore';
 import { Participant } from './useParticipants';
 import { logAction } from './useLogger';
 
@@ -14,7 +14,9 @@ export interface Table {
 export interface BalancingResult {
   participantId: string;
   fromTableNumber: number;
+  fromSeatIndex: number;
   toTableNumber: number;
+  toSeatIndex: number;
 }
 
 const tablesCollection = collection(db, 'tables');
@@ -53,6 +55,25 @@ export const useTables = () => {
     return () => unsubscribe();
   }, []);
   
+  const openNewTable = async () => {
+    setLoading(true);
+    try {
+      const maxTableNumber = tables.reduce((max, table) => Math.max(max, table.tableNumber), 0);
+      const newTable = {
+        tableNumber: maxTableNumber + 1,
+        seats: Array(9).fill(null),
+        status: 'open',
+      };
+      const docRef = await addDoc(tablesCollection, newTable);
+      logAction('table_opened', { tableId: docRef.id, tableNumber: newTable.tableNumber });
+    } catch (e) {
+      console.error("Error opening new table:", e);
+      setError(e as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const closeTable = async (tableIdToClose: string): Promise<BalancingResult[]> => {
     setLoading(true);
     try {
@@ -71,52 +92,68 @@ export const useTables = () => {
           throw new Error(`Table with id ${tableIdToClose} not found.`);
         }
 
-        const participantsToMove = (tableToClose.seats || []).filter(pId => pId !== null) as string[];
+        const participantsToMove = (tableToClose.seats || [])
+            .map((pId, index) => ({ pId, fromSeatIndex: index}))
+            .filter(item => item.pId !== null) as { pId: string, fromSeatIndex: number }[];
+
         if (participantsToMove.length === 0) {
-            // 닫을 테이블에 참가자가 없으면 테이블만 삭제하고 종료
             const tableRef = doc(db, 'tables', tableIdToClose);
             transaction.delete(tableRef);
+            logAction('table_closed', { tableId: tableIdToClose, tableNumber: tableToClose.tableNumber, movedParticipantsCount: 0 });
             return;
         }
+        
+        // 지능형 밸런싱 로직 시작
+        const totalPlayers = openTables.reduce((sum, t) => sum + (t.seats || []).filter(s => s).length, 0) + participantsToMove.length;
+        const totalTables = openTables.length;
+        const basePlayersPerTable = Math.floor(totalPlayers / totalTables);
+        let remainder = totalPlayers % totalTables;
 
-        const availableSeats: { tableId: string, tableNumber: number, seatIndex: number }[] = [];
-        openTables.forEach(t => {
-          (t.seats || []).forEach((pId, i) => {
-            if (pId === null) {
-              availableSeats.push({ tableId: t.id, tableNumber: t.tableNumber, seatIndex: i });
-            }
-          });
-        });
-
-        if (availableSeats.length < participantsToMove.length) {
-          throw new Error("Not enough available seats to balance the table.");
-        }
+        const tablesWithSeats = openTables.map(t => ({
+            ...t,
+            currentPlayerCount: (t.seats || []).filter(s => s).length,
+            targetPlayerCount: basePlayersPerTable + (remainder-- > 0 ? 1 : 0),
+        })).sort((a,b) => a.currentPlayerCount - b.currentPlayerCount);
 
         const movedParticipantsDetails: any[] = [];
+        let participantIndex = 0;
 
-        participantsToMove.forEach((pId, i) => {
-          const seat = availableSeats[i];
-          const fromTableNumber = tableToClose.tableNumber;
-          const toTableNumber = seat.tableNumber;
-          
-          balancingResult.push({ participantId: pId, fromTableNumber, toTableNumber });
+        for (const table of tablesWithSeats) {
+            const seatsToFill = table.targetPlayerCount - table.currentPlayerCount;
+            for (let i = 0; i < seatsToFill; i++) {
+                if(participantIndex >= participantsToMove.length) break;
 
-          const targetTable = openTables.find(t => t.id === seat.tableId);
-          if (targetTable) {
-              const newSeats = [...(targetTable.seats || [])];
-              newSeats[seat.seatIndex] = pId;
-              targetTable.seats = newSeats; // 메모리상의 테이블 정보 업데이트
+                const participantToMove = participantsToMove[participantIndex];
+                const emptySeatIndex = (table.seats || []).indexOf(null);
+                
+                if(emptySeatIndex !== -1) {
+                    const from = { tableNumber: tableToClose.tableNumber, seatIndex: participantToMove.fromSeatIndex };
+                    const to = { tableNumber: table.tableNumber, seatIndex: emptySeatIndex };
 
-              movedParticipantsDetails.push({
-                  participantId: pId,
-                  from: `Table ${fromTableNumber}`,
-                  to: `Table ${toTableNumber} (Seat ${seat.seatIndex + 1})`
-              });
-          }
-        });
+                    balancingResult.push({ participantId: participantToMove.pId, fromTableNumber: from.tableNumber, fromSeatIndex: from.seatIndex, toTableNumber: to.tableNumber, toSeatIndex: to.seatIndex });
+                    
+                    const newSeats = [...(table.seats || [])];
+                    newSeats[emptySeatIndex] = participantToMove.pId;
+                    table.seats = newSeats;
+
+                    movedParticipantsDetails.push({
+                        participantId: participantToMove.pId,
+                        from: `${from.tableNumber}-${from.seatIndex + 1}`,
+                        to: `${to.tableNumber}-${to.seatIndex + 1}`,
+                    });
+
+                    participantIndex++;
+                }
+            }
+        }
         
+        if (participantIndex < participantsToMove.length) {
+            throw new Error("Balancing failed. Not all participants could be seated.");
+        }
+        // 지능형 밸런싱 로직 종료
+
         // 트랜잭션 업데이트
-        openTables.forEach(t => {
+        tablesWithSeats.forEach(t => {
             const tableRef = doc(db, 'tables', t.id);
             transaction.update(tableRef, { seats: t.seats });
         });
@@ -257,5 +294,5 @@ export const useTables = () => {
   };
 
 
-  return { tables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable };
+  return { tables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable };
 };
