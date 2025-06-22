@@ -74,10 +74,11 @@ const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, getPartici
 };
 
 const TablesPage: React.FC = () => {
-    const { tables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable } = useTables();
+    const { tables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
     const [isClosing, setIsClosing] = useState(false);
+    const [isOpeningTable, setIsOpeningTable] = useState(false);
     const [closingTableId, setClosingTableId] = useState<string | null>(null);
     const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
 
@@ -90,6 +91,17 @@ const TablesPage: React.FC = () => {
         }
     };
     
+    const handleOpenTable = async () => {
+        setIsOpeningTable(true);
+        try {
+            await openNewTable();
+        } catch (error: any) {
+            alert(`Error opening new table: ${error.message}`);
+        } finally {
+            setIsOpeningTable(false);
+        }
+    };
+
     const handleCloseTable = (tableId: string) => {
         setClosingTableId(tableId);
     };
@@ -110,7 +122,7 @@ const TablesPage: React.FC = () => {
     };
 
     const handleBustOut = (participantId: string) => {
-        if(window.confirm("정말로 이 참가자를 탈락 처리하시겠습니까?")) {
+        if(window.confirm("정말로 해당 참가자를 탈락 처리하시겠습니까?")) {
             bustOutParticipant(participantId);
         }
     };
@@ -118,7 +130,7 @@ const TablesPage: React.FC = () => {
     const getParticipantName = (participantId: string | null): string => {
         if (!participantId) return "비어있음";
         const participant = participants.find(p => p.id === participantId);
-        if (!participant) return "알 수 없음";
+        if (!participant) return "알수없음";
         return participant.status === 'busted' ? `(탈락) ${participant.name}` : participant.name;
     };
 
@@ -146,15 +158,20 @@ const TablesPage: React.FC = () => {
         <div className="card">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">테이블 및 좌석 관리</h2>
-                <button onClick={handleAssignSeats} className="btn btn-primary mt-2 sm:mt-0">
-                    좌석 자동 배정
-                </button>
+                <div className="flex items-center mt-2 sm:mt-0">
+                    <button onClick={handleOpenTable} className="btn btn-success mr-2" disabled={isOpeningTable}>
+                        {isOpeningTable ? '테이블 여는중...' : '새 테이블 열기'}
+                    </button>
+                    <button onClick={handleAssignSeats} className="btn btn-primary">
+                        좌석 자동 배정
+                    </button>
+                </div>
             </div>
 
             {needsBalancing && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                    <p className="font-bold">밸런스 경고</p>
-                    <p>테이블 간 인원 수 차이가 3명 이상입니다. 밸런스를 재조정하는 것이 좋습니다.</p>
+                    <p className="font-bold">밸런싱 경고</p>
+                    <p>테이블간 인원 수 차이가 3명 이상입니다. 밸런스를 조정하는 것이 좋습니다.</p>
                 </div>
             )}
 
@@ -171,7 +188,7 @@ const TablesPage: React.FC = () => {
                             <button
                                 onClick={() => handleCloseTable(table.id)}
                                 className="text-red-500 hover:text-red-700 font-bold"
-                                disabled={isClosing}
+                                disabled={isClosing || isOpeningTable}
                                 title="테이블 닫기"
                             >
                                 X
@@ -200,7 +217,7 @@ const TablesPage: React.FC = () => {
                     onClose={() => setClosingTableId(null)}
                     title="테이블 닫기 확인"
                 >
-                    <p>정말로 이 테이블을 닫으시겠습니까? 해당 테이블의 모든 참가자는 다른 테이블의 빈자리로 자동 이동됩니다.</p>
+                    <p>정말로 해당 테이블을 닫으시겠습니까? 해당 테이블의 모든 참가자는 다른 테이블의 빈자리로 자동 이동됩니다.</p>
                     <div className="flex justify-end mt-4">
                         <button onClick={() => setClosingTableId(null)} className="btn btn-secondary mr-2" disabled={isClosing}>
                             취소
@@ -218,11 +235,17 @@ const TablesPage: React.FC = () => {
                     onClose={() => setBalancingResult(null)}
                     title="자동 밸런싱 결과"
                 >
-                    <ul>
+                    <ul className="list-disc pl-5">
                         {balancingResult.map((result, index) => (
-                            <li key={index}>
-                                {getParticipantNameById(result.participantId)}:
-                                Table {result.fromTableNumber} → Table {result.toTableNumber}
+                            <li key={index} className="mb-1">
+                                <span className="font-semibold">{getParticipantNameById(result.participantId)}</span>:
+                                <span className="mx-2 font-mono bg-gray-100 p-1 rounded">
+                                    {result.fromTableNumber}-{result.fromSeatIndex! + 1}
+                                </span>
+                                <span className="font-bold">&rarr;</span>
+                                <span className="mx-2 font-mono bg-blue-100 p-1 rounded">
+                                    {result.toTableNumber}-{result.toSeatIndex! + 1}
+                                </span>
                             </li>
                         ))}
                     </ul>
