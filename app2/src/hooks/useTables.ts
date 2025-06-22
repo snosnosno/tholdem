@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import db from '../firebase';
-import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
 import { Participant } from './useParticipants';
 import { logAction } from './useLogger';
 
 export interface Table {
   id: string;
+  name: string;
   tableNumber: number;
   seats: (string | null)[]; // participant.id 또는 null
   status?: 'open' | 'closed';
+  borderColor?: string;
 }
 
 export interface BalancingResult {
@@ -55,11 +57,24 @@ export const useTables = () => {
     return () => unsubscribe();
   }, []);
   
+  const updateTableDetails = async (tableId: string, data: { name?: string; borderColor?: string }) => {
+    const tableRef = doc(db, 'tables', tableId);
+    try {
+      await updateDoc(tableRef, data);
+      logAction('table_details_updated', { tableId, ...data });
+    } catch (e) {
+      console.error("Error updating table details:", e);
+      setError(e as Error);
+      throw e;
+    }
+  };
+
   const openNewTable = async () => {
     setLoading(true);
     try {
       const maxTableNumber = tables.reduce((max, table) => Math.max(max, table.tableNumber), 0);
       const newTable = {
+        name: `Table ${maxTableNumber + 1}`,
         tableNumber: maxTableNumber + 1,
         seats: Array(9).fill(null),
         status: 'open',
@@ -294,5 +309,5 @@ export const useTables = () => {
   };
 
 
-  return { tables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable };
+  return { tables, loading, error, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, updateTableDetails };
 };
