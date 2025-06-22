@@ -18,6 +18,7 @@ interface TableDetailModalProps {
   onBustOut: (participantId: string, tableId: string) => void;
   onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
+  onCloseTable: (tableId: string) => void;
   isDimmed?: boolean;
 }
 
@@ -34,6 +35,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   onBustOut,
   onPlayerSelect,
   updateTableDetails,
+  onCloseTable,
   isDimmed = false,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -62,6 +64,13 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
     setShowColorPicker(false);
   }
 
+  const handleCloseTableClick = () => {
+    if (table) {
+      onCloseTable(table.id);
+      onClose();
+    }
+  };
+
   const totalSeats = (table.seats || []).length;
   const filledSeats = (table.seats || []).filter(s => s !== null).length;
   const emptySeatCount = totalSeats - filledSeats;
@@ -72,7 +81,6 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
         <div className="relative">
           {isDimmed && <div className="absolute inset-0 bg-black bg-opacity-50 z-10 rounded-md" aria-hidden="true"></div>}
           
-          {/* Custom Header */}
           <div className="flex justify-between items-center mb-4 pb-4 border-b">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -83,7 +91,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                     title="테두리 색상 변경"
                 />
                 {showColorPicker && (
-                    <div className="absolute z-20 top-8 left-0 bg-white p-2 rounded-md shadow-lg flex gap-2">
+                    <div className="absolute z-30 top-8 left-0 bg-white p-2 rounded-md shadow-lg flex gap-2">
                         {PRESET_COLORS.map(color => (
                             <button
                                 key={color}
@@ -115,9 +123,17 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                 </h2>
               )}
             </div>
-            <div className="text-sm text-gray-600 space-x-4">
-                <span>참가자: {filledSeats}/{totalSeats}</span>
-                <span>빈 좌석: {emptySeatCount}</span>
+            <div className="flex items-center">
+                <div className="text-sm text-gray-600 space-x-4 mr-4">
+                    <span>참가자: {filledSeats}/{totalSeats}</span>
+                    <span>빈 좌석: {emptySeatCount}</span>
+                </div>
+                <button
+                  onClick={handleCloseTableClick}
+                  className="btn btn-error btn-sm text-white"
+                >
+                  테이블 닫기
+                </button>
             </div>
           </div>
 
@@ -129,7 +145,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                   seatIndex={i}
                   participantId={participantId}
                   getParticipantName={getParticipantName}
-                  onMoveSeat={onMoveSeat}
+                  onMoveSeat={onMoveTMoveSeat}
                   onBustOut={() => participantId && onBustOut(participantId, table.id)}
                 />
               </div>
