@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import TableCard from '../components/TableCard';
 import PlayerActionModal from '../components/PlayerActionModal';
 import { Participant } from '../hooks/useParticipants';
+import TableListView from '../components/TableListView';
 
 const ItemTypes = {
   SEAT: 'seat',
@@ -53,7 +54,7 @@ export const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, get
     <div
       ref={(node) => drag(drop(node))}
       style={{ opacity: isDragging ? 0.5 : 1 }}
-      className={`relative p-2 rounded-md h-20 flex flex-col justify-center items-center text-xs group 
+      className={`relative p-2 rounded-md h-16 flex flex-col justify-center items-center text-xs group 
         ${participantId ? 'bg-blue-100 text-blue-800 cursor-pointer' : 'bg-gray-200 border-2 border-dashed border-gray-400'}
         ${isOver ? 'ring-2 ring-yellow-400' : ''}
       `}
@@ -226,10 +227,11 @@ const TablesPage: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">List View (Placeholder)</h3>
-                    {/* 리스트 뷰는 다음 Task에서 구현 */}
-                </div>
+                <TableListView
+                    tables={tables}
+                    getParticipantName={getParticipantName}
+                    onPlayerSelect={handlePlayerSelect}
+                />
             )}
 
             {closingTableId && (
