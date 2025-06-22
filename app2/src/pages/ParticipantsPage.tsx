@@ -14,7 +14,7 @@ const ParticipantsPage: React.FC = () => {
     tables.forEach(table => {
       (table.seats || []).forEach((participantId, seatIndex) => {
         if (participantId) {
-          locations.set(participantId, `${table.tableNumber}-${seatIndex + 1}`);
+                    locations.set(participantId, `${table.name}-${seatIndex + 1}`);
         }
       });
     });
