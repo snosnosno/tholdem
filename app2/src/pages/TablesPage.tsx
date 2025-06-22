@@ -1,90 +1,240 @@
-import React from 'react';
-import { useTournament, Participant, Table } from '../contexts/TournamentContext';
+import React, { useMemo, useState, Fragment } from 'react';
+import { useTables, Table, BalancingResult } from '../hooks/useTables';
+import { useParticipants } from '../hooks/useParticipants';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import Modal from '../components/Modal';
 
-// 임시 스태프 데이터 (원래는 컨텍스트나 props로 받아야 함)
-const dummyStaff = [
-    { id: 's1', name: 'John Doe', role: 'dealer' },
-    { id: 's2', name: 'Jane Smith', role: 'dealer' },
-    { id: 's3', name: 'Mike Ross', role: 'floor' },
-];
+const ItemTypes = {
+  SEAT: 'seat',
+};
+
+interface SeatProps {
+  table: Table;
+  seatIndex: number;
+  participantId: string | null;
+  getParticipantName: (id: string | null) => string;
+  onMoveSeat: (
+    participantId: string,
+    from: { tableId: string; seatIndex: number },
+    to: { tableId: string; seatIndex: number }
+  ) => void;
+  onBustOut: (participantId: string) => void;
+}
+
+const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, getParticipantName, onMoveSeat, onBustOut }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ItemTypes.SEAT,
+    item: { participantId, from: { tableId: table.id, seatIndex } },
+    canDrag: !!participantId,
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }), [participantId, table.id, seatIndex]);
+
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ItemTypes.SEAT,
+    drop: (item: { participantId: string; from: { tableId: string; seatIndex: number } }) => {
+      if (item.participantId) {
+        onMoveSeat(item.participantId, item.from, { tableId: table.id, seatIndex });
+      }
+    },
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  }), [table.id, seatIndex, onMoveSeat]);
+
+  const participantName = getParticipantName(participantId);
+
+  return (
+    <div
+      ref={(node) => drag(drop(node))}
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+      className={`relative p-2 rounded-md h-20 flex flex-col justify-center items-center text-xs group 
+        ${participantId ? 'bg-blue-100 text-blue-800 cursor-move' : 'bg-gray-200 border-2 border-dashed border-gray-400'}
+        ${isOver ? 'ring-2 ring-yellow-400' : ''}
+      `}
+    >
+      <span className="font-bold text-sm mb-1">{seatIndex + 1}</span>
+      <span className="font-semibold">{participantName}</span>
+      {participantId && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onBustOut(participantId);
+          }}
+          className="absolute top-0 right-0 p-1 bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+          title="탈락 처리"
+        >
+          X
+        </button>
+      )}
+    </div>
+  );
+};
 
 const TablesPage: React.FC = () => {
-    const { state, dispatch } = useTournament();
-    const { participants, tables, settings } = state;
+    const { tables, loading: tablesLoading, error: tablesError, autoAssignSeats, moveSeat, bustOutParticipant, closeTable } = useTables();
+    const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
 
-    // 딜러 역할만 필터링
-    const dealers = dummyStaff.filter(s => s.role === 'dealer');
+    const [isClosing, setIsClosing] = useState(false);
+    const [closingTableId, setClosingTableId] = useState<string | null>(null);
+    const [balancingResult, setBalancingResult] = useState<BalancingResult[] | null>(null);
 
     const handleAssignSeats = () => {
         const activeParticipants = participants.filter(p => p.status === 'active');
-        // dispatch({ type: 'ASSIGN_SEATS', payload: { players: activeParticipants, seatsPerTable: settings.seatsPerTable } });
-        console.log("Assign seats action dispatched (not implemented yet)");
+        if (activeParticipants.length > 0) {
+            autoAssignSeats(activeParticipants);
+        } else {
+            alert("배정할 활동중인 참가자가 없습니다.");
+        }
+    };
+    
+    const handleCloseTable = (tableId: string) => {
+        setClosingTableId(tableId);
     };
 
-    const handleAssignDealer = (tableId: string, dealerId: string) => {
-        // dispatch({ type: 'ASSIGN_DEALER', payload: { tableId, dealerId } });
-        console.log(`Dispatching ASSIGN_DEALER for table ${tableId} with dealer ${dealerId} (not implemented)`);
-    }
+    const confirmCloseTable = async () => {
+        if (!closingTableId) return;
 
-    const handleMovePlayer = (participantId: string, fromTableId: string, toTableId: string) => {
-        // dispatch({ type: 'MOVE_PLAYER', payload: { participantId, fromTableId, toTableId } });
-        console.log(`Move player action dispatched for ${participantId} from ${fromTableId} to ${toTableId} (not implemented yet)`);
-    }
+        setIsClosing(true);
+        try {
+            const result = await closeTable(closingTableId);
+            setBalancingResult(result);
+        } catch (error: any) {
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsClosing(false);
+            setClosingTableId(null);
+        }
+    };
+
+    const handleBustOut = (participantId: string) => {
+        if(window.confirm("정말로 이 참가자를 탈락 처리하시겠습니까?")) {
+            bustOutParticipant(participantId);
+        }
+    };
+
+    const getParticipantName = (participantId: string | null): string => {
+        if (!participantId) return "비어있음";
+        const participant = participants.find(p => p.id === participantId);
+        if (!participant) return "알 수 없음";
+        return participant.status === 'busted' ? `(탈락) ${participant.name}` : participant.name;
+    };
+
+    const needsBalancing = useMemo(() => {
+        const playerCounts = tables
+            .map(t => (t.seats || []).filter(s => s !== null).length)
+            .filter(count => count > 0); 
+
+        if (playerCounts.length <= 1) return false;
+
+        const minPlayers = Math.min(...playerCounts);
+        const maxPlayers = Math.max(...playerCounts);
+
+        return maxPlayers - minPlayers >= 3;
+    }, [tables]);
+
+    if (tablesLoading || participantsLoading) return <div className="card">Loading...</div>;
+    if (tablesError) return <div className="card">Error loading tables: {tablesError.message}</div>;
+    if (participantsError) return <div className="card">Error loading participants: {participantsError.message}</div>;
+
+    const getParticipantNameById = (id: string) => participants.find(p => p.id === id)?.name || 'Unknown';
 
     return (
+      <DndProvider backend={HTML5Backend}>
         <div className="card">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <h2 className="text-2xl font-bold">테이블 및 좌석 관리</h2>
+                <h2 className="text-2xl font-bold text-gray-800">테이블 및 좌석 관리</h2>
                 <button onClick={handleAssignSeats} className="btn btn-primary mt-2 sm:mt-0">
                     좌석 자동 배정
                 </button>
             </div>
+
+            {needsBalancing && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                    <p className="font-bold">밸런스 경고</p>
+                    <p>테이블 간 인원 수 차이가 3명 이상입니다. 밸런스를 재조정하는 것이 좋습니다.</p>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {tables.map((table: Table) => (
-                    <div key={table.id} className="bg-gray-700 rounded-lg p-4 flex flex-col">
+                    <div key={table.id} className="bg-white rounded-lg p-4 flex flex-col shadow-md">
                         <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-bold text-lg">
+                            <h3 className="font-bold text-lg text-gray-800">
                                 Table {table.tableNumber}
-                                <span className="text-sm font-normal text-gray-400 ml-2">
-                                    ({table.players.length} / {settings.seatsPerTable})
+                                <span className="text-sm font-normal text-gray-500 ml-2">
+                                    ({(table.seats || []).filter(s => s !== null).length} / {(table.seats || []).length})
                                 </span>
                             </h3>
-                            <select 
-                                className="input-field !mt-0 !py-1 text-sm max-w-[120px]"
-                                value={table.dealerId || ''}
-                                onChange={(e) => handleAssignDealer(table.id, e.target.value)}
+                            <button
+                                onClick={() => handleCloseTable(table.id)}
+                                className="text-red-500 hover:text-red-700 font-bold"
+                                disabled={isClosing}
+                                title="테이블 닫기"
                             >
-                                <option value="">딜러 선택</option>
-                                {dealers.map(d => (
-                                    <option key={d.id} value={d.id}>{d.name}</option>
-                                ))}
-                            </select>
+                                X
+                            </button>
                         </div>
-                        <div className="flex-grow grid grid-cols-3 gap-2 text-center">
-                            {Array.from({ length: settings.seatsPerTable }).map((_, i) => {
-                                const seatNumber = i + 1;
-                                const player = table.players.find((p: Participant) => p.seatNumber === seatNumber);
-                                return (
-                                    <div
-                                        key={seatNumber}
-                                        className={`p-2 rounded-md h-20 flex flex-col justify-center items-center text-xs
-                                          ${player ? 'bg-blue-900' : 'bg-gray-800 border-2 border-dashed border-gray-600'}
-                                        `}
-                                    >
-                                        <span className="font-bold text-sm mb-1">{seatNumber}</span>
-                                        {player ? (
-                                            <span className="font-semibold">{player.name}</span>
-                                        ) : (
-                                            <span className="text-gray-500">비어있음</span>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                        <div className="flex-grow grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 text-center">
+                            {(table.seats || []).map((participantId, i) => (
+                                <Seat
+                                  key={i}
+                                  table={table}
+                                  seatIndex={i}
+                                  participantId={participantId}
+                                  getParticipantName={getParticipantName}
+                                  onMoveSeat={moveSeat}
+                                  onBustOut={handleBustOut}
+                                />
+                            ))}
                         </div>
                     </div>
                 ))}
             </div>
+
+            {closingTableId && (
+                <Modal
+                    isOpen={!!closingTableId}
+                    onClose={() => setClosingTableId(null)}
+                    title="테이블 닫기 확인"
+                >
+                    <p>정말로 이 테이블을 닫으시겠습니까? 해당 테이블의 모든 참가자는 다른 테이블의 빈자리로 자동 이동됩니다.</p>
+                    <div className="flex justify-end mt-4">
+                        <button onClick={() => setClosingTableId(null)} className="btn btn-secondary mr-2" disabled={isClosing}>
+                            취소
+                        </button>
+                        <button onClick={confirmCloseTable} className="btn btn-danger" disabled={isClosing}>
+                            {isClosing ? '닫는 중...' : '확인'}
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {balancingResult && (
+                <Modal
+                    isOpen={!!balancingResult}
+                    onClose={() => setBalancingResult(null)}
+                    title="자동 밸런싱 결과"
+                >
+                    <ul>
+                        {balancingResult.map((result, index) => (
+                            <li key={index}>
+                                {getParticipantNameById(result.participantId)}:
+                                Table {result.fromTableNumber} → Table {result.toTableNumber}
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="flex justify-end mt-4">
+                        <button onClick={() => setBalancingResult(null)} className="btn btn-primary">
+                            닫기
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </div>
+      </DndProvider>
     );
 };
 
