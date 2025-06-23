@@ -1,8 +1,15 @@
 import React from 'react';
+import { useStaff } from '../hooks/useStaff';
 import { useStaffApplications, StaffApplication } from '../hooks/useStaffApplications';
 
 const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
   const { applications, updateApplication } = useStaffApplications({ eventId });
+  const { staff } = useStaff();
+
+  const getStaffName = (staffId: string) => {
+    const s = staff.find(st => st.id === staffId);
+    return s ? s.name : staffId;
+  };
 
   const handleStatusChange = async (id: string, status: StaffApplication['status']) => {
     await updateApplication(id, { status });
@@ -27,7 +34,7 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
           <tbody>
             {applications.map(app => (
               <tr key={app.id} className="hover:bg-blue-50">
-                <td className="px-2 py-1">{app.staffId}</td>
+                                <td className="px-2 py-1">{getStaffName(app.staffId)}</td>
                 <td className="px-2 py-1">{app.role}</td>
                 <td className="px-2 py-1">{app.date}</td>
                 <td className="px-2 py-1 font-bold">
