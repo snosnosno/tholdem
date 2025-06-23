@@ -10,9 +10,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isTD() {
-      // Check if the user is signed in and if their role in the 'staff' collection is 'TD'.
-      return isSignedIn() && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'TD';
+    function isAdmin() {
+      // Option 1: Check the ID token claim (fast, but can have sync delays)
+      let isTokenAdmin = isSignedIn() && request.auth.token.role == 'admin';
+      
+      // Option 2: Check the Firestore document (authoritative data source)
+      // This provides a fallback if token propagation is slow.
+      let isDbAdmin = isSignedIn() && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'admin';
+
+      // If either is true, grant admin access.
+      return isTokenAdmin || isDbAdmin;
     }
 
     function isOwner(userId) {
@@ -23,57 +30,81 @@ service cloud.firestore {
     //  Collection Rules
     // ====================
 
-    // Settings: Readable by signed-in users, writable only by TDs.
+    // Settings: Readable by signed-in users, writable only by admins.
     match /settings/{docId} {
       allow read: if isSignedIn();
-      allow write: if isTD();
+      allow write: if isAdmin();
     }
 
-    // Staff: Readable by signed-in users. Writable only by TDs.
+    // Staff: Readable by signed-in users.
+    // Admin can create/delete. Users can update their own document.
     match /staff/{staffId} {
       allow read: if isSignedIn();
-      allow write: if isTD();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isOwner(staffId);
     }
 
-    // Tables: Readable by signed-in users, writable only by TDs.
+    // Tables: Readable by signed-in users, writable only by admins.
     match /tables/{tableId} {
       allow read: if isSignedIn();
-      allow write: if isTD();
+      allow write: if isAdmin();
+    }
+
+    // StaffApplications: Readable and writable by admins.
+    // Users can create their own application.
+    match /staffApplications/{applicationId} {
+      allow read, write: if isAdmin();
+      allow create: if isSignedIn() && isOwner(request.resource.data.staffId);
+    }
+
+    // Assignments: Readable by signed-in users, writable by admins.
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     // WorkLogs: Readable by signed-in users.
     // A user can only create their own work log.
-    // Only TDs can update or delete logs.
+    // Only admins can update or delete logs.
     match /workLogs/{logId} {
       allow read: if isSignedIn();
       allow create: if isOwner(request.resource.data.staffId);
-      allow update, delete: if isTD();
+      allow update, delete: if isAdmin();
     }
 
-    // Participants: Readable by signed-in users, writable only by TDs.
+    // Participants: Readable by signed-in users, writable only by admins.
     match /participants/{participantId} {
       allow read: if isSignedIn();
-      allow write: if isTD();
+      allow write: if isAdmin();
+    }
+
+    // Events (Recruitment announcements): Readable by signed-in users, writable by admins.
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
     
-    // Announcements: Readable by signed-in users, writable only by TDs.
+    // Announcements: Readable by signed-in users, writable only by admins.
     match /announcements/{announcementId} {
         allow read: if isSignedIn();
-        allow write: if isTD();
+        allow write: if isAdmin();
     }
     
-    // Logs (internal): Accessible only by TDs.
+    // Logs (internal): Writable via cloud function, readable by admins.
     match /logs/{logId} {
-        allow read, write: if isTD();
+        allow read: if isAdmin();
+        // Write access is handled by the 'logAction' cloud function, 
+        // so no direct client write rule is needed.
+        allow write: if false;
     }
     
     // Legacy rules for compatibility
     match /tournaments/{any} {
-      allow read, write: if isTD();
+      allow read, write: if isAdmin();
     }
     match /notices/{any} {
       allow read: if true;
-      allow write: if isTD();
+      allow write: if isAdmin();
     }
   }
 }

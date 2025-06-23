@@ -4,7 +4,9 @@ import { FaEdit, FaTrash, FaSave, FaPlus, FaCamera } from 'react-icons/fa';
 import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import Modal from '../components/Modal';
+import { useSettings } from '../hooks/useSettings';
+import QRScannerModal from '../components/QRScannerModal';
+import { FaQrcode, FaClock } from 'react-icons/fa';
 
 // 폼 필드의 타입을 정의합니다.
 interface FormField {
@@ -21,13 +23,18 @@ const StaffPage: React.FC = () => {
     { id: 'profileImageUrl', label: '프로필 사진', type: 'file', required: false },
     { id: 'name', label: '이름', type: 'text', required: true },
     { id: 'contact', label: '연락처', type: 'text', required: false },
-    { id: 'role', label: '역할', type: 'select', options: ['TD', 'Dealer', 'Floor', 'Admin', 'Other'], required: true },
+    { id: 'role', label: '역할', type: 'select', options: ['admin', 'Dealer', 'Floor', 'Other'], required: true },
   ]);
   const staffRoles = useMemo(() => formFields.find(f => f.id === 'role')?.options || [], [formFields]);
 
   const [newStaffData, setNewStaffData] = useState<Record<string, any>>({});
   
   const { staff, loading, error, addStaff, updateStaff, deleteStaff } = useStaff();
+  
+    const { settings } = useSettings();
+    const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+    const [qrScanAction, setQrScanAction] = useState<'clock-in' | 'clock-out' | null>(null);
+    const [selectedStaffForQR, setSelectedStaffForQR] = useState<Staff | null>(null);
   
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +44,15 @@ const StaffPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [editingStaffData, setEditingStaffData] = useState<Record<string, any> | null>(null);
+
+  const uniqueStaff = useMemo(() => {
+    const seen = new Set<string>();
+    return staff.filter(s => {
+      const isDuplicate = seen.has(s.id);
+      seen.add(s.id);
+      return !isDuplicate;
+    });
+  }, [staff]);
 
   const handleInputChange = (id: string, value: any) => {
     setNewStaffData(prev => ({ ...prev, [id]: value }));
@@ -117,10 +133,31 @@ const StaffPage: React.FC = () => {
   };
 
   const filteredStaff = useMemo(() => {
-    return staff
-      .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    return uniqueStaff
+      .filter(s => (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
       .filter(s => roleFilter === 'All' || s.role === roleFilter);
-  }, [staff, searchTerm, roleFilter]);
+  }, [uniqueStaff, searchTerm, roleFilter]);
+  
+  const handleQRScan = async (data: string | null) => {
+    if (data && selectedStaffForQR) {
+      if (settings.qrClockInEnabled && data === settings.qrCodeValue) {
+        alert(`${selectedStaffForQR.name}님의 ${qrScanAction === 'clock-in' ? '출근' : '퇴근'}이(가) 확인되었습니다.`);
+        // ToDo: Add actual clock-in/out logic using a new hook for work logs.
+      } else {
+        alert('유효하지 않은 QR 코드입니다.');
+      }
+      setIsQRScannerOpen(false);
+      setSelectedStaffForQR(null);
+      setQrScanAction(null);
+    }
+  };
+  
+  const openQRScanner = (staffMember: Staff, action: 'clock-in' | 'clock-out') => {
+    setSelectedStaffForQR(staffMember);
+    setQrScanAction(action);
+    setIsQRScannerOpen(true);
+  };
+  
 
   if (loading) return <div className="p-4">로딩 중...</div>;
   if (error) return <div className="p-4 text-red-500">오류: {error.message}</div>;
@@ -256,7 +293,14 @@ const StaffPage: React.FC = () => {
           </div>
         </div>
       </Modal>
-
+      
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onScan={handleQRScan}
+        onError={(error) => alert(`QR 스캔 오류: ${error.message}`)}
+      />
+      
       <div className="bg-white rounded-lg shadow-md overflow-x-auto">
         <table className="w-full table-auto min-w-max">
           <thead className="bg-gray-100">
@@ -267,19 +311,22 @@ const StaffPage: React.FC = () => {
                 </th>
               ))}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                출퇴근
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 관리
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredStaff.map((staffMember) => (
-              <tr key={staffMember.id} onClick={() => handleEditClick(staffMember)} className="cursor-pointer hover:bg-gray-50">
+              <tr key={staffMember.id} className="hover:bg-gray-50">
                 {formFields.map(field => (
-                  <td key={field.id} className="px-6 py-4 whitespace-nowrap">
+                  <td key={field.id} className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleEditClick(staffMember)}>
                     {field.type === 'file' ? (
                       <img 
                         src={(staffMember as any)[field.id] || 'https://via.placeholder.com/40'} 
-                        alt={staffMember.name}
+                        alt={staffMember.name || 'staff'}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
@@ -287,13 +334,49 @@ const StaffPage: React.FC = () => {
                     )}
                   </td>
                 ))}
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {settings.qrClockInEnabled && (
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openQRScanner(staffMember, 'clock-in'); }}
+                        className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200"
+                        title="출근 QR 스캔"
+                      >
+                        <FaQrcode />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openQRScanner(staffMember, 'clock-out'); }}
+                        className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200"
+                        title="퇴근 QR 스캔"
+                      >
+                        <FaClock />
+                      </button>
+                    </div>
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(staffMember.id); }}
-                    className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                  >
-                    <FaTrash />
-                    삭제
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEditClick(staffMember); }}
+                      className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                    >
+                      <FaEdit />
+                      수정
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(staffMember.id); }}
+                      className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                    >
+                      <FaTrash />
+                      삭제
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
                   </button>
                 </td>
               </tr>
