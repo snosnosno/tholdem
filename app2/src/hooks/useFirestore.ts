@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, setDoc, collection, query, where, orderBy, limit, QueryConstraint } from 'firebase/firestore';
+import {
+  doc, onSnapshot, updateDoc, setDoc, collection, query, where, orderBy, limit, Query, DocumentData, QueryConstraint
+} from 'firebase/firestore';
 
 // ... (useDocument hook remains the same)
 export const useDocument = (collectionPath: string, docId: string) => {
@@ -54,7 +56,6 @@ export const useDocument = (collectionPath: string, docId: string) => {
   return { document, loading, error, updateDocument, upsertDocument };
 };
 
-
 interface QueryOptions {
     where?: [string, any, any][];
     orderBy?: [string, 'asc' | 'desc'][];
@@ -67,12 +68,9 @@ export const useCollection = (collectionPath: string, queryOptions?: QueryOption
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
-    // 옵션 객체가 렌더링마다 변경되어 무한 루프를 유발하는 것을 방지하기 위해 JSON 문자열로 변환하여 비교
-    const optionsJSON = queryOptions ? JSON.stringify(queryOptions) : null;
-
-    useEffect(() => {
+    // queryOptions가 렌더링마다 변경되어 무한 루프를 유발하는 것을 방지하기 위해 useMemo를 사용
+    const memoizedQuery = useMemo(() => {
         const constraints: QueryConstraint[] = [];
-
         if (queryOptions) {
             if (queryOptions.where) {
                 queryOptions.where.forEach(w => constraints.push(where(...w)));
@@ -84,10 +82,12 @@ export const useCollection = (collectionPath: string, queryOptions?: QueryOption
                 constraints.push(limit(queryOptions.limit));
             }
         }
-        
-        const q = query(collection(db, collectionPath), ...constraints);
+        return query(collection(db, collectionPath), ...constraints);
+    }, [collectionPath, JSON.stringify(queryOptions)]); // 여전히 JSON.stringify가 가장 안정적인 방법입니다.
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+    useEffect(() => {
+        setLoading(true);
+        const unsubscribe = onSnapshot(memoizedQuery, (snapshot) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setDocuments(docs);
             setLoading(false);
@@ -98,7 +98,7 @@ export const useCollection = (collectionPath: string, queryOptions?: QueryOption
         });
 
         return () => unsubscribe();
-    }, [collectionPath, optionsJSON]);
+    }, [memoizedQuery]);
 
     return { documents, loading, error };
 }
