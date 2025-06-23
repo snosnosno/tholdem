@@ -19,6 +19,7 @@ interface TableDetailModalProps {
   onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
   onCloseTable: (tableId: string) => void;
+  activateTable: (tableId: string) => void; // Add activateTable to props
   isDimmed?: boolean;
 }
 
@@ -36,6 +37,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   onPlayerSelect,
   updateTableDetails,
   onCloseTable,
+  activateTable, // Destructure from props
   isDimmed = false,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -67,6 +69,13 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   const handleCloseTableClick = () => {
     if (table) {
       onCloseTable(table.id);
+      onClose();
+    }
+  };
+
+  const handleActivateTableClick = () => {
+    if (table) {
+      activateTable(table.id);
       onClose();
     }
   };
@@ -123,14 +132,22 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                 </h2>
               )}
             </div>
-            <div className="flex items-center">
-                <div className="text-sm text-gray-600 space-x-4 mr-4">
+            <div className="flex items-center gap-2">
+                <div className="text-sm text-gray-600 space-x-4 mr-2">
                     <span>참가자: {filledSeats}/{totalSeats}</span>
                     <span>빈 좌석: {emptySeatCount}</span>
                 </div>
+                {table.status === 'standby' && (
+                  <button
+                    onClick={handleActivateTableClick}
+                    className="btn btn-primary btn-sm"
+                  >
+                    테이블 활성화
+                  </button>
+                )}
                 <button
                   onClick={handleCloseTableClick}
-                  className="btn btn-sm text-white bg-red-500 hover:bg-red-600 border-none"
+                  className="btn btn-sm bg-red-500 hover:bg-red-600 text-white border-none"
                 >
                   테이블 닫기
                 </button>

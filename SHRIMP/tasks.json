@@ -1,113 +1,51 @@
 {
   "tasks": [
     {
-      "id": "79fe9272-4e76-45ed-b9ed-a582bb9cce45",
-      "name": "1. [Setup] dnd-kit 라이브러리 설치",
-      "description": "테이블 드래그 앤 드롭 기능을 구현하는 데 필요한 @dnd-kit 관련 라이브러리를 설치합니다.",
+      "id": "35ba7223-6b3e-4ac5-bf99-5fb0686ad74e",
+      "name": "스태프 모집 공고/지원/선발 페이지 구현",
+      "description": "관리자 모집 공고 생성(대회/날짜/포지션별), 프리랜서 지원, 관리자 선발/배정, 지원 현황 관리 UI/로직 구현. Firestore /events, /staffApplications 구조 활용.",
       "status": "pending",
       "dependencies": [],
-      "createdAt": "2025-06-22T17:49:28.651Z",
-      "updatedAt": "2025-06-22T17:49:28.651Z",
-      "implementationGuide": "프로젝트의 루트 디렉토리에서 다음 명령어를 실행하여 dnd-kit 라이브러리들을 설치합니다: npm install @dnd-kit/core @dnd-kit/modifiers @dnd-kit/utilities",
-      "verificationCriteria": "`package.json` 파일의 `dependencies`에 `@dnd-kit/core`, `@dnd-kit/modifiers`, `@dnd-kit/utilities`가 추가되었는지 확인합니다.",
-      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
+      "createdAt": "2025-06-23T09:34:40.214Z",
+      "updatedAt": "2025-06-23T09:34:40.214Z",
+      "relatedFiles": [],
+      "implementationGuide": "기존 ParticipantsPage, StaffPage, useParticipants 등 테이블/모달/필터/상태관리 패턴을 재사용 및 확장. Firestore CRUD는 신규 useStaffApplications 훅으로 구현.",
+      "verificationCriteria": "관리자 모집 공고 생성, 프리랜서 지원, 지원자 목록 열람 및 선발/배정, 지원 현황 관리가 정상 동작해야 함.",
+      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
     },
     {
-      "id": "8e77d342-1010-475d-b375-66f22b1d84d8",
-      "name": "2. [Backend] 테이블 위치 데이터 모델 및 로직 구현",
-      "description": "`useTables.ts` 훅을 수정하여 테이블의 위치(`position`) 정보를 관리할 수 있는 기반을 마련합니다.",
+      "id": "78854c5f-7db9-4c68-9ea3-a47fbaf5299f",
+      "name": "스태프 배치/로테이션 페이지 구현",
+      "description": "날짜/포지션별 근무표, 교대(오전/오후/풀타임) 관리, 자동/수동 배정, 인원 수정 UI/로직 구현. Firestore /assignments 구조 활용.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "79fe9272-4e76-45ed-b9ed-a582bb9cce45"
+          "taskId": "35ba7223-6b3e-4ac5-bf99-5fb0686ad74e"
         }
       ],
-      "createdAt": "2025-06-22T17:49:28.651Z",
-      "updatedAt": "2025-06-22T17:49:28.651Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/hooks/useTables.ts",
-          "type": "TO_MODIFY",
-          "description": "Table 인터페이스에 position 필드를 추가하고, 위치 업데이트 및 초기화 로직을 구현합니다."
-        }
-      ],
-      "implementationGuide": "1. `app2/src/hooks/useTables.ts` 파일의 `Table` 인터페이스에 `position?: { x: number; y: number }` 필드를 추가합니다.\n2. `openNewTable` 함수를 수정하여, 새 테이블을 생성할 때 기존 테이블들과 겹치지 않는 초기 `position` 값을 할당하도록 로직을 추가합니다.\n3. `updateTablePosition(tableId: string, position: { x: number; y: number })` 함수를 새로 추가하여 Firestore의 해당 테이블 문서에 `position` 필드만 업데이트합니다.\n4. 새로 만든 `updateTablePosition` 함수를 `useTables` 훅의 반환 객체에 포함시킵니다.",
-      "verificationCriteria": "1. `Table` 인터페이스에 `position` 필드가 추가되었는지 확인합니다.\n2. 새 테이블 생성 시 Firestore 문서에 `position` 필드가 정상적으로 저장되는지 확인합니다.\n3. `updateTablePosition` 함수 호출 시 Firestore의 해당 테이블 `position` 필드가 정확하게 업데이트되는지 확인합니다.",
-      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
+      "createdAt": "2025-06-23T09:34:40.214Z",
+      "updatedAt": "2025-06-23T09:34:40.214Z",
+      "relatedFiles": [],
+      "implementationGuide": "기존 TablesPage, ParticipantsPage 등 테이블/필터/드래그 UI 패턴을 재사용 및 확장. Firestore CRUD는 신규 useAssignments 훅으로 구현.",
+      "verificationCriteria": "날짜/포지션별 근무표, 교대 관리, 자동/수동 배정, 인원 수정이 정상 동작해야 함.",
+      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
     },
     {
-      "id": "18d37dc6-b32d-434b-94bd-bb2763c3f7cd",
-      "name": "3. [Frontend] 테이블 페이지 UI 레이아웃 변경",
-      "description": "`TablesPage.tsx`의 레이아웃을 기존 CSS Grid 방식에서 자유로운 위치 지정을 위한 '캔버스' 방식으로 변경합니다.",
+      "id": "b574e89a-13ff-4459-b47a-695f359a8910",
+      "name": "출퇴근 및 정산 페이지 구현",
+      "description": "출퇴근 기록, 근무시간 자동 계산, 정산 금액 표시, 관리자 승인 UI/로직 구현. Firestore /workLogs 구조 활용.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "8e77d342-1010-475d-b375-66f22b1d84d8"
+          "taskId": "78854c5f-7db9-4c68-9ea3-a47fbaf5299f"
         }
       ],
-      "createdAt": "2025-06-22T17:49:28.651Z",
-      "updatedAt": "2025-06-22T17:49:28.651Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/pages/TablesPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "기존 그리드 레이아웃을 position:relative 속성을 가진 캔버스 div로 교체합니다."
-        }
-      ],
-      "implementationGuide": "1. `app2/src/pages/TablesPage.tsx`에서 테이블 목록을 감싸고 있는 `<div class='grid ...'>` 요소를 제거합니다.\n2. 대신, `position: 'relative', width: '100%', height: 'calc(100vh - 200px)'` 스타일을 가진 새로운 `div` (캔버스)를 생성합니다. \n3. 캔버스 div 안에 `tables.map(...)`을 위치시킵니다.",
-      "verificationCriteria": "1. `TablesPage` 렌더링 시 테이블들이 그리드 형태로 정렬되지 않고 좌측 상단에 겹쳐서 보이는지 확인합니다.\n2. 브라우저 개발자 도구에서 그리드 관련 CSS 클래스가 사라지고, `position: relative`를 가진 캔버스 `div`가 생성되었는지 확인합니다.",
-      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
-    },
-    {
-      "id": "b62ba7e1-2131-403f-aa6d-6857afe0674d",
-      "name": "4. [Frontend] dnd-kit 컨텍스트 및 이벤트 핸들러 설정",
-      "description": "`TablesPage.tsx`에 `dnd-kit`의 `DndContext`를 설정하고, 드래그 종료 이벤트를 처리하여 테이블 위치를 업데이트하는 로직을 구현합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "18d37dc6-b32d-434b-94bd-bb2763c3f7cd"
-        }
-      ],
-      "createdAt": "2025-06-22T17:49:28.651Z",
-      "updatedAt": "2025-06-22T17:49:28.651Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/pages/TablesPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "DndContext를 설정하고 onDragEnd 이벤트 핸들러를 구현하여 위치 업데이트 로직을 연동합니다."
-        }
-      ],
-      "implementationGuide": "1. `useTables` 훅에서 `updateTablePosition` 함수를 가져옵니다.\n2. `DndContext`로 캔버스 div와 그 안의 `TableCard`들을 감쌉니다.\n3. `onDragEnd` 핸들러 함수 `handleDragEnd`를 구현하여 `delta`와 `active.id`를 가져옵니다.\n4. `handleDragEnd` 내부에서 새로운 `position`을 계산하고, `updateTablePosition` 함수를 호출하여 Firestore에 저장합니다.\n5. (최적화) `DndContext`에 `modifiers`를 추가하여 카드가 화면 밖으로 나가는 것을 방지합니다.",
-      "verificationCriteria": "1. 테이블 카드를 드래그했다 놓았을 때 Firestore의 `position` 데이터가 업데이트되는지 확인합니다.\n2. (최적화) 테이블 카드를 화면 가장자리 밖으로 드래그할 수 없는지 확인합니다.",
-      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
-    },
-    {
-      "id": "8978459e-7e72-40a3-8b12-13df32b1db51",
-      "name": "5. [Frontend] 테이블 카드를 Draggable 컴포넌트로 구현",
-      "description": "`TableCard.tsx`를 `dnd-kit`의 `useDraggable` 훅을 사용하여 드래그 가능한 컴포넌트로 만들고, 절대 위치에 렌더링되도록 수정합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "b62ba7e1-2131-403f-aa6d-6857afe0674d"
-        }
-      ],
-      "createdAt": "2025-06-22T17:49:28.651Z",
-      "updatedAt": "2025-06-22T17:49:28.651Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/components/TableCard.tsx",
-          "type": "TO_MODIFY",
-          "description": "useDraggable 훅을 적용하여 드래그 기능을 활성화하고, 절대 위치 스타일을 받도록 수정합니다."
-        },
-        {
-          "path": "app2/src/pages/TablesPage.tsx",
-          "type": "TO_MODIFY",
-          "description": "TableCard에 절대 위치를 지정하는 style prop을 전달합니다."
-        }
-      ],
-      "implementationGuide": "1. `TableCard.tsx`에서 `useDraggable` 훅을 호출하고 `attributes`, `listeners`, `setNodeRef`, `transform`을 사용합니다.\n2. 최상위 `div`에 `ref={setNodeRef}`, `{...listeners}`, `{...attributes}`를 적용합니다.\n3. `transform`이 존재할 경우 `style`에 `transform` css를 추가합니다.\n4. `TablesPage.tsx`에서 `TableCard` 렌더링 시 `style` prop으로 `{ position: 'absolute', left: table.position?.x || 0, top: table.position?.y || 0 }`를 전달합니다.\n5. `TableCard.tsx`는 `props`로 받은 `style`을 최상위 `div`에 병합합니다.",
-      "verificationCriteria": "1. 테이블 카드가 마우스로 드래그되는지 확인합니다.\n2. 페이지 로드 시 각 테이블 카드가 Firestore에 저장된 `position` 좌표에 따라 올바르게 배치되는지 확인합니다.\n3. 드래그가 끝나면 카드가 새로운 위치에 고정되는지 확인합니다.",
-      "analysisResult": "`TablesPage`에서 테이블 카드를 자유롭게 드래그하여 위치를 조정하고 그 위치를 Firestore에 저장하는 기능을 구현합니다. 이를 위해 `dnd-kit` 라이브러리를 도입하고, 데이터 모델에 `position` 필드를 추가하며, `useTables` 훅과 관련 UI 컴포넌트들을 수정합니다. 새 테이블 생성 시 동적 위치를 할당하고 드래그 영역을 제한하는 최적화 방안을 포함합니다."
+      "createdAt": "2025-06-23T09:34:40.214Z",
+      "updatedAt": "2025-06-23T09:34:40.214Z",
+      "relatedFiles": [],
+      "implementationGuide": "기존 StaffPage, ParticipantsPage 등 테이블/모달/필터/상태관리 패턴을 재사용 및 확장. Firestore CRUD는 신규 useWorkLogs 훅으로 구현.",
+      "verificationCriteria": "출퇴근 기록, 근무시간 자동 계산, 정산 금액 표시, 관리자 승인 처리가 정상 동작해야 함.",
+      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
     }
   ]
 }

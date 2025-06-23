@@ -9,8 +9,9 @@ export interface Table {
   name: string;
   tableNumber: number;
   seats: (string | null)[]; // participant.id 또는 null
-  status?: 'open' | 'closed' | 'standby'; // 'standby' 추가
+  status?: 'open' | 'closed' | 'standby';
   borderColor?: string;
+  position?: { x: number; y: number };
 }
 
 export interface BalancingResult {
@@ -95,6 +96,17 @@ export const useTables = () => {
     }
   };
 
+  const updateTablePosition = async (tableId: string, position: { x: number; y: number }) => {
+    const tableRef = doc(db, 'tables', tableId);
+    try {
+      await updateDoc(tableRef, { position });
+    } catch (e) {
+      console.error("Error updating table position:", e);
+      setError(e as Error);
+      throw e;
+    }
+  };
+
   const activateTable = async (tableId: string) => {
     const tableRef = doc(db, 'tables', tableId);
     try {
@@ -112,10 +124,11 @@ export const useTables = () => {
     try {
       const maxTableNumber = tables.reduce((max, table) => Math.max(max, table.tableNumber), 0);
       const newTable = {
-        name: `Table ${maxTableNumber + 1}`,
+        name: `T${maxTableNumber + 1}`,
         tableNumber: maxTableNumber + 1,
         seats: Array(maxSeatsSetting).fill(null),
-        status: 'standby', // 'open'에서 'standby'로 변경
+        status: 'standby',
+        position: { x: 10, y: 10 + (tables.length * 40) },
       };
       const docRef = await addDoc(tablesCollection, newTable);
       logAction('table_created_standby', { tableId: docRef.id, tableNumber: newTable.tableNumber, maxSeats: maxSeatsSetting });
@@ -154,7 +167,6 @@ export const useTables = () => {
             return;
         }
 
-        // 'open' 상태인 테이블만 재배치 대상으로 한정
         const openTables = allTables.filter(t => t.id !== tableIdToClose && t.status === 'open');
         if (openTables.length === 0) {
             throw new Error("참가자를 이동시킬 수 있는 활성화된 테이블이 없습니다.");
@@ -231,7 +243,6 @@ export const useTables = () => {
       const batch = writeBatch(db);
       const tablesSnapshot = await getDocs(tablesCollection);
       
-      // 'open' 상태인 테이블만 배정 대상으로 한정
       const openTables: Table[] = tablesSnapshot.docs
         .map(d => ({id: d.id, ...d.data()} as Table))
         .filter(t => t.status === 'open');
@@ -316,7 +327,6 @@ export const useTables = () => {
             const fromSeats = [...fromTableSnap.data().seats];
             const toSeats = from.tableId === to.tableId ? fromSeats : [...toTableSnap.data().seats];
             
-            // UI 단에서 to.tableId가 'open' 상태인 것만 허용해야 함.
             if (toSeats[to.seatIndex] !== null) {
               const otherParticipantId = toSeats[to.seatIndex];
               fromSeats[from.seatIndex] = otherParticipantId;
@@ -357,5 +367,5 @@ export const useTables = () => {
     }
   };
 
-  return { tables, setTables, loading, error, maxSeatsSetting, updateMaxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant };
+  return { tables, setTables, loading, error, maxSeatsSetting, updateMaxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition };
 };
