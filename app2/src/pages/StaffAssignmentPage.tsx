@@ -7,7 +7,18 @@ const shifts = [
   { value: 'morning', label: '오전' },
   { value: 'afternoon', label: '오후' },
   { value: 'full', label: '풀타임' },
-];
+const handleAutoAssign = async () => {
+  // 예시: 오늘 날짜, 모든 포지션에 랜덤하게 스태프 배정
+  const today = new Date().toISOString().slice(0, 10);
+  const positions = ['TD', 'Dealer', 'Floor'];
+  const availableStaff = [...staff];
+  for (const pos of positions) {
+    if (availableStaff.length === 0) break;
+    const idx = Math.floor(Math.random() * availableStaff.length);
+    const s = availableStaff.splice(idx, 1)[0];
+    await addAssignment({ date: today, shift: 'morning', position: pos, staffId: s.id });
+  }
+};
 
 const StaffAssignmentPage: React.FC = () => {
   const { assignments, loading, error, addAssignment, updateAssignment, deleteAssignment } = useAssignments();
@@ -25,7 +36,7 @@ const StaffAssignmentPage: React.FC = () => {
       date: selectedDate,
       shift: selectedShift as any,
       position: selectedPosition,
-      staffId: selectedStaffId,
+      <button onClick={handleAutoAssign} className="btn btn-info mb-4 ml-2">자동 배정</button>
     });
     setModalOpen(false);
   };
