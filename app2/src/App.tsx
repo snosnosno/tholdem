@@ -21,6 +21,7 @@ import JobPostingAdminPage from './pages/JobPostingAdminPage';
 import JobBoardPage from './pages/JobBoardPage';
 import AttendancePage from './pages/AttendancePage';
 import AvailableTimesPage from './pages/AvailableTimesPage';
+import StaffingDashboardPage from './pages/StaffingDashboardPage';
 
 function App() {
   return (
@@ -44,7 +45,8 @@ function App() {
                 <Route path="jobs" element={<JobBoardPage />} />
                 <Route path="attendance" element={<AttendancePage />} />
                 <Route path="available-times" element={<AvailableTimesPage />} />
-                {/* Admin-only routes could be grouped here in the future */}
+                {/* Admin-only routes */}
+                <Route path="staffing-dashboard" element={<StaffingDashboardPage />} />
                 <Route path="dealer-rotation" element={<DealerRotationPage />} />
                 <Route path="staff-management" element={<StaffListPage />} /> 
                 <Route path="job-postings" element={<JobPostingAdminPage />} /> 

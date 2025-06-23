@@ -4,7 +4,7 @@ import { IconType } from 'react-icons';
 import { 
     FaTachometerAlt, FaUsers, FaTable, FaClock, 
     FaTrophy, FaUserTie, FaBullhorn, FaHistory, FaUserCircle, FaUserShield, FaFileInvoice, FaClipboardList, FaQrcode,
-    FaChevronLeft, FaChevronRight, FaCalendarAlt
+    FaChevronLeft, FaChevronRight, FaCalendarAlt, FaClipboardCheck
 } from 'react-icons/fa';
 
 interface NavItemProps {
@@ -60,6 +60,7 @@ export const Layout = () => {
             <div className="px-2 pt-2">
                 <p className={`text-xs font-semibold text-gray-500 uppercase transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Admin</p>
             </div>
+            <NavItem to="/staffing-dashboard" label="Staffing Dashboard" Icon={FaClipboardCheck} isOpen={isSidebarOpen} />
             <NavItem to="/staff-management" label="Staff Management" Icon={FaUserShield} isOpen={isSidebarOpen} />
             <NavItem to="/job-postings" label="Manage Postings" Icon={FaFileInvoice} isOpen={isSidebarOpen} />
             <NavItem to="/participants" label="Participants" Icon={FaUsers} isOpen={isSidebarOpen} />
