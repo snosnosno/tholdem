@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, query, where, orderBy, limit, QueryConstraint } from 'firebase/firestore';
 
-// 특정 문서 하나를 실시간으로 가져오는 훅
+// ... (useDocument hook remains the same)
 export const useDocument = (collectionPath: string, docId: string) => {
   const [document, setDocument] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -54,15 +54,40 @@ export const useDocument = (collectionPath: string, docId: string) => {
   return { document, loading, error, updateDocument, upsertDocument };
 };
 
-// 특정 컬렉션의 모든 문서를 가져오는 훅
-export const useCollection = (collectionPath: string) => {
+
+interface QueryOptions {
+    where?: [string, any, any][];
+    orderBy?: [string, 'asc' | 'desc'][];
+    limit?: number;
+}
+
+// 특정 컬렉션의 문서를 가져오는 훅 (쿼리 옵션 포함)
+export const useCollection = (collectionPath: string, queryOptions?: QueryOptions) => {
     const [documents, setDocuments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
+    // 옵션 객체가 렌더링마다 변경되어 무한 루프를 유발하는 것을 방지하기 위해 JSON 문자열로 변환하여 비교
+    const optionsJSON = queryOptions ? JSON.stringify(queryOptions) : null;
+
     useEffect(() => {
-        const collectionRef = collection(db, collectionPath);
-        const unsubscribe = onSnapshot(collectionRef, (snapshot) => {
+        const constraints: QueryConstraint[] = [];
+
+        if (queryOptions) {
+            if (queryOptions.where) {
+                queryOptions.where.forEach(w => constraints.push(where(...w)));
+            }
+            if (queryOptions.orderBy) {
+                queryOptions.orderBy.forEach(o => constraints.push(orderBy(...o)));
+            }
+            if (queryOptions.limit) {
+                constraints.push(limit(queryOptions.limit));
+            }
+        }
+        
+        const q = query(collection(db, collectionPath), ...constraints);
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setDocuments(docs);
             setLoading(false);
@@ -73,7 +98,7 @@ export const useCollection = (collectionPath: string) => {
         });
 
         return () => unsubscribe();
-    }, [collectionPath]);
+    }, [collectionPath, optionsJSON]);
 
     return { documents, loading, error };
 }

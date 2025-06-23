@@ -10,11 +10,11 @@ const StaffingDashboardPage = () => {
   const { documents: staffProfiles, loading: loadingStaff } = useCollection('staffProfiles');
   const { documents: jobPostings, loading: loadingJobs } = useCollection('jobPostings');
   const { documents: applications, loading: loadingApps } = useCollection('applications', {
-    orderBy: ['createdAt', 'desc'],
+    orderBy: [['createdAt', 'desc']],
     limit: 5
   });
   const { documents: schedules, loading: loadingSchedules } = useCollection('schedules', {
-    orderBy: ['createdAt', 'desc'],
+    orderBy: [['createdAt', 'desc']],
     limit: 5
   });
 
