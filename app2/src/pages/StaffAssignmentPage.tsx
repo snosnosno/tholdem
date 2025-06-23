@@ -26,7 +26,7 @@ const StaffAssignmentPage: React.FC = () => {
     let availableStaff = [...staff];
     for (const shift of shiftsArr) {
       let staffPool = [...availableStaff];
-      for (const pos of positions) {
+      const shiftsArr: Array<'morning' | 'afternoon' | 'full'> = ['morning', 'afternoon', 'full'];
         const assigned = assignments.find(a => a.date === today && a.shift === shift && a.position === pos);
         if (assigned) continue;
         if (staffPool.length === 0) staffPool = [...availableStaff];
