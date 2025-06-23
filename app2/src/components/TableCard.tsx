@@ -1,81 +1,89 @@
 import React from 'react';
 import { Table } from '../hooks/useTables';
 import { Participant } from '../hooks/useParticipants';
-import { useDraggable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { FaUsers, FaEllipsisV } from 'react-icons/fa';
 
 interface TableCardProps {
   table: Table;
-  participants: Participant[];
   onTableClick: () => void;
-  onPlayerSelect: (participant: Participant | null, table: Table, seatIndex: number, event?: React.MouseEvent) => void;
   isMobile: boolean;
-  getParticipantName: (participantId: string | null) => string;
   getDealerName: (dealerId: string | null) => string;
-  isDraggable?: boolean;
-  style?: React.CSSProperties;
 }
 
 const TableCard: React.FC<TableCardProps> = ({
   table,
   onTableClick,
-  onPlayerSelect,
   isMobile,
-  getParticipantName,
   getDealerName,
-  isDraggable,
-  style,
 }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: table.id,
-    disabled: !isDraggable,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: table.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
+    borderColor: table.borderColor || 'transparent',
+  };
   
   const isStandby = table.status === 'standby';
-
-  const draggableStyle = isDraggable ? {
-    '--tw-translate-x': transform ? `${transform.x}px` : '0px',
-    '--tw-translate-y': transform ? `${transform.y}px` : '0px',
-  } : {};
-  
-  const combinedStyle = { ...style, ...draggableStyle };
-
-  const getSeatClass = (participantId: string | null) => {
-    return participantId
-      ? 'bg-blue-500 hover:bg-blue-700 text-white'
-      : 'bg-gray-300 hover:bg-gray-400';
-  };
-  
-  const handleSeatClick = (e: React.MouseEvent, participantId: string | null, seatIndex: number) => {
-      e.stopPropagation();
-      onPlayerSelect(null, table, seatIndex, e);
-  };
+  const playerCount = table.seats?.filter(s => s !== null).length || 0;
+  const maxSeats = table.seats?.length || 9;
 
   return (
     <div
       ref={setNodeRef}
-      style={combinedStyle}
-      className={`relative p-3 rounded-lg shadow-lg flex flex-col items-center justify-center transition-all ${isDraggable ? 'transform' : ''} ${isStandby ? 'bg-gray-200' : 'bg-white'}`}
+      style={style}
+      className={`relative p-4 rounded-lg flex flex-col transition-shadow duration-100 bg-white shadow-md hover:shadow-xl border-4 min-h-[120px] justify-center`}
       onClick={onTableClick}
-      {...(isDraggable ? { ...listeners, ...attributes } : {})}
     >
-      <div className="w-full text-center mb-2">
-        <p className="font-bold text-lg truncate">{table.name || `Table ${table.tableNumber}`}</p>
+      {/* Card Header */}
+      <div 
+        className="w-full flex justify-between items-center mb-3 pb-2 border-b"
+      >
+        <h3 
+            className={`font-bold text-lg truncate ${!isMobile ? 'cursor-grab' : ''}`}
+            {...listeners} 
+            {...attributes}
+        >
+            {table.name || `Table ${table.tableNumber}`}
+        </h3>
+        <div className="flex items-center text-sm text-gray-600">
+            <FaUsers className="mr-2" />
+            <span>{playerCount} / {maxSeats}</span>
+        </div>
+        <button 
+            className="p-2 rounded-full hover:bg-gray-200" 
+            onClick={(e) => { 
+                e.stopPropagation(); 
+                onTableClick();
+            }}
+        >
+            <FaEllipsisV />
+        </button>
+      </div>
+
+      {/* Dealer Info */}
+      <div className="w-full text-center">
         <p className="text-sm text-gray-500">
           딜러: {getDealerName(table.assignedDealerId || null)}
         </p>
       </div>
 
-      <div className={`grid ${isMobile ? 'grid-cols-5' : 'grid-cols-5'} gap-2 w-full`}>
-        {(table.seats || []).map((participantId, index) => (
-          <button
-            key={index}
-            onClick={(e) => handleSeatClick(e, participantId, index)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-transform transform hover:scale-110 ${getSeatClass(participantId)}`}
-          >
-            {getParticipantName(participantId).substring(0, 3) || index + 1}
-          </button>
-        ))}
-      </div>
+      {isStandby && (
+          <div className="absolute inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center rounded-lg pointer-events-none">
+              <span className="text-white font-bold text-lg bg-black bg-opacity-50 px-4 py-2 rounded">대기중</span>
+          </div>
+      )}
     </div>
   );
 };

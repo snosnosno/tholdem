@@ -24,8 +24,9 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
 
   if (!isOpen || !movingParticipant) return null;
 
-  const handleSeatSelect = (tableId: string, seatIndex: number, participantId: string | null) => {
-    if (participantId === null) {
+  const handleSeatSelect = (tableId: string, seatIndex: number, participantId: string | null, tableStatus?: string) => {
+    // FIX: Use a looser check for empty seat (!participantId) to handle both null and undefined.
+    if (!participantId && tableStatus === 'open') {
       setSelectedSeat({ tableId, seatIndex });
     }
   };
@@ -50,24 +51,27 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
         </div>
       <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
         {tables.map(table => (
-          <div key={table.id} className="border rounded-lg p-3">
-            <h4 className="font-bold text-lg mb-2">{table.name || `Table ${table.tableNumber}`}</h4>
+          <div key={table.id} className={`border rounded-lg p-3 ${table.status !== 'open' ? 'bg-gray-100 opacity-70' : ''}`}>
+            <h4 className="font-bold text-lg mb-2">{table.name || `Table ${table.tableNumber}`} <span className="text-sm font-normal text-gray-500">({table.status})</span></h4>
             <div className="grid grid-cols-5 gap-2">
               {table.seats.map((participantId, seatIndex) => {
                 const isSelected = selectedSeat?.tableId === table.id && selectedSeat?.seatIndex === seatIndex;
+                const isSelectable = !participantId && table.status === 'open';
+
                 return (
                   <div
                     key={seatIndex}
-                    onClick={() => handleSeatSelect(table.id, seatIndex, participantId)}
-                    className={`relative p-2 rounded-md h-16 flex flex-col justify-center items-center text-xs group cursor-pointer
-                      ${participantId ? 'bg-gray-300 text-gray-600' : 'bg-green-100 text-green-800 border-2 border-dashed border-green-400'}
+                    onClick={() => handleSeatSelect(table.id, seatIndex, participantId, table.status)}
+                    className={`relative p-2 rounded-md h-16 flex flex-col justify-center items-center text-xs group
+                      ${isSelectable ? 'cursor-pointer bg-green-100 text-green-800 border-2 border-dashed border-green-400' : 'bg-gray-300 text-gray-600'}
                       ${isSelected ? 'ring-4 ring-blue-500' : ''}
                     `}
                   >
                     <span className="font-bold text-sm mb-1">{seatIndex + 1}</span>
                     <span className="font-semibold">{getParticipantName(participantId)}</span>
                     {participantId && <span className="text-xs text-gray-500">(자리 있음)</span>}
-                    {!participantId && <span className="text-xs text-green-600">(빈 자리)</span>}
+                    {!participantId && table.status === 'open' && <span className="text-xs text-green-600">(빈 자리)</span>}
+                    {!participantId && table.status !== 'open' && <span className="text-xs text-gray-500">(이동 불가)</span>}
                   </div>
                 );
               })}

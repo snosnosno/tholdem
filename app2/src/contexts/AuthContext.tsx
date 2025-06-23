@@ -5,6 +5,7 @@ import { auth } from '../firebase';
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
 }
 
@@ -25,10 +26,23 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user) {
+        try {
+          const idTokenResult = await user.getIdTokenResult(true); // Force refresh
+          const userRole = idTokenResult.claims.role;
+          setIsAdmin(userRole === 'admin');
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
 
@@ -42,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     currentUser,
     loading,
+    isAdmin,
     signIn,
   };
 
@@ -50,4 +65,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+};

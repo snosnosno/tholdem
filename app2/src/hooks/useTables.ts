@@ -226,6 +226,12 @@ export const useTables = () => {
 
       return balancingResult;
     } catch (e) {
+      const errorContext = {
+        failedAction: 'close_table',
+        tableId: tableIdToClose,
+        errorMessage: e instanceof Error ? e.message : String(e),
+      };
+      logAction('action_failed', errorContext);
       console.error("Error closing table:", e);
       setError(e as Error);
       throw e;
@@ -234,7 +240,7 @@ export const useTables = () => {
     }
   }, [maxSeatsSetting]);
   
-  const autoAssignSeats = useCallback(async (participants: Participant[]) => {
+  const rebalanceAndAssignAll = useCallback(async (participants: Participant[]) => {
     if (participants.length === 0) {
         alert("배정할 참가자가 없습니다.");
         return;
@@ -295,6 +301,12 @@ export const useTables = () => {
       console.log("좌석 밸런싱 재배정이 성공적으로 완료되었습니다.");
       logAction('seats_reassigned_with_balancing', { participantsCount: participants.length, tableCount: openTables.length });
     } catch (e) {
+      const errorContext = {
+        failedAction: 'rebalance_and_assign_all',
+        participantsCount: participants.length,
+        errorMessage: e instanceof Error ? e.message : String(e),
+      };
+      logAction('action_failed', errorContext);
       console.error("좌석 자동 재배정 중 오류가 발생했습니다:", e);
       alert(`오류 발생: ${e instanceof Error ? e.message : String(e)}`);
       setError(e as Error);
@@ -391,7 +403,48 @@ export const useTables = () => {
     }
   }, [tables]);
 
-  return { tables, setTables, loading, error, maxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition, updateTableOrder };
+  const updateTableMaxSeats = useCallback(async (tableId: string, newMaxSeats: number, getParticipantName: (id: string) => string) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        const tableRef = doc(db, 'tables', tableId);
+        const tableSnap = await transaction.get(tableRef);
+        if (!tableSnap.exists()) {
+          throw new Error("테이블을 찾을 수 없습니다.");
+        }
+
+        const table = tableSnap.data() as Table;
+        const currentSeats = table.seats || [];
+        const currentMaxSeats = currentSeats.length;
+
+        if (newMaxSeats === currentMaxSeats) return;
+
+        if (newMaxSeats < currentMaxSeats) {
+          const seatsToRemove = currentSeats.slice(newMaxSeats);
+          const occupiedSeatsToRemove = seatsToRemove.map((pId, i) => ({ pId, seatNum: newMaxSeats + i + 1 })).filter(s => s.pId !== null);
+
+          if (occupiedSeatsToRemove.length > 0) {
+            const playerInfo = occupiedSeatsToRemove.map(s => `${s.seatNum}번(${getParticipantName(s.pId!)})`).join(', ');
+            throw new Error(`좌석 수를 줄이려면 먼저 다음 플레이어를 이동시켜야 합니다: ${playerInfo}`);
+          }
+        }
+
+        const newSeats = Array(newMaxSeats).fill(null);
+        for(let i=0; i < Math.min(currentMaxSeats, newMaxSeats); i++) {
+          newSeats[i] = currentSeats[i];
+        }
+
+        transaction.update(tableRef, { seats: newSeats });
+      });
+
+      logAction('max_seats_updated', { tableId: tableId, newMaxSeats: newMaxSeats });
+    } catch (e) {
+      console.error("최대 좌석 수 변경 중 오류 발생:", e);
+      setError(e as Error);
+      throw e; // Rethrow to be caught by the UI
+    }
+  }, []);
+
+  return { tables, setTables, loading, error, maxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats: rebalanceAndAssignAll, moveSeat, bustOutParticipant, updateTablePosition, updateTableOrder, updateTableMaxSeats };
 };
 
 export default useTables;

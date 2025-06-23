@@ -1,51 +1,155 @@
 {
   "tasks": [
     {
-      "id": "35ba7223-6b3e-4ac5-bf99-5fb0686ad74e",
-      "name": "스태프 모집 공고/지원/선발 페이지 구현",
-      "description": "관리자 모집 공고 생성(대회/날짜/포지션별), 프리랜서 지원, 관리자 선발/배정, 지원 현황 관리 UI/로직 구현. Firestore /events, /staffApplications 구조 활용.",
+      "id": "d8be599e-43bc-4dc9-8ec2-92eb0a4c1044",
+      "name": "TASK-1: Firestore 데이터 모델 확장 및 규칙 설정",
+      "description": "Firestore의 `staff`, `tables`, `workLogs` 컬렉션에 제안된 새 필드(status, assignedDealerId 등)를 추가하고, 신규 `settings` 컬렉션을 생성하여 토너먼트 규칙(최소 근무 시간, 휴식 시간 등)을 저장합니다. 또한, 이들 데이터에 대한 보안 규칙(firestore.rules)을 업데이트합니다.",
       "status": "pending",
       "dependencies": [],
-      "createdAt": "2025-06-23T09:34:40.214Z",
-      "updatedAt": "2025-06-23T09:34:40.214Z",
-      "relatedFiles": [],
-      "implementationGuide": "기존 ParticipantsPage, StaffPage, useParticipants 등 테이블/모달/필터/상태관리 패턴을 재사용 및 확장. Firestore CRUD는 신규 useStaffApplications 훅으로 구현.",
-      "verificationCriteria": "관리자 모집 공고 생성, 프리랜서 지원, 지원자 목록 열람 및 선발/배정, 지원 현황 관리가 정상 동작해야 함.",
-      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
+      "createdAt": "2025-06-23T11:23:01.175Z",
+      "updatedAt": "2025-06-23T11:23:01.175Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/hooks/useStaff.ts",
+          "type": "TO_MODIFY",
+          "description": "Staff 인터페이스에 신규 필드(status, assignedTableId 등)를 추가합니다."
+        },
+        {
+          "path": "app2/src/hooks/useTables.ts",
+          "type": "TO_MODIFY",
+          "description": "Table 인터페이스에 신규 필드(assignedDealerId)를 추가합니다."
+        },
+        {
+          "path": "app2/src/hooks/useWorkLogs.ts",
+          "type": "TO_MODIFY",
+          "description": "WorkLog 인터페이스에 신규 필드(clockInMethod, clockInLocation)를 추가합니다."
+        },
+        {
+          "path": "firestore.rules",
+          "type": "TO_MODIFY",
+          "description": "신규 컬렉션 및 필드에 대한 접근 제어 규칙을 추가합니다."
+        }
+      ],
+      "implementationGuide": "1. `staff`, `tables`, `workLogs` 인터페이스(TypeScript)에 각각의 새 필드를 정의합니다. \n2. `settings` 컬렉션을 위한 `Settings` 인터페이스를 정의합니다. \n3. Firestore 콘솔 또는 마이그레이션 스크립트를 사용하여 `settings/tournament_rules` 문서를 생성하고 초기값을 설정합니다. \n4. `firestore.rules`를 수정하여 인증된 TD만 `settings` 문서에 접근하고, `staff`의 `status` 필드 등을 수정할 수 있도록 규칙을 강화합니다.",
+      "verificationCriteria": "1. 모든 컬렉션의 데이터 구조가 설계대로 확장되었는지 확인. \n2. `settings/tournament_rules` 문서가 정상적으로 생성되고 읽어올 수 있는지 확인. \n3. 수정된 Firestore 보안 규칙이 의도대로 동작하는지 테스트.",
+      "analysisResult": "### 시스템 아키텍처 원칙\n- **중앙화된 비즈니스 로직:** 모든 딜러 상태 변경(배정, 휴식, 출퇴근 등)의 핵심 로직은 **Firebase Functions** 내에 `DealerService`로 구현하여 중앙에서 관리합니다. 클라이언트(React)는 이 서비스를 호출하는 역할만 수행하여 데이터 정합성을 보장하고 클라이언트의 복잡도를 낮춥니다.\n- **기존 패턴 재사용:** 신규 UI 컴포넌트 및 Hooks는 기존의 `StaffPage`, `useStaff` 등의 코드 스타일, 상태 관리(useState, useReducer), 네이밍 컨벤션을 엄격히 준수하여 프로젝트의 일관성을 유지합니다.\n- **성능 최적화:** 실시간 데이터가 표시되는 `DealerRotationPage`는 `React.memo`와 ViewModel 패턴을 적용하여 불필요한 리렌더링을 최소화합니다."
     },
     {
-      "id": "78854c5f-7db9-4c68-9ea3-a47fbaf5299f",
-      "name": "스태프 배치/로테이션 페이지 구현",
-      "description": "날짜/포지션별 근무표, 교대(오전/오후/풀타임) 관리, 자동/수동 배정, 인원 수정 UI/로직 구현. Firestore /assignments 구조 활용.",
+      "id": "4397418a-b568-47eb-a971-23549bdc4249",
+      "name": "TASK-2: `useSettings` 훅 및 GPS/QR 기반 출퇴근 기능 구현",
+      "description": "`settings` 컬렉션의 규칙을 실시간으로 읽어오는 `useSettings` 훅을 구현하고, 이를 활용하여 GPS/QR 기반 출퇴근 기능을 개발합니다. 최소 근무 시간 규칙을 적용하여 퇴근 버튼 활성화 여부를 제어합니다.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "35ba7223-6b3e-4ac5-bf99-5fb0686ad74e"
+          "taskId": "d8be599e-43bc-4dc9-8ec2-92eb0a4c1044"
         }
       ],
-      "createdAt": "2025-06-23T09:34:40.214Z",
-      "updatedAt": "2025-06-23T09:34:40.214Z",
-      "relatedFiles": [],
-      "implementationGuide": "기존 TablesPage, ParticipantsPage 등 테이블/필터/드래그 UI 패턴을 재사용 및 확장. Firestore CRUD는 신규 useAssignments 훅으로 구현.",
-      "verificationCriteria": "날짜/포지션별 근무표, 교대 관리, 자동/수동 배정, 인원 수정이 정상 동작해야 함.",
-      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
+      "createdAt": "2025-06-23T11:23:01.175Z",
+      "updatedAt": "2025-06-23T11:23:01.175Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/hooks/useSettings.ts",
+          "type": "CREATE",
+          "description": "토너먼트 규칙을 Firestore에서 읽어오는 신규 훅입니다."
+        },
+        {
+          "path": "app2/src/components/QRScannerModal.tsx",
+          "type": "CREATE",
+          "description": "QR 코드 스캔을 위한 신규 모달 컴포넌트입니다."
+        },
+        {
+          "path": "app2/src/pages/WorkLogPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "출퇴근 UI에 QR/GPS 기반 출근 기능을 추가합니다."
+        }
+      ],
+      "implementationGuide": "1. `hooks/useSettings.ts` 파일을 생성하고 `settings/tournament_rules` 문서를 실시간으로 구독하는 훅을 만듭니다. \n2. 출퇴근 UI(예: `StaffDashboard` 또는 신규 페이지)에서 `react-qr-reader`를 사용한 QR 스캐너 모달과 `navigator.geolocation`을 사용한 GPS 출첵 버튼을 구현합니다. \n3. 출근 시 `clockIn` Firebase Function을 호출하고, `workLogs` 문서 생성 및 `staff.status`를 'available'로 변경합니다. \n4. `useSettings` 훅으로 가져온 `minWorkMinutesForClockOut`과 `workLogs`의 `clockIn` 시간을 비교하여 퇴근 버튼의 활성화/비활성화 상태를 제어합니다.",
+      "verificationCriteria": "1. `useSettings` 훅이 토너먼트 규칙을 정상적으로 가져오는지 확인. \n2. QR 및 GPS 기반 출근 시 `workLogs`에 정확한 데이터(method, location 등)가 기록되는지 확인. \n3. 최소 근무 시간이 지나기 전에는 퇴근 버튼이 비활성화되는지 확인.",
+      "analysisResult": "### 시스템 아키텍처 원칙\n- **중앙화된 비즈니스 로직:** 모든 딜러 상태 변경(배정, 휴식, 출퇴근 등)의 핵심 로직은 **Firebase Functions** 내에 `DealerService`로 구현하여 중앙에서 관리합니다. 클라이언트(React)는 이 서비스를 호출하는 역할만 수행하여 데이터 정합성을 보장하고 클라이언트의 복잡도를 낮춥니다.\n- **기존 패턴 재사용:** 신규 UI 컴포넌트 및 Hooks는 기존의 `StaffPage`, `useStaff` 등의 코드 스타일, 상태 관리(useState, useReducer), 네이밍 컨벤션을 엄격히 준수하여 프로젝트의 일관성을 유지합니다.\n- **성능 최적화:** 실시간 데이터가 표시되는 `DealerRotationPage`는 `React.memo`와 ViewModel 패턴을 적용하여 불필요한 리렌더링을 최소화합니다."
     },
     {
-      "id": "b574e89a-13ff-4459-b47a-695f359a8910",
-      "name": "출퇴근 및 정산 페이지 구현",
-      "description": "출퇴근 기록, 근무시간 자동 계산, 정산 금액 표시, 관리자 승인 UI/로직 구현. Firestore /workLogs 구조 활용.",
+      "id": "1681d513-5f79-4a4a-aaf5-e3572f2b2cfa",
+      "name": "TASK-3: Firebase Functions `DealerService` 핵심 로직 개발",
+      "description": "서버리스 환경에서 딜러 관리의 핵심 로직을 수행할 Firebase Functions(`DealerService`)를 개발합니다. 자동 딜러 배정, 해제, 휴식 관리 기능을 포함합니다.",
       "status": "pending",
       "dependencies": [
         {
-          "taskId": "78854c5f-7db9-4c68-9ea3-a47fbaf5299f"
+          "taskId": "d8be599e-43bc-4dc9-8ec2-92eb0a4c1044"
         }
       ],
-      "createdAt": "2025-06-23T09:34:40.214Z",
-      "updatedAt": "2025-06-23T09:34:40.214Z",
-      "relatedFiles": [],
-      "implementationGuide": "기존 StaffPage, ParticipantsPage 등 테이블/모달/필터/상태관리 패턴을 재사용 및 확장. Firestore CRUD는 신규 useWorkLogs 훅으로 구현.",
-      "verificationCriteria": "출퇴근 기록, 근무시간 자동 계산, 정산 금액 표시, 관리자 승인 처리가 정상 동작해야 함.",
-      "analysisResult": "1. 각 기능은 독립된 React Page로 분리, Firestore 예시 데이터 구조 활용. 2. 기존 ParticipantsPage, StaffPage, TablesPage, useStaff, useParticipants 등 테이블/모달/필터/상태관리/권한 분리 등 공통 UI 및 로직을 재사용 또는 확장. 3. 데이터량이 많아질 수 있으므로 페이징, 비동기 쿼리, 인덱스 활용, 필요시 서버사이드 연동 고려. 4. 네이밍, 컴포넌트 구조, Tailwind 스타일, 상태관리(Context/Hook) 등 기존 패턴을 엄격히 준수. 5. 신규 페이지는 기존 인증/권한 관리(AuthContext), 프로젝트/참여자 관리(TournamentContext, useParticipants 등)와 자연스럽게 연동."
+      "createdAt": "2025-06-23T11:23:01.175Z",
+      "updatedAt": "2025-06-23T11:23:01.175Z",
+      "relatedFiles": [
+        {
+          "path": "functions/src/index.ts",
+          "type": "CREATE",
+          "description": "딜러 관리 핵심 로직을 담을 신규 Firebase Functions 파일입니다."
+        }
+      ],
+      "implementationGuide": "1. Firebase Functions 프로젝트를 설정합니다. \n2. `onTableStatusChange` 함수를 작성하여 테이블의 `status` 변경 시, '공정한 로테이션 알고리즘'(초기에는 근무시간 적은 순)에 따라 딜러를 자동 배정/해제합니다. \n3. `setDealerBreak` HTTPS Callable 함수를 작성하여, 호출 시 딜러 상태를 'on_break'으로 변경하고 스케줄링 함수를 사용해 지정된 시간 후 'available'로 복귀시킵니다. \n4. `assignDealerManually` 등 TD가 수동으로 호출할 함수들을 구현합니다.",
+      "verificationCriteria": "1. 새 테이블이 'open'되면 가장 적절한 딜러가 자동으로 배정되는지 확인. \n2. 테이블이 'closed'되면 해당 딜러의 상태가 'available'로 변경되는지 확인. \n3. `setDealerBreak` 호출 시 딜러 상태가 변경되고, 설정된 시간이 지나면 자동으로 복귀하는지 확인.",
+      "analysisResult": "### 시스템 아키텍처 원칙\n- **중앙화된 비즈니스 로직:** 모든 딜러 상태 변경(배정, 휴식, 출퇴근 등)의 핵심 로직은 **Firebase Functions** 내에 `DealerService`로 구현하여 중앙에서 관리합니다. 클라이언트(React)는 이 서비스를 호출하는 역할만 수행하여 데이터 정합성을 보장하고 클라이언트의 복잡도를 낮춥니다.\n- **기존 패턴 재사용:** 신규 UI 컴포넌트 및 Hooks는 기존의 `StaffPage`, `useStaff` 등의 코드 스타일, 상태 관리(useState, useReducer), 네이밍 컨벤션을 엄격히 준수하여 프로젝트의 일관성을 유지합니다.\n- **성능 최적화:** 실시간 데이터가 표시되는 `DealerRotationPage`는 `React.memo`와 ViewModel 패턴을 적용하여 불필요한 리렌더링을 최소화합니다."
+    },
+    {
+      "id": "3be543e4-bf7e-4a0a-9396-1b56648e71a2",
+      "name": "TASK-4: 실시간 딜러 로테이션 현황판 페이지(`DealerRotationPage`) 개발",
+      "description": "모든 딜러의 현재 상태(대기, 테이블, 휴식), 담당 테이블, 근무/휴식 시간을 실시간으로 보여주는 현황판 페이지를 개발합니다. TD가 이 페이지에서 딜러를 수동으로 배정할 수 있어야 합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "1681d513-5f79-4a4a-aaf5-e3572f2b2cfa"
+        }
+      ],
+      "createdAt": "2025-06-23T11:23:01.175Z",
+      "updatedAt": "2025-06-23T11:23:01.175Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/DealerRotationPage.tsx",
+          "type": "CREATE",
+          "description": "실시간 현황판을 위한 신규 페이지입니다."
+        },
+        {
+          "path": "app2/src/components/DealerStatusGrid.tsx",
+          "type": "CREATE",
+          "description": "현황판의 그리드 UI를 담당할 신규 컴포넌트입니다."
+        }
+      ],
+      "implementationGuide": "1. `pages/DealerRotationPage.tsx` 파일을 생성합니다. \n2. `useStaff` 훅을 사용하여 `role`이 'Dealer'인 모든 스태프 정보를 실시간으로 가져옵니다. \n3. `ag-grid` 또는 `react-table`을 사용하여 딜러 목록을 그리드 형태로 표시하고, 딜러의 `status`에 따라 행 스타일을 동적으로 변경합니다. \n4. 딜러 행을 드래그하여 특정 테이블에 드롭하면 `assignDealerManually` Firebase Function을 호출하여 수동 배정하는 기능을 구현합니다. \n5. ViewModel 패턴과 `React.memo`를 적용하여 성능을 최적화합니다.",
+      "verificationCriteria": "1. 딜러의 상태가 변경될 때 현황판에 즉시 반영되는지 확인. \n2. 딜러를 드래그 앤 드롭하여 테이블에 수동 배정하는 기능이 정상 동작하는지 확인. \n3. 많은 수의 딜러(예: 50명 이상)가 있어도 페이지가 원활하게 동작하는지 확인.",
+      "analysisResult": "### 시스템 아키텍처 원칙\n- **중앙화된 비즈니스 로직:** 모든 딜러 상태 변경(배정, 휴식, 출퇴근 등)의 핵심 로직은 **Firebase Functions** 내에 `DealerService`로 구현하여 중앙에서 관리합니다. 클라이언트(React)는 이 서비스를 호출하는 역할만 수행하여 데이터 정합성을 보장하고 클라이언트의 복잡도를 낮춥니다.\n- **기존 패턴 재사용:** 신규 UI 컴포넌트 및 Hooks는 기존의 `StaffPage`, `useStaff` 등의 코드 스타일, 상태 관리(useState, useReducer), 네이밍 컨벤션을 엄격히 준수하여 프로젝트의 일관성을 유지합니다.\n- **성능 최적화:** 실시간 데이터가 표시되는 `DealerRotationPage`는 `React.memo`와 ViewModel 패턴을 적용하여 불필요한 리렌더링을 최소화합니다."
+    },
+    {
+      "id": "4aea9b8c-b832-48c7-9129-bf3b0b005923",
+      "name": "TASK-5: 기존 페이지와 신규 기능 연동",
+      "description": "개발된 딜러 관리 기능을 기존 `TablesPage`와 네비게이션 메뉴에 통합합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "3be543e4-bf7e-4a0a-9396-1b56648e71a2"
+        }
+      ],
+      "createdAt": "2025-06-23T11:23:01.175Z",
+      "updatedAt": "2025-06-23T11:23:01.175Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/TablesPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "`TableCard`에 담당 딜러 이름을 표시합니다."
+        },
+        {
+          "path": "app2/src/App.tsx",
+          "type": "TO_MODIFY",
+          "description": "`DealerRotationPage`에 대한 라우팅을 추가합니다."
+        },
+        {
+          "path": "app2/src/components/Layout.tsx",
+          "type": "TO_MODIFY",
+          "description": "네비게이션 메뉴에 현황판 페이지 링크를 추가합니다."
+        }
+      ],
+      "implementationGuide": "1. `TablesPage`의 `TableCard` 컴포넌트에 `assignedDealerId`를 기반으로 담당 딜러의 이름을 표시하도록 수정합니다. \n2. 앱의 네비게이션 바(사이드바 또는 상단 메뉴)에 `DealerRotationPage`로 이동하는 링크를 추가합니다. \n3. `App.tsx` 또는 라우팅 관련 파일에 `/dealer-rotation` 경로에 대한 라우트를 설정하고 `PrivateRoute`로 감싸 TD만 접근 가능하도록 설정합니다.",
+      "verificationCriteria": "1. `TablesPage`에서 각 테이블에 배정된 딜러의 이름이 정확히 표시되는지 확인. \n2. 네비게이션 메뉴를 통해 `DealerRotationPage`로 정상적으로 이동되는지 확인. \n3. TD가 아닌 다른 역할의 사용자는 `/dealer-rotation` 페이지에 접근할 수 없는지 확인.",
+      "analysisResult": "### 시스템 아키텍처 원칙\n- **중앙화된 비즈니스 로직:** 모든 딜러 상태 변경(배정, 휴식, 출퇴근 등)의 핵심 로직은 **Firebase Functions** 내에 `DealerService`로 구현하여 중앙에서 관리합니다. 클라이언트(React)는 이 서비스를 호출하는 역할만 수행하여 데이터 정합성을 보장하고 클라이언트의 복잡도를 낮춥니다.\n- **기존 패턴 재사용:** 신규 UI 컴포넌트 및 Hooks는 기존의 `StaffPage`, `useStaff` 등의 코드 스타일, 상태 관리(useState, useReducer), 네이밍 컨벤션을 엄격히 준수하여 프로젝트의 일관성을 유지합니다.\n- **성능 최적화:** 실시간 데이터가 표시되는 `DealerRotationPage`는 `React.memo`와 ViewModel 패턴을 적용하여 불필요한 리렌더링을 최소화합니다."
     }
   ]
 }

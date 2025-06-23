@@ -3,14 +3,15 @@ import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useTables, Table } from '../hooks/useTables';
 import { useParticipants, Participant } from '../hooks/useParticipants';
-import { useStaff } from '../hooks/useStaff';
+// import { useStaff } from '../hooks/useStaff';
+import { useSettings } from '../hooks/useSettings';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import TableCard from '../components/TableCard';
 import TableDetailModal from '../components/TableDetailModal';
 import PlayerActionModal from '../components/PlayerActionModal';
 import MoveSeatModal from '../components/MoveSeatModal';
 import ParticipantDetailModal from '../components/ParticipantDetailModal';
-import { FaPlus, FaUsers, FaThList } from 'react-icons/fa';
+import { FaPlus, FaThList, FaUserPlus } from 'react-icons/fa';
 
 const TablesPage: React.FC = () => {
     const {
@@ -26,6 +27,7 @@ const TablesPage: React.FC = () => {
         autoAssignSeats,
         activateTable,
         updateTableDetails,
+        updateTableMaxSeats,
     } = useTables();
     
     const { 
@@ -36,20 +38,21 @@ const TablesPage: React.FC = () => {
     } = useParticipants();
 
     const { staff, loading: staffLoading, error: staffError } = useStaff();
+    const { settings, updateSettings, loading: settingsLoading } = useSettings();
+    
     const isMobile = useMediaQuery('(max-width: 768px)');
 
-    const [detailModalTable, setDetailModalTable] = useState<Table | null>(null);
-    const [detailModalParticipant, setDetailModalParticipant] = useState<Participant | null>(null);
+    // const { staff, loading: staffLoading, error: staffError } = useStaff();
+    const { settings, updateSettings, loading: settingsLoading } = useSettings();
     const [isMoveSeatModalOpen, setMoveSeatModalOpen] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<{ participant: Participant; table: Table; seatIndex: number } | null>(null);
     const [actionMenu, setActionMenu] = useState<{ x: number, y: number } | null>(null);
     
-    useEffect(() => {
-        if (detailModalTable) {
-            const updatedTable = tables.find((t: Table) => t.id === detailModalTable.id);
-            setDetailModalTable(updatedTable || null);
+    const handleMaxSeatsChange = (newMaxSeats: number) => {
+        if (newMaxSeats > 0) {
+            updateSettings({ maxSeatsPerTable: newMaxSeats });
         }
-    }, [tables, detailModalTable]);
+    };
 
     const handleDragEnd = (event: DragEndEvent) => {
         if (isMobile) return;
@@ -86,11 +89,12 @@ const TablesPage: React.FC = () => {
             setActionMenu({ x: event.clientX, y: event.clientY });
             setSelectedPlayer({ participant, table, seatIndex });
         }
+    const getDealerName = (dealerId: string | null): string => {
+        // if (!dealerId) return 'N/A';
+        // const d = staff.find(s => s.id === dealerId);
+        // return d ? d.name : 'Unknown';
+        return 'N/A';
     };
-    
-    const handleShowDetails = () => {
-        if (selectedPlayer?.participant) {
-            setDetailModalParticipant(selectedPlayer.participant);
         }
         handleCloseActionMenu();
     };
@@ -142,10 +146,14 @@ const TablesPage: React.FC = () => {
         }
     };
 
-    if (tablesLoading || participantsLoading || staffLoading) return <div className="p-4">Loading...</div>;
+    if (tablesLoading || participantsLoading || staffLoading || settingsLoading) return <div className="p-4">Loading...</div>;
     if (tablesError || participantsError || staffError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message || staffError?.message}</div>;
 
-    const waitingPlayers = participants.filter(p => p.status === 'active' && !tables.some(t => t.seats.includes(p.id)));
+    const totalEmptySeats = tables
+        .filter(t => t.status === 'open')
+        .reduce((sum, table) => sum + table.seats.filter(seat => seat === null).length, 0);
+    
+    const currentDetailTable = tables.find(t => t.id === detailModalTable?.id) || null;
 
     return (
         <div className="p-4 bg-gray-100 min-h-screen" onClick={handleCloseActionMenu}>
@@ -157,18 +165,34 @@ const TablesPage: React.FC = () => {
                         <button 
                             onClick={() => autoAssignSeats(participants.filter(p => p.status === 'active'))}
                             className="btn btn-secondary"
-                            disabled={tablesLoading || participantsLoading || waitingPlayers.length === 0}
+                            disabled={tablesLoading || participantsLoading}
                         >
-                            자동 자리 배정
+                            자동 재배치
                         </button>
                         <button onClick={openNewTable} className="btn btn-primary">
-                            <FaPlus className="mr-2"/>새 테이블 (대기)
+                            <FaPlus className="mr-2"/>테이블추가
                         </button>
                     </div>
                 </div>
-                <div className="flex items-center space-x-6 text-gray-600">
-                    <div className="flex items-center"><FaThList className="mr-2 text-blue-500" /> 총 테이블: <span className="font-bold ml-1">{tables.length}</span></div>
-                    <div className="flex items-center"><FaUsers className="mr-2 text-green-500" /> 대기 플레이어: <span className="font-bold ml-1">{waitingPlayers.length}</span></div>
+
+                <div className="flex justify-between items-center text-gray-600">
+                    <div className="flex items-center space-x-6">
+                        <div className="flex items-center"><FaThList className="mr-2 text-blue-500" /> 테이블: <span className="font-bold ml-1">{tables.length}</span></div>
+                        <div className="flex items-center"><FaUserPlus className="mr-2 text-green-500" /> 빈 자리: <span className="font-bold ml-1">{totalEmptySeats}</span></div>
+                    if (tablesLoading || participantsLoading || settingsLoading) return <div className="p-4">Loading...</div>;
+                    if (tablesError || participantsError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message}</div>;
+                        <label htmlFor="max-seats" className="font-semibold">최대 좌석:</label>
+                        <select
+                            id="max-seats"
+                            value={settings.maxSeatsPerTable || 9}
+                            onChange={(e) => handleMaxSeatsChange(parseInt(e.target.value, 10))}
+                            className="select select-bordered"
+                        >
+                            {Array.from({ length: 8 }, (_, i) => i + 4).map(num => (
+                                <option key={num} value={num}>{num}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -180,11 +204,8 @@ const TablesPage: React.FC = () => {
                             <TableCard
                                 key={table.id}
                                 table={table}
-                                participants={participants}
                                 onTableClick={() => setDetailModalTable(table)}
-                                onPlayerSelect={handlePlayerSelect}
                                 isMobile={isMobile}
-                                getParticipantName={getParticipantName}
                                 getDealerName={getDealerName}
                             />
                         ))}
@@ -193,18 +214,19 @@ const TablesPage: React.FC = () => {
             </DndContext>
 
             {/* Modals */}
-            {detailModalTable && (
+            {currentDetailTable && (
                 <TableDetailModal
-                    isOpen={!!detailModalTable}
+                    isOpen={!!currentDetailTable}
                     onClose={() => setDetailModalTable(null)}
-                    table={detailModalTable}
+                    table={currentDetailTable}
                     activateTable={activateTable}
                     onCloseTable={closeTable}
                     getParticipantName={getParticipantName}
                     onMoveSeat={moveSeat}
-                    onBustOut={(participantId, tableId) => bustOutParticipant(participantId)}
+                    onBustOut={(participantId) => bustOutParticipant(participantId)}
                     onPlayerSelect={onPlayerSelectInModal}
                     updateTableDetails={updateTableDetails}
+                    updateTableMaxSeats={updateTableMaxSeats}
                 />
             )}
             
@@ -213,7 +235,8 @@ const TablesPage: React.FC = () => {
                     isOpen={!!actionMenu}
                     onClose={handleCloseActionMenu}
                     position={{ top: actionMenu.y, left: actionMenu.x }}
-                    onBustOut={handleBustOut}
+                    // getDealerName={getDealerName}
+                    
                     onMoveSeat={handleOpenMoveSeatModal}
                     onShowDetails={handleShowDetails}
                 />

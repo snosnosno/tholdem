@@ -16,10 +16,11 @@ interface TableDetailModalProps {
     to: { tableId: string; seatIndex: number }
   ) => void;
   onBustOut: (participantId: string, tableId: string) => void;
-  onPlayerSelect: (participantId: string, tableId: string, seatIndex: number) => void;
+  onPlayerSelect: (participantId: string, tableId: string, seatIndex: number, event: React.MouseEvent) => void;
   updateTableDetails: (tableId: string, data: { name?: string; borderColor?: string }) => void;
   onCloseTable: (tableId: string) => void;
-  activateTable: (tableId: string) => void; // Add activateTable to props
+  activateTable: (tableId: string) => void;
+  updateTableMaxSeats: (tableId: string, newMaxSeats: number, getParticipantName: (id: string) => string) => Promise<void>;
   isDimmed?: boolean;
 }
 
@@ -37,7 +38,8 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   onPlayerSelect,
   updateTableDetails,
   onCloseTable,
-  activateTable, // Destructure from props
+  activateTable,
+  updateTableMaxSeats,
   isDimmed = false,
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
@@ -52,9 +54,19 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
 
   if (!table) return null;
 
+  const handleMaxSeatsChange = async (newMaxSeats: number) => {
+    if (table) {
+      try {
+        await updateTableMaxSeats(table.id, newMaxSeats, (id) => getParticipantName(id) || 'Unknown');
+      } catch (error) {
+        alert(error instanceof Error ? error.message : String(error));
+      }
+    }
+  };
+
   const handleNameUpdate = (e: React.FocusEvent | React.KeyboardEvent) => {
     e.stopPropagation();
-    if (tableName.trim() && tableName !== table.name) {
+    if (tableName.trim() && tableName.trim() !== table.name) {
       updateTableDetails(table.id, { name: tableName.trim() });
     }
     setIsEditingName(false);
@@ -126,7 +138,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
               ) : (
                 <h2
                   className="text-xl font-bold text-gray-800 cursor-pointer"
-                  onClick={() => setIsEditingName(true)}
+                  onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }}
                 >
                   {table.name || `Table ${table.tableNumber}`}
                 </h2>
@@ -136,6 +148,20 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                 <div className="text-sm text-gray-600 space-x-4 mr-2">
                     <span>참가자: {filledSeats}/{totalSeats}</span>
                     <span>빈 좌석: {emptySeatCount}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <label htmlFor="max-seats-modal" className="text-sm font-semibold">최대 좌석:</label>
+                    <select
+                        id="max-seats-modal"
+                        value={totalSeats}
+                        onChange={(e) => handleMaxSeatsChange(parseInt(e.target.value, 10))}
+                        className="select select-bordered select-sm"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {Array.from({ length: 8 }, (_, i) => i + 4).map(num => (
+                            <option key={num} value={num}>{num}</option>
+                        ))}
+                    </select>
                 </div>
                 {table.status === 'standby' && (
                   <button
@@ -156,7 +182,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
 
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 text-center">
             {(table.seats || []).map((participantId, i) => (
-              <div key={i} onClick={() => participantId && onPlayerSelect(participantId, table.id, i)}>
+              <div key={i} onClick={(e) => participantId && onPlayerSelect(participantId, table.id, i, e)}>
                 <Seat
                   table={table}
                   seatIndex={i}

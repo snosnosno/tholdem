@@ -100,7 +100,8 @@ service cloud.firestore {
     
     // Legacy rules for compatibility
     match /tournaments/{any} {
-      allow read, write: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
     match /notices/{any} {
       allow read: if true;

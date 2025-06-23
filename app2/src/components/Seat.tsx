@@ -29,28 +29,37 @@ export const Seat: React.FC<SeatProps> = ({ table, seatIndex, participantId, get
     }),
   }), [participantId, table.id, seatIndex]);
 
-  const [{ isOver }, drop] = useDrop(() => ({
+  const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: ItemTypes.SEAT,
     drop: (item: { participantId: string; from: { tableId: string; seatIndex: number } }) => {
       if (item.participantId) {
         onMoveSeat(item.participantId, item.from, { tableId: table.id, seatIndex });
       }
     },
+    canDrop: () => !participantId, // Crucial fix: Can only drop on an empty seat.
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
+      canDrop: !!monitor.canDrop(),
     }),
-  }), [table.id, seatIndex, onMoveSeat]);
+  }), [table.id, seatIndex, onMoveSeat, participantId]);
 
   const participantName = getParticipantName(participantId);
+  
+  const getBackgroundColor = () => {
+    if (isOver && canDrop) {
+      return 'bg-green-200'; // Highlight drop target
+    }
+    if (participantId) {
+      return 'bg-blue-100 text-blue-800 cursor-pointer';
+    }
+    return 'bg-gray-200 border-2 border-dashed border-gray-400';
+  }
 
   return (
     <div
       ref={(node) => drag(drop(node))}
       style={{ opacity: isDragging ? 0.5 : 1 }}
-      className={`relative p-2 rounded-md h-16 flex flex-col justify-center items-center text-xs group 
-        ${participantId ? 'bg-blue-100 text-blue-800 cursor-pointer' : 'bg-gray-200 border-2 border-dashed border-gray-400'}
-        ${isOver ? 'ring-2 ring-yellow-400' : ''}
-      `}
+      className={`relative p-2 rounded-md h-16 flex flex-col justify-center items-center text-xs group ${getBackgroundColor()}`}
     >
       <span className="font-bold text-sm mb-1">{seatIndex + 1}</span>
       <span className="font-semibold">{participantName}</span>

@@ -11,16 +11,12 @@ import ParticipantsPage from './pages/ParticipantsPage';
 import TablesPage from './pages/TablesPage';
 import BlindsPage from './pages/BlindsPage';
 import PrizesPage from './pages/PrizesPage';
-import StaffPage from './pages/StaffPage';
-import AnnouncementsPage from './pages/AnnouncementsPage';
-import HistoryPage from './pages/HistoryPage';
-import HistoryDetailPage from './pages/HistoryDetailPage';
-import StaffRecruitPage from './pages/StaffRecruitPage';
-import StaffAssignmentPage from './pages/StaffAssignmentPage';
-import AttendancePayrollPage from './pages/AttendancePayrollPage';
-import DealerRotationPage from './pages/DealerRotationPage';
-import WorkLogPage from './pages/WorkLogPage'; // Added WorkLogPage import
-
+// import StaffPage from './pages/StaffPage';
+// import StaffRecruitPage from './pages/StaffRecruitPage';
+// import StaffAssignmentPage from './pages/StaffAssignmentPage';
+// import AttendancePayrollPage from './pages/AttendancePayrollPage';
+// import DealerRotationPage from './pages/DealerRotationPage';
+// import WorkLogPage from './pages/WorkLogPage'; // Added WorkLogPage import
 function App() {
   return (
     <AuthProvider>
@@ -41,13 +37,13 @@ function App() {
                 <Route path="history/:logId" element={<HistoryDetailPage />} />
 
                 {/* Staff Routes */}
-                <Route path="staff" element={<StaffPage />} />
-                <Route path="staff-recruit" element={<StaffRecruitPage />} />
-                <Route path="staff-assignment" element={<StaffAssignmentPage />} />
-                <Route path="dealer-rotation" element={<DealerRotationPage />} />
-                <Route path="work-log" element={<WorkLogPage />} />
-                <Route path="attendance-payroll" element={<AttendancePayrollPage />} />
-
+                {/* Staff Routes - Temporarily disabled */}
+                {/* <Route path="staff" element={<StaffPage />} /> */}
+                {/* <Route path="staff-recruit" element={<StaffRecruitPage />} /> */}
+                {/* <Route path="staff-assignment" element={<StaffAssignmentPage />} /> */}
+                {/* <Route path="dealer-rotation" element={<DealerRotationPage />} /> */}
+                {/* <Route path="work-log" element={<WorkLogPage />} /> */}
+                {/* <Route path="attendance-payroll" element={<AttendancePayrollPage />} /> */}
               </Route>
             </Route>
           </Routes>
