@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, runTransaction, DocumentData, QueryDocumentSnapshot, getDocs, writeBatch, addDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { Participant } from './useParticipants';
 import { logAction } from './useLogger';
+
 export interface Table {
   id: string;
   name: string;
   tableNumber: number;
-  seats: (string | null)[]; // participant.id 또는 null
+  seats: (string | null)[];
   status?: 'open' | 'closed' | 'standby';
   borderColor?: string;
   position?: { x: number; y: number };
@@ -24,7 +25,6 @@ export interface BalancingResult {
 
 const tablesCollection = collection(db, 'tables');
 
-// Fisher-Yates shuffle algorithm
 const shuffleArray = <T>(array: T[]): T[] => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -68,23 +68,8 @@ export const useTables = () => {
         unsubscribeTables();
     };
   }, []);
-
-  const updateMaxSeatsSetting = async (newMaxSeats: number) => {
-    if (newMaxSeats < 5 || newMaxSeats > 10) {
-        console.error("Max seats must be between 5 and 10.");
-        return;
-    }
-    const settingsDocRef = doc(db, 'tournaments', 'settings');
-    try {
-        await setDoc(settingsDocRef, { maxSeatsPerTable: newMaxSeats }, { merge: true });
-        logAction('max_seats_updated', { newMaxSeats });
-    } catch (e) {
-        console.error("Error updating max seats setting:", e);
-        setError(e as Error);
-    }
-  };
   
-  const updateTableDetails = async (tableId: string, data: { name?: string; borderColor?: string }) => {
+  const updateTableDetails = useCallback(async (tableId: string, data: { name?: string; borderColor?: string }) => {
     const tableRef = doc(db, 'tables', tableId);
     try {
       await updateDoc(tableRef, data);
@@ -94,9 +79,9 @@ export const useTables = () => {
       setError(e as Error);
       throw e;
     }
-  };
+  }, []);
 
-  const updateTablePosition = async (tableId: string, position: { x: number; y: number }) => {
+  const updateTablePosition = useCallback(async (tableId: string, position: { x: number; y: number }) => {
     const tableRef = doc(db, 'tables', tableId);
     try {
       await updateDoc(tableRef, { position });
@@ -105,9 +90,30 @@ export const useTables = () => {
       setError(e as Error);
       throw e;
     }
-  };
+  }, []);
 
-  const activateTable = async (tableId: string) => {
+  const openNewTable = useCallback(async () => {
+    setLoading(true);
+    try {
+      const maxTableNumber = tables.reduce((max, table) => Math.max(max, table.tableNumber), 0);
+      const newTable = {
+        name: `T${maxTableNumber + 1}`,
+        tableNumber: maxTableNumber + 1,
+        seats: Array(maxSeatsSetting).fill(null),
+        status: 'standby' as const,
+        position: { x: 10, y: 10 + (tables.length * 40) },
+      };
+      const docRef = await addDoc(tablesCollection, newTable);
+      logAction('table_created_standby', { tableId: docRef.id, tableNumber: newTable.tableNumber, maxSeats: maxSeatsSetting });
+    } catch (e) {
+      console.error("Error opening new table:", e);
+      setError(e as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tables, maxSeatsSetting]);
+
+  const activateTable = useCallback(async (tableId: string) => {
     const tableRef = doc(db, 'tables', tableId);
     try {
       await updateDoc(tableRef, { status: 'open' });
@@ -117,29 +123,9 @@ export const useTables = () => {
       setError(e as Error);
       throw e;
     }
-  };
-
-  const openNewTable = async () => {
-    setLoading(true);
-    try {
-      const maxTableNumber = tables.reduce((max, table) => Math.max(max, table.tableNumber), 0);
-      const newTable = {
-        name: `T${maxTableNumber + 1}`,
-        tableNumber: maxTableNumber + 1,
-        seats: Array(maxSeatsSetting).fill(null),
-        status: 'standby',
-        position: { x: 10, y: 10 + (tables.length * 40) },
-      };
-      const docRef = await addDoc(tablesCollection, newTable);
-      logAction('table_created_standby', { tableId: docRef.id, tableNumber: newTable.tableNumber, maxSeats: maxSeatsSetting });
-    } catch (e)      console.error("Error opening new table:", e);
-      setError(e as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const closeTable = async (tableIdToClose: string): Promise<BalancingResult[]> => {
+  }, []);
+  
+  const closeTable = useCallback(async (tableIdToClose: string): Promise<BalancingResult[]> => {
     setLoading(true);
     try {
       const balancingResult: BalancingResult[] = [];
@@ -230,9 +216,9 @@ export const useTables = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [maxSeatsSetting]);
   
-  const autoAssignSeats = async (participants: Participant[]) => {
+  const autoAssignSeats = useCallback(async (participants: Participant[]) => {
     if (participants.length === 0) {
         alert("배정할 참가자가 없습니다.");
         return;
@@ -300,9 +286,9 @@ export const useTables = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [maxSeatsSetting]);
 
-  const moveSeat = async (
+  const moveSeat = useCallback(async (
     participantId: string,
     from: { tableId: string; seatIndex: number },
     to: { tableId: string; seatIndex: number }
@@ -344,9 +330,9 @@ export const useTables = () => {
         console.error("좌석 이동 중 오류 발생:", e);
         setError(e as Error);
     }
-  };
+  }, []);
 
-  const bustOutParticipant = async (participantId: string) => {
+  const bustOutParticipant = useCallback(async (participantId: string) => {
     try {
       await runTransaction(db, async (transaction) => {
         const participantRef = doc(db, 'participants', participantId);
@@ -364,7 +350,9 @@ export const useTables = () => {
       console.error("탈락 처리 중 오류 발생:", e);
       setError(e as Error);
     }
-  };
+  }, [tables]);
 
-  return { tables, setTables, loading, error, maxSeatsSetting, updateMaxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition };
+  return { tables, setTables, loading, error, maxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition };
 };
+
+export default useTables;

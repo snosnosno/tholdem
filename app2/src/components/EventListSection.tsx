@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEvents, Event } from '../hooks/useEvents';
-import { useStaffApplications } from '../hooks/useStaffApplications';
+import { useStaffApplications, StaffApplication } from '../hooks/useStaffApplications';
 import Modal from './Modal';
 import ApplicationListSection from './ApplicationListSection';
 
@@ -56,7 +56,7 @@ const EventListSection: React.FC = () => {
 
   // 이벤트별 지원자 수 계산
   const getApplicationCount = (eventId: string) =>
-    applications.filter(app => app.eventId === eventId).length;
+    applications.filter((app: StaffApplication) => app.eventId === eventId).length;
 
   // 지원 현황 모달 열기
   const handleOpenAppModal = (eventId: string) => {
@@ -95,11 +95,11 @@ const EventListSection: React.FC = () => {
           </thead>
           <tbody>
             {events
-              .filter(ev =>
+              .filter((ev: Event) =>
                 ev.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 ev.location.toLowerCase().includes(searchTerm.toLowerCase())
               )
-              .map(ev => (
+              .map((ev: Event) => (
                 <tr key={ev.id} className="hover:bg-blue-50 transition">
                   <td className="px-4 py-2 font-semibold text-blue-900 whitespace-nowrap">{ev.title}</td>
                   <td className="px-4 py-2 whitespace-nowrap">{ev.location}</td>
@@ -136,6 +136,7 @@ const EventListSection: React.FC = () => {
               <input name="endDate" type="date" value={form.endDate} onChange={handleChange} className="input-field w-full" required />
             </div>
           </div>
+          {/* Staffing needs UI can be added here later */}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">취소</button>
             <button type="submit" className="btn btn-primary">{editingEvent ? '수정' : '생성'}</button>
