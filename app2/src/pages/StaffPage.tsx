@@ -1,24 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import { useStaff, Staff } from '../hooks/useStaff';
-import { FaEdit, FaTrash, FaSave, FaPlus, FaCamera } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaCamera, FaQrcode, FaClock } from 'react-icons/fa';
 import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import Modal from '../components/Modal';
 import { useSettings } from '../hooks/useSettings';
 import QRScannerModal from '../components/QRScannerModal';
-import { FaQrcode, FaClock } from 'react-icons/fa';
 
-// 폼 필드의 타입을 정의합니다.
 interface FormField {
-  id: string; // Keep it simple as string
+  id: string;
   label: string;
   type: 'text' | 'select' | 'file';
-  options?: string[]; // 'select' 타입일 경우 사용
+  options?: string[];
   required: boolean;
 }
 
 const StaffPage: React.FC = () => {
-  // 폼 필드를 상태로 관리합니다.
   const [formFields, setFormFields] = useState<FormField[]>([
     { id: 'profileImageUrl', label: '프로필 사진', type: 'file', required: false },
     { id: 'name', label: '이름', type: 'text', required: true },
@@ -31,10 +29,10 @@ const StaffPage: React.FC = () => {
   
   const { staff, loading, error, addStaff, updateStaff, deleteStaff } = useStaff();
   
-    const { settings } = useSettings();
-    const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-    const [qrScanAction, setQrScanAction] = useState<'clock-in' | 'clock-out' | null>(null);
-    const [selectedStaffForQR, setSelectedStaffForQR] = useState<Staff | null>(null);
+  const { settings } = useSettings();
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [qrScanAction, setQrScanAction] = useState<'clock-in' | 'clock-out' | null>(null);
+  const [selectedStaffForQR, setSelectedStaffForQR] = useState<Staff | null>(null);
   
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,21 +58,16 @@ const StaffPage: React.FC = () => {
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-
     for (const field of formFields) {
       if (field.required && !newStaffData[field.id]) {
         alert(`'${field.label}'은(는) 필수 항목입니다.`);
         return;
       }
     }
-
     setUploading(true);
-
     try {
       const dataToSave: Record<string, any> = { ...newStaffData };
-      
       const fileFields = formFields.filter(f => f.type === 'file');
-      
       for (const field of fileFields) {
         const file = dataToSave[field.id];
         if (file instanceof File) {
@@ -84,9 +77,7 @@ const StaffPage: React.FC = () => {
           dataToSave[field.id] = downloadURL;
         }
       }
-
       await addStaff(dataToSave as Omit<Staff, 'id'>);
-
       setNewStaffData({});
       setIsModalOpen(false);
     } catch (err) {
@@ -104,14 +95,12 @@ const StaffPage: React.FC = () => {
 
   const handleUpdate = async () => {
     if (!editingStaff || !editingStaffData) return;
-
     for (const field of formFields) {
       if (field.required && !editingStaffData[field.id]) {
         alert(`'${field.label}'은(는) 필수 항목입니다.`);
         return;
       }
     }
-
     try {
       await updateStaff(editingStaff.id, editingStaffData as Partial<Staff>);
       setIsEditModalOpen(false);
@@ -137,7 +126,7 @@ const StaffPage: React.FC = () => {
       .filter(s => (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
       .filter(s => roleFilter === 'All' || s.role === roleFilter);
   }, [uniqueStaff, searchTerm, roleFilter]);
-  
+
   const handleQRScan = async (data: string | null) => {
     if (data && selectedStaffForQR) {
       if (settings.qrClockInEnabled && data === settings.qrCodeValue) {
@@ -151,21 +140,19 @@ const StaffPage: React.FC = () => {
       setQrScanAction(null);
     }
   };
-  
+
   const openQRScanner = (staffMember: Staff, action: 'clock-in' | 'clock-out') => {
     setSelectedStaffForQR(staffMember);
     setQrScanAction(action);
     setIsQRScannerOpen(true);
   };
-  
 
   if (loading) return <div className="p-4">로딩 중...</div>;
   if (error) return <div className="p-4 text-red-500">오류: {error.message}</div>;
 
-    return (
+  return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">직원 관리</h1>
-
       <div className="mb-6 p-4 bg-white rounded-lg shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-4">
           <input
@@ -241,7 +228,6 @@ const StaffPage: React.FC = () => {
                 )}
               </div>
             ))}
-            
             <div className="md:col-span-2 flex justify-end">
               <button
                 type="submit"
@@ -300,7 +286,7 @@ const StaffPage: React.FC = () => {
         onScan={handleQRScan}
         onError={(error) => alert(`QR 스캔 오류: ${error.message}`)}
       />
-      
+
       <div className="bg-white rounded-lg shadow-md overflow-x-auto">
         <table className="w-full table-auto min-w-max">
           <thead className="bg-gray-100">
@@ -377,15 +363,8 @@ const StaffPage: React.FC = () => {
           </tbody>
         </table>
       </div>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
-    );
+  );
 };
 
 export default StaffPage;

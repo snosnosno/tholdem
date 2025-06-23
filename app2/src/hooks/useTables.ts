@@ -92,6 +92,22 @@ export const useTables = () => {
     }
   }, []);
 
+  const updateTableOrder = useCallback(async (tables: Table[]) => {
+    const batch = writeBatch(db);
+    tables.forEach((table, index) => {
+        const tableRef = doc(db, 'tables', table.id);
+        batch.update(tableRef, { tableNumber: index });
+    });
+    try {
+        await batch.commit();
+        logAction('table_order_updated', { tableCount: tables.length });
+    } catch (e) {
+        console.error("Error updating table order:", e);
+        setError(e as Error);
+        throw e;
+    }
+  }, []);
+
   const openNewTable = useCallback(async () => {
     setLoading(true);
     try {
@@ -297,40 +313,63 @@ export const useTables = () => {
 
     try {
         await runTransaction(db, async (transaction) => {
-            const fromTableRef = doc(db, 'tables', from.tableId);
-            const toTableRef = doc(db, 'tables', to.tableId);
+            if (from.tableId === to.tableId) {
+                // Same table move
+                const tableRef = doc(db, 'tables', from.tableId);
+                const tableSnap = await transaction.get(tableRef);
+                if (!tableSnap.exists()) throw new Error("Table not found.");
+                
+                const seats = [...tableSnap.data().seats];
+                if (seats[to.seatIndex] !== null) {
+                  // This case should be prevented by UI (canDrop in Seat.tsx)
+                  // but as a safeguard:
+                  throw new Error("Target seat is already occupied.");
+                }
+                
+                seats[to.seatIndex] = participantId;
+                seats[from.seatIndex] = null;
+                
+                transaction.update(tableRef, { seats });
 
-            const [fromTableSnap, toTableSnap] = await Promise.all([
-                transaction.get(fromTableRef),
-                transaction.get(toTableRef)
-            ]);
-
-            if (!fromTableSnap.exists() || !toTableSnap.exists()) {
-                throw new Error("테이블 정보를 찾을 수 없습니다.");
-            }
-            
-            const fromSeats = [...fromTableSnap.data().seats];
-            const toSeats = from.tableId === to.tableId ? fromSeats : [...toTableSnap.data().seats];
-            
-            if (toSeats[to.seatIndex] !== null) {
-              const otherParticipantId = toSeats[to.seatIndex];
-              fromSeats[from.seatIndex] = otherParticipantId;
-              toSeats[to.seatIndex] = participantId;
             } else {
-              fromSeats[from.seatIndex] = null;
-              toSeats[to.seatIndex] = participantId;
-            }
+                // Different table move
+                const fromTableRef = doc(db, 'tables', from.tableId);
+                const toTableRef = doc(db, 'tables', to.tableId);
 
-            transaction.update(fromTableRef, { seats: fromSeats });
-            if (from.tableId !== to.tableId) {
+                const [fromTableSnap, toTableSnap] = await Promise.all([
+                    transaction.get(fromTableRef),
+                    transaction.get(toTableRef)
+                ]);
+
+                if (!fromTableSnap.exists() || !toTableSnap.exists()) {
+                    throw new Error("Table information could not be found.");
+                }
+                
+                const fromSeats = [...fromTableSnap.data().seats];
+                const toSeats = [...toTableSnap.data().seats];
+
+                if (toSeats[to.seatIndex] !== null) {
+                  // This case should be prevented by UI (canDrop in Seat.tsx)
+                  throw new Error("Target seat is already occupied.");
+                }
+
+                fromSeats[from.seatIndex] = null;
+                toSeats[to.seatIndex] = participantId;
+                
+                transaction.update(fromTableRef, { seats: fromSeats });
                 transaction.update(toTableRef, { seats: toSeats });
             }
         });
+        const fromTable = tables.find(t=>t.id === from.tableId);
+        const toTable = tables.find(t=>t.id === to.tableId);
+        logAction('seat_moved', { participantId, from: `${fromTable?.tableNumber}-${from.seatIndex+1}`, to: `${toTable?.tableNumber}-${to.seatIndex+1}` });
+
     } catch (e) {
-        console.error("좌석 이동 중 오류 발생:", e);
+        console.error("An error occurred while moving the seat:", e);
         setError(e as Error);
+        throw e;
     }
-  }, []);
+  }, [tables]);
 
   const bustOutParticipant = useCallback(async (participantId: string) => {
     try {
@@ -352,7 +391,7 @@ export const useTables = () => {
     }
   }, [tables]);
 
-  return { tables, setTables, loading, error, maxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition };
+  return { tables, setTables, loading, error, maxSeatsSetting, updateTableDetails, openNewTable, activateTable, closeTable, autoAssignSeats, moveSeat, bustOutParticipant, updateTablePosition, updateTableOrder };
 };
 
 export default useTables;

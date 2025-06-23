@@ -95,7 +95,7 @@ const DealerRotationPage: React.FC = () => {
                 className={`p-3 rounded-md cursor-pointer ${selectedTable === table.id ? 'bg-blue-200 ring-2 ring-blue-500' : 'bg-blue-50'}`}
                 onClick={() => setSelectedTable(table.id)}
               >
-                <span className="font-medium">테이블 {table.number}</span>
+                <span className="font-medium">테이블 {table.tableNumber}</span>
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ const DealerRotationPage: React.FC = () => {
               <div key={dealer.id} className="p-4 border rounded-lg bg-gray-50 text-center">
                 <p className="font-bold text-lg">{dealer.name}</p>
                 <p className="text-sm text-gray-600">
-                  {assignedTable ? `테이블 ${assignedTable.number}` : '배정 정보 없음'}
+                  {assignedTable ? `테이블 ${assignedTable.tableNumber}` : '배정 정보 없음'}
                 </p>
               </div>
             );
