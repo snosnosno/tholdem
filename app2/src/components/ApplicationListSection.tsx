@@ -25,6 +25,7 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
           <thead className="bg-gray-100">
             <tr>
               <th className="px-2 py-1">이름</th>
+              <th className="px-2 py-1">연락처</th>
               <th className="px-2 py-1">역할</th>
               <th className="px-2 py-1">날짜</th>
               <th className="px-2 py-1">상태</th>
@@ -34,7 +35,8 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
           <tbody>
             {applications.map(app => (
               <tr key={app.id} className="hover:bg-blue-50">
-                                <td className="px-2 py-1">{getStaffName(app.staffId)}</td>
+                <td className="px-2 py-1">{getStaffName(app.staffId)}</td>
+                <td className="px-2 py-1">{(staff.find(st => st.id === app.staffId)?.contact) || '-'}</td>
                 <td className="px-2 py-1">{app.role}</td>
                 <td className="px-2 py-1">{app.date}</td>
                 <td className="px-2 py-1 font-bold">
