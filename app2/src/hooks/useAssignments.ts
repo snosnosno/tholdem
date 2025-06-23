@@ -1,3 +1,4 @@
+import { Query, CollectionReference } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import db from '../firebase';
 import {
@@ -20,7 +21,7 @@ export const useAssignments = (filter?: Partial<Assignment>) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let q = assignmentsCollection;
+        let q: Query<DocumentData> | CollectionReference<DocumentData> = assignmentsCollection;
     if (filter) {
       const filterKeys = Object.keys(filter) as (keyof Assignment)[];
       if (filterKeys.length > 0) {

@@ -17,7 +17,7 @@ const StaffAssignmentPage: React.FC = () => {
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState(null);
+    const [editingAssignment, setEditingAssignment] = useState<import('../hooks/useAssignments').Assignment | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
