@@ -6,17 +6,21 @@ import { FaUsers, FaBriefcase, FaFileSignature, FaCalendarCheck } from 'react-ic
 
 const StaffingDashboardPage = () => {
   const { isAdmin } = useAuth();
+
+  const applicationQueryOptions = useMemo(() => ({
+    orderBy: [['createdAt', 'desc']] as [string, 'asc' | 'desc'][],
+    limit: 5
+  }), []);
+
+  const scheduleQueryOptions = useMemo(() => ({
+    orderBy: [['createdAt', 'desc']] as [string, 'asc' | 'desc'][],
+    limit: 5
+  }), []);
   
   const { documents: staffProfiles, loading: loadingStaff } = useCollection('staffProfiles');
   const { documents: jobPostings, loading: loadingJobs } = useCollection('jobPostings');
-  const { documents: applications, loading: loadingApps } = useCollection('applications', {
-    orderBy: [['createdAt', 'desc']],
-    limit: 5
-  });
-  const { documents: schedules, loading: loadingSchedules } = useCollection('schedules', {
-    orderBy: [['createdAt', 'desc']],
-    limit: 5
-  });
+  const { documents: applications, loading: loadingApps } = useCollection('applications', applicationQueryOptions);
+  const { documents: schedules, loading: loadingSchedules } = useCollection('schedules', scheduleQueryOptions);
 
   const metrics = useMemo(() => {
     if (!staffProfiles || !jobPostings) return null;
