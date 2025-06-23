@@ -3,8 +3,8 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { IconType } from 'react-icons';
 import { 
     FaTachometerAlt, FaUsers, FaTable, FaClock, 
-    FaTrophy, FaUserTie, FaBullhorn, FaHistory,
-    FaChevronLeft, FaChevronRight, FaUserShield, FaUserPlus, FaFileInvoiceDollar, FaRandom
+    FaTrophy, FaUserTie, FaBullhorn, FaHistory, FaUserCircle, FaUserShield, FaFileInvoice, FaClipboardList, FaQrcode,
+    FaChevronLeft, FaChevronRight, FaCalendarAlt
 } from 'react-icons/fa';
 
 interface NavItemProps {
@@ -29,6 +29,9 @@ const NavItem = ({ to, label, Icon, isOpen }: NavItemProps) => {
 export const Layout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
+  // TODO: Add role-based access control for menu items
+  // const { isAdmin } = useAuth(); 
+
   return (
     <div className="flex h-screen bg-gray-100 text-gray-800 font-sans">
       <aside className={`bg-white shadow-lg flex flex-col transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
@@ -47,22 +50,24 @@ export const Layout = () => {
         </div>
         <nav className="mt-5 flex-1 px-2 space-y-2">
             <NavItem to="/" label="Dashboard" Icon={FaTachometerAlt} isOpen={isSidebarOpen} />
+            <NavItem to="/jobs" label="Job Board" Icon={FaClipboardList} isOpen={isSidebarOpen} />
+            <NavItem to="/profile" label="My Profile" Icon={FaUserCircle} isOpen={isSidebarOpen} />
+            <NavItem to="/available-times" label="My Availability" Icon={FaCalendarAlt} isOpen={isSidebarOpen} />
+            <NavItem to="/attendance" label="Attendance" Icon={FaQrcode} isOpen={isSidebarOpen} />
+            <hr className="my-2 border-t border-gray-200" />
+            
+            {/* Admin Menu */}
+            <div className="px-2 pt-2">
+                <p className={`text-xs font-semibold text-gray-500 uppercase transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>Admin</p>
+            </div>
+            <NavItem to="/staff-management" label="Staff Management" Icon={FaUserShield} isOpen={isSidebarOpen} />
+            <NavItem to="/job-postings" label="Manage Postings" Icon={FaFileInvoice} isOpen={isSidebarOpen} />
             <NavItem to="/participants" label="Participants" Icon={FaUsers} isOpen={isSidebarOpen} />
             <NavItem to="/tables" label="Tables" Icon={FaTable} isOpen={isSidebarOpen} />
             <NavItem to="/blinds" label="Blinds" Icon={FaClock} isOpen={isSidebarOpen} />
             <NavItem to="/prizes" label="Prizes" Icon={FaTrophy} isOpen={isSidebarOpen} />
             <NavItem to="/announcements" label="Announcements" Icon={FaBullhorn} isOpen={isSidebarOpen} />
             <NavItem to="/history" label="History" Icon={FaHistory} isOpen={isSidebarOpen} />
-            {/* 
-            <NavItem to="/staff" label="Staff" Icon={FaUserShield} isOpen={isSidebarOpen} />
-            <div className="pl-4 border-l-2 border-gray-200 ml-4 my-1 space-y-1">
-              <NavItem to="/staff-recruit" label="Recruitment" Icon={FaUserPlus} isOpen={isSidebarOpen} />
-              <NavItem to="/staff-assignment" label="Assignment" Icon={FaUserTie} isOpen={isSidebarOpen} />
-              <NavItem to="/dealer-rotation" label="Rotation" Icon={FaRandom} isOpen={isSidebarOpen} />
-              <NavItem to="/work-log" label="Clock In/Out" Icon={FaClock} isOpen={isSidebarOpen} />
-              <NavItem to="/attendance-payroll" label="Payroll" Icon={FaFileInvoiceDollar} isOpen={isSidebarOpen} />
-            </div>
-            */}
         </nav>
       </aside>
       <main className="flex-1 p-8 overflow-y-auto bg-gray-100">

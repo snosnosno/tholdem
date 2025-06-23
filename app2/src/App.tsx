@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { TournamentProvider } from './contexts/TournamentContext';
-import { Layout } from './components/Layout'; // Changed to named import
+import { Layout } from './components/Layout';
 import AdminLogin from './pages/AdminLogin';
 import ParticipantLivePage from './pages/ParticipantLivePage';
 import PrivateRoute from './components/PrivateRoute';
@@ -15,12 +15,13 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import HistoryPage from './pages/HistoryPage';
 import HistoryDetailPage from './pages/HistoryDetailPage';
 import DealerRotationPage from './pages/DealerRotationPage';
+import ProfilePage from './pages/ProfilePage';
+import StaffListPage from './pages/StaffListPage';
+import JobPostingAdminPage from './pages/JobPostingAdminPage';
+import JobBoardPage from './pages/JobBoardPage';
+import AttendancePage from './pages/AttendancePage';
+import AvailableTimesPage from './pages/AvailableTimesPage';
 
-// import StaffRecruitPage from './pages/StaffRecruitPage';
-// import StaffAssignmentPage from './pages/StaffAssignmentPage';
-// import AttendancePayrollPage from './pages/AttendancePayrollPage';
-// import DealerRotationPage from './pages/DealerRotationPage';
-// import WorkLogPage from './pages/WorkLogPage'; // Added WorkLogPage import
 function App() {
   return (
     <AuthProvider>
@@ -39,15 +40,14 @@ function App() {
                 <Route path="announcements" element={<AnnouncementsPage />} />
                 <Route path="history" element={<HistoryPage />} />
                 <Route path="history/:logId" element={<HistoryDetailPage />} />
-
-                {/* Staff Routes */}
-                {/* Staff Routes - Temporarily disabled */}
-                {/* <Route path="staff" element={<StaffPage />} /> */}
-                {/* <Route path="staff-recruit" element={<StaffRecruitPage />} /> */}
-                {/* <Route path="staff-assignment" element={<StaffAssignmentPage />} /> */}
-                {/* <Route path="dealer-rotation" element={<DealerRotationPage />} /> */}
-                {/* <Route path="work-log" element={<WorkLogPage />} /> */}
-                {/* <Route path="dealer-rotation" element={<DealerRotationPage />} /> */}
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="jobs" element={<JobBoardPage />} />
+                <Route path="attendance" element={<AttendancePage />} />
+                <Route path="available-times" element={<AvailableTimesPage />} />
+                {/* Admin-only routes could be grouped here in the future */}
+                <Route path="dealer-rotation" element={<DealerRotationPage />} />
+                <Route path="staff-management" element={<StaffListPage />} /> 
+                <Route path="job-postings" element={<JobPostingAdminPage />} /> 
               </Route>
             </Route>
           </Routes>
