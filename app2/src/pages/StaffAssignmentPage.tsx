@@ -5,27 +5,9 @@ import Modal from '../components/Modal';
 
 const shifts = [
   { value: 'morning', label: '오전' },
-  const handleAutoAssign = async () => {
-    // 오늘 날짜, 각 교대별로 포지션에 중복 없이 순환 배정
-    const today = new Date().toISOString().slice(0, 10);
-    const positions = ['TD', 'Dealer', 'Floor'];
-    const shiftsArr = ['morning', 'afternoon', 'full'];
-    let availableStaff = [...staff];
-    for (const shift of shiftsArr) {
-      let staffPool = [...availableStaff];
-      for (const pos of positions) {
-        // 이미 해당 날짜/교대/포지션에 배정된 스태프 제외
-        const assigned = assignments.find(a => a.date === today && a.shift === shift && a.position === pos);
-        if (assigned) continue;
-        if (staffPool.length === 0) staffPool = [...availableStaff];
-        const idx = Math.floor(Math.random() * staffPool.length);
-        const s = staffPool.splice(idx, 1)[0];
-        await addAssignment({ date: today, shift, position: pos, staffId: s.id });
-      }
-    }
-  };
-  }
-};
+  { value: 'afternoon', label: '오후' },
+  { value: 'full', label: '풀타임' },
+];
 
 const StaffAssignmentPage: React.FC = () => {
   const { assignments, loading, error, addAssignment, updateAssignment, deleteAssignment } = useAssignments();
@@ -35,7 +17,25 @@ const StaffAssignmentPage: React.FC = () => {
   const [selectedPosition, setSelectedPosition] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-    const [editingAssignment, setEditingAssignment] = useState<import('../hooks/useAssignments').Assignment | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<import('../hooks/useAssignments').Assignment | null>(null);
+
+  const handleAutoAssign = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const positions = ['TD', 'Dealer', 'Floor'];
+    const shiftsArr = ['morning', 'afternoon', 'full'];
+    let availableStaff = [...staff];
+    for (const shift of shiftsArr) {
+      let staffPool = [...availableStaff];
+      for (const pos of positions) {
+        const assigned = assignments.find(a => a.date === today && a.shift === shift && a.position === pos);
+        if (assigned) continue;
+        if (staffPool.length === 0) staffPool = [...availableStaff];
+        const idx = Math.floor(Math.random() * staffPool.length);
+        const s = staffPool.splice(idx, 1)[0];
+        await addAssignment({ date: today, shift, position: pos, staffId: s.id });
+      }
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +43,7 @@ const StaffAssignmentPage: React.FC = () => {
       date: selectedDate,
       shift: selectedShift as any,
       position: selectedPosition,
-      <button onClick={handleAutoAssign} className="btn btn-info mb-4 ml-2">자동 배정</button>
+      staffId: selectedStaffId,
     });
     setModalOpen(false);
   };
@@ -80,6 +80,7 @@ const StaffAssignmentPage: React.FC = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">스태프 배치/로테이션</h1>
       <button onClick={() => { setModalOpen(true); setEditingAssignment(null); }} className="btn btn-primary mb-4">+ 배정 추가</button>
+      <button onClick={handleAutoAssign} className="btn btn-info mb-4 ml-2">자동 배정</button>
       {loading ? (
         <div>로딩 중...</div>
       ) : error ? (

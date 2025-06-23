@@ -6,9 +6,10 @@ import { useStaffApplications, StaffApplication } from '../hooks/useStaffApplica
 const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
   const { applications, updateApplication } = useStaffApplications({ eventId });
   const { staff } = useStaff();
-
   const [selectedApp, setSelectedApp] = useState<StaffApplication | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const getStaffName = (staffId: string) => {
     const s = staff.find(st => st.id === staffId);
     return s ? s.name : staffId;
   };
@@ -35,13 +36,13 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
             </tr>
           </thead>
           <tbody>
-            <td className="px-2 py-1">
-              <button onClick={() => { setSelectedApp(app); setModalOpen(true); }} className="underline text-blue-700 hover:text-blue-900">
-                {getStaffName(app.staffId)}
-              </button>
-            </td>
-            <td className="px-2 py-1">{(staff.find(st => st.id === app.staffId)?.contact) || '-'}</td>
-                <td className="px-2 py-1">{getStaffName(app.staffId)}</td>
+            {applications.map(app => (
+              <tr key={app.id} className="hover:bg-blue-50">
+                <td className="px-2 py-1">
+                  <button onClick={() => { setSelectedApp(app); setModalOpen(true); }} className="underline text-blue-700 hover:text-blue-900">
+                    {getStaffName(app.staffId)}
+                  </button>
+                </td>
                 <td className="px-2 py-1">{(staff.find(st => st.id === app.staffId)?.contact) || '-'}</td>
                 <td className="px-2 py-1">{app.role}</td>
                 <td className="px-2 py-1">{app.date}</td>
@@ -56,25 +57,7 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
                       <button onClick={() => handleStatusChange(app.id, 'accepted')} className="btn btn-xs btn-primary">승인</button>
                       <button onClick={() => handleStatusChange(app.id, 'rejected')} className="btn btn-xs btn-danger">거절</button>
                     </>
-                  <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="지원서 상세">
-                    {selectedApp && (
-                      <div className="space-y-2">
-                        <div><b>이름:</b> {getStaffName(selectedApp.staffId)}</div>
-                        <div><b>연락처:</b> {(staff.find(st => st.id === selectedApp.staffId)?.contact) || '-'}</div>
-                        <div><b>역할:</b> {selectedApp.role}</div>
-                        <div><b>지원일:</b> {selectedApp.date}</div>
-                        <div><b>상태:</b> {selectedApp.status}</div>
-                        <div className="flex gap-2 mt-4">
-                          {selectedApp.status !== 'accepted' && (
-                            <button onClick={async () => { await handleStatusChange(selectedApp.id, 'accepted'); setModalOpen(false); }} className="btn btn-primary btn-xs">승인</button>
-                          )}
-                          {selectedApp.status !== 'rejected' && (
-                            <button onClick={async () => { await handleStatusChange(selectedApp.id, 'rejected'); setModalOpen(false); }} className="btn btn-danger btn-xs">거절</button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </Modal>
+                  )}
                   {app.status === 'accepted' && (
                     <button onClick={() => handleStatusChange(app.id, 'rejected')} className="btn btn-xs btn-danger">거절</button>
                   )}
@@ -87,6 +70,25 @@ const ApplicationListSection: React.FC<{ eventId: string }> = ({ eventId }) => {
           </tbody>
         </table>
       )}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="지원서 상세">
+        {selectedApp && (
+          <div className="space-y-2">
+            <div><b>이름:</b> {getStaffName(selectedApp.staffId)}</div>
+            <div><b>연락처:</b> {(staff.find(st => st.id === selectedApp.staffId)?.contact) || '-'}</div>
+            <div><b>역할:</b> {selectedApp.role}</div>
+            <div><b>지원일:</b> {selectedApp.date}</div>
+            <div><b>상태:</b> {selectedApp.status}</div>
+            <div className="flex gap-2 mt-4">
+              {selectedApp.status !== 'accepted' && (
+                <button onClick={async () => { await handleStatusChange(selectedApp.id, 'accepted'); setModalOpen(false); }} className="btn btn-primary btn-xs">승인</button>
+              )}
+              {selectedApp.status !== 'rejected' && (
+                <button onClick={async () => { await handleStatusChange(selectedApp.id, 'rejected'); setModalOpen(false); }} className="btn btn-danger btn-xs">거절</button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
