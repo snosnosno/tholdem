@@ -9,6 +9,7 @@ interface TableCardProps {
   isProcessing: boolean;
   isDraggable: boolean;
   style?: React.CSSProperties;
+  assignedDealerName?: string;
 }
 
 const TableCard: React.FC<TableCardProps> = ({
@@ -18,6 +19,7 @@ const TableCard: React.FC<TableCardProps> = ({
   isProcessing,
   isDraggable,
   style,
+  assignedDealerName,
 }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: table.id,
@@ -91,6 +93,10 @@ const TableCard: React.FC<TableCardProps> = ({
         </div>
       </div>
       
+      <div className="mt-2 text-sm text-gray-600">
+        <strong>딜러:</strong> {assignedDealerName || '미배정'}
+      </div>
+
       {isStandby && (
         <div className="flex items-center justify-center mt-2 gap-2">
           <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">

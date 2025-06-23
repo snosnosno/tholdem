@@ -3,34 +3,75 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 관리자 UID 목록 (실제 환경에서는 별도의 컬렉션에서 관리하는 것이 더 안전함)
-    function isAdmin() {
-      return request.auth.uid in ['ADMIN_USER_UID_1', 'ADMIN_USER_UID_2'];
+    // 사용자의 역할을 가져오는 함수
+    function getRole() {
+      // Allow access if the user is authenticated
+      if (request.auth != null) {
+        return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role;
+      }
+      return '';
     }
 
-    // Tournaments 컬렉션: 관리자만 모든 권한을 가짐
-    match /tournaments/{tournamentId} {
-      allow read, write: if isAdmin();
+    // 사용자가 TD(Tournament Director)인지 확인하는 함수
+    function isTD() {
+      return getRole() == 'TD';
     }
 
-    // Participants 컬렉션:
-    // 관리자는 모든 읽기/쓰기 가능
-    // 플레이어는 자신의 정보만 읽기 가능
+    // 로그인한 사용자인지 확인하는 함수
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Settings 컬렉션: TD만 쓰기 가능, 로그인한 사용자는 읽기 가능
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isTD();
+    }
+
+    // Staff 컬렉션: TD는 모든 쓰기 가능, 본인은 업데이트 가능, 로그인 사용자는 읽기 가능
+    match /staff/{staffId} {
+      allow read: if isSignedIn();
+      allow write: if isTD(); // TD can create/delete/update any staff
+    }
+
+    // Tables 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
+    match /tables/{tableId} {
+      allow read: if isSignedIn();
+      allow write: if isTD();
+    }
+
+    // WorkLogs 컬렉션: 본인 로그 생성 가능, TD는 업데이트 가능, 로그인 사용자는 읽기 가능
+    match /workLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if request.auth.uid == request.resource.data.staffId;
+      allow update: if isTD();
+      allow delete: if isTD();
+    }
+
+    // Participants 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
     match /participants/{participantId} {
-      allow read: if isAdmin() || request.auth.uid == resource.data.uid;
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isTD();
     }
     
-    // Notices 컬렉션:
-    // 관리자는 쓰기 가능, 모든 사용자는 읽기 가능
-    match /notices/{noticeId} {
-        allow read: if true;
-        allow write: if isAdmin();
+    // Announcements 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
+    match /announcements/{announcementId} {
+        allow read: if isSignedIn();
+        allow write: if isTD();
     }
-
-    // 기본적으로 다른 모든 경로는 접근을 거부합니다.
-    match /{document=**} {
-      allow read, write: if false;
+    
+    // Logs 컬렉션 (내부용): TD만 접근 가능
+    match /logs/{logId} {
+        allow read, write: if isTD();
+    }
+    
+    // 기존 Tournaments, Notices 규칙 (호환성 유지)
+    match /tournaments/{any} {
+      allow read, write: if isTD();
+    }
+    match /notices/{any} {
+      allow read: if true;
+      allow write: if isTD();
     }
   }
-} 
+}

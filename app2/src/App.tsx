@@ -15,15 +15,18 @@ import StaffPage from './pages/StaffPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import HistoryPage from './pages/HistoryPage';
 import HistoryDetailPage from './pages/HistoryDetailPage';
-
+import StaffRecruitPage from './pages/StaffRecruitPage';
+import StaffAssignmentPage from './pages/StaffAssignmentPage';
+import AttendancePayrollPage from './pages/AttendancePayrollPage';
+import DealerRotationPage from './pages/DealerRotationPage';
 function App() {
   return (
     <AuthProvider>
-    <TournamentProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<AdminLogin />} />
-          <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />
+      <TournamentProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<AdminLogin />} />
+            <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />
             <Route element={<PrivateRoute />}>
               <Route path="/" element={<Layout />}>
                 <Route index element={<TournamentDashboard />} />
@@ -32,14 +35,17 @@ function App() {
                 <Route path="blinds" element={<BlindsPage />} />
                 <Route path="prizes" element={<PrizesPage />} />
                 <Route path="staff" element={<StaffPage />} />
-                <Route path="announcements" element={<AnnouncementsPage />} />
+                <Route path="staff-recruit" element={<StaffRecruitPage />} />
+                <Route path="staff-assignment" element={<StaffAssignmentPage />} />
+                <Route path="dealer-rotation" element={<DealerRotationPage />} />
+                <Route path="attendance-payroll" element={<AttendancePayrollPage />} />
                 <Route path="history" element={<HistoryPage />} />
                 <Route path="history/:tournamentId" element={<HistoryDetailPage />} />
               </Route>
-          </Route>
-        </Routes>
-      </Router>
-    </TournamentProvider>
+            </Route>
+          </Routes>
+        </Router>
+      </TournamentProvider>
     </AuthProvider>
   );
 }

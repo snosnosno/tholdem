@@ -2,14 +2,20 @@ import { useState, useEffect } from 'react';
 import db from '../firebase';
 import { 
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, 
-  DocumentData, QueryDocumentSnapshot 
-} from 'firebase/firestore';
-
-export interface Staff {
-  id: string;
-  name: string;
-  role: string;
-  contact?: string;
+  export interface Staff {
+    id: string;
+    name: string;
+    role: string;
+    contact?: string;
+    profilePictureUrl?: string;
+    status?: 'available' | 'on_table' | 'on_break' | 'clocked_out';
+    assignedTableId?: string | null;
+    lastClockIn?: number | null;
+    lastBreakStart?: number | null;
+    totalWorkMinutes?: number;
+    totalBreakMinutes?: number;
+    [key: string]: any;
+  }
   profilePictureUrl?: string;
   [key: string]: any;
 }

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTables, Table, BalancingResult } from '../hooks/useTables';
 import { useParticipants, Participant } from '../hooks/useParticipants';
+import { useStaff } from '../hooks/useStaff';
 import Modal from '../components/Modal';
 import TableCard from '../components/TableCard';
 import PlayerActionModal from '../components/PlayerActionModal';
@@ -14,6 +15,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 const TablesPage: React.FC = () => {
     const { tables, setTables, loading: tablesLoading, error: tablesError, maxSeatsSetting, updateMaxSeatsSetting, autoAssignSeats, moveSeat, bustOutParticipant, closeTable, openNewTable, activateTable, updateTableDetails, updateTablePosition } = useTables();
     const { participants, loading: participantsLoading, error: participantsError } = useParticipants();
+    const { staff, loading: staffLoading, error: staffError } = useStaff();
     
     const canvasRef = useRef<HTMLDivElement>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
@@ -149,7 +151,7 @@ const TablesPage: React.FC = () => {
         setIsClosing(true);
         try {
             await closeTable(closingTableId);
-            setBalancingResult(null); // Clear balancing result after action
+            setBalancingResult(null); 
             if (detailModalTable?.id === closingTableId) {
                 setDetailModalTable(null);
             }
@@ -196,6 +198,11 @@ const TablesPage: React.FC = () => {
         if (!participant) return "알수없음";
         return participant.status === 'busted' ? `(탈락) ${participant.name}` : participant.name;
     };
+    
+    const getDealerName = (dealerId: string | null | undefined): string => {
+        if (!dealerId) return "미배정";
+        return staff.find(s => s.id === dealerId)?.name || "알수없음";
+    };
 
     const needsBalancing = useMemo(() => {
         const playerCounts = tables
@@ -218,9 +225,10 @@ const TablesPage: React.FC = () => {
         }, 0);
     }, [tables]);
 
-    if (tablesLoading || participantsLoading) return <div className="card">Loading...</div>;
+    if (tablesLoading || participantsLoading || staffLoading) return <div className="card">Loading...</div>;
     if (tablesError) return <div className="card">Error loading tables: {tablesError.message}</div>;
     if (participantsError) return <div className="card">Error loading participants: {participantsError.message}</div>;
+    if (staffError) return <div className="card">Error loading staff: {staffError.message}</div>;
 
     const getParticipantNameById = (id: string) => participants.find(p => p.id === id)?.name || 'Unknown';
 
@@ -234,6 +242,7 @@ const TablesPage: React.FC = () => {
                 isProcessing={isClosing || isOpeningTable}
                 isDraggable={!isMobile}
                 style={isMobile ? {} : { position: 'absolute', left: table.position?.x || 0, top: table.position?.y || 0 }}
+                assignedDealerName={getDealerName(table.assignedDealerId)}
             />
         ));
 

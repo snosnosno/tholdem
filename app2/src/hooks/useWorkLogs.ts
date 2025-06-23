@@ -7,12 +7,11 @@ import {
 export interface WorkLog {
   id: string;
   staffId: string;
-  date: string; // YYYY-MM-DD
-  clockIn: string; // HH:mm
-  clockOut: string; // HH:mm
-  approved: boolean;
-  wage: number;
-  totalMinutes: number;
+  clockIn: number; // timestamp
+  clockOut: number | null; // timestamp
+  clockInMethod: 'qr' | 'gps' | 'manual';
+  clockInLocation?: { latitude: number, longitude: number };
+}
 }
 
 const workLogsCollection = collection(db, 'workLogs');
