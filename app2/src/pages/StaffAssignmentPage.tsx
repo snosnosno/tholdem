@@ -5,18 +5,25 @@ import Modal from '../components/Modal';
 
 const shifts = [
   { value: 'morning', label: '오전' },
-  { value: 'afternoon', label: '오후' },
-  { value: 'full', label: '풀타임' },
-const handleAutoAssign = async () => {
-  // 예시: 오늘 날짜, 모든 포지션에 랜덤하게 스태프 배정
-  const today = new Date().toISOString().slice(0, 10);
-  const positions = ['TD', 'Dealer', 'Floor'];
-  const availableStaff = [...staff];
-  for (const pos of positions) {
-    if (availableStaff.length === 0) break;
-    const idx = Math.floor(Math.random() * availableStaff.length);
-    const s = availableStaff.splice(idx, 1)[0];
-    await addAssignment({ date: today, shift: 'morning', position: pos, staffId: s.id });
+  const handleAutoAssign = async () => {
+    // 오늘 날짜, 각 교대별로 포지션에 중복 없이 순환 배정
+    const today = new Date().toISOString().slice(0, 10);
+    const positions = ['TD', 'Dealer', 'Floor'];
+    const shiftsArr = ['morning', 'afternoon', 'full'];
+    let availableStaff = [...staff];
+    for (const shift of shiftsArr) {
+      let staffPool = [...availableStaff];
+      for (const pos of positions) {
+        // 이미 해당 날짜/교대/포지션에 배정된 스태프 제외
+        const assigned = assignments.find(a => a.date === today && a.shift === shift && a.position === pos);
+        if (assigned) continue;
+        if (staffPool.length === 0) staffPool = [...availableStaff];
+        const idx = Math.floor(Math.random() * staffPool.length);
+        const s = staffPool.splice(idx, 1)[0];
+        await addAssignment({ date: today, shift, position: pos, staffId: s.id });
+      }
+    }
+  };
   }
 };
 
