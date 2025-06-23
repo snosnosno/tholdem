@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useEvents, Event } from '../hooks/useEvents';
+import { useStaffApplications } from '../hooks/useStaffApplications';
 import Modal from './Modal';
+import ApplicationListSection from './ApplicationListSection';
 
 const initialEvent: Omit<Event, 'id'> = {
   title: '',
@@ -12,10 +14,13 @@ const initialEvent: Omit<Event, 'id'> = {
 
 const EventListSection: React.FC = () => {
   const { events, loading, error, addEvent, updateEvent, deleteEvent } = useEvents();
+  const { applications } = useStaffApplications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [form, setForm] = useState<Omit<Event, 'id'>>(initialEvent);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
 
   const openCreateModal = () => {
     setEditingEvent(null);
@@ -49,7 +54,16 @@ const EventListSection: React.FC = () => {
     }
   };
 
-  // 반응형 테이블 및 검색/필터/지원자수 컬럼/버튼 UX 개선
+  // 이벤트별 지원자 수 계산
+  const getApplicationCount = (eventId: string) =>
+    applications.filter(app => app.eventId === eventId).length;
+
+  // 지원 현황 모달 열기
+  const handleOpenAppModal = (eventId: string) => {
+    setSelectedEventId(eventId);
+    setIsAppModalOpen(true);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-4 overflow-x-auto">
       <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
@@ -91,11 +105,11 @@ const EventListSection: React.FC = () => {
                   <td className="px-4 py-2 whitespace-nowrap">{ev.location}</td>
                   <td className="px-4 py-2 whitespace-nowrap">{ev.startDate}</td>
                   <td className="px-4 py-2 whitespace-nowrap">{ev.endDate}</td>
-                  <td className="px-4 py-2 text-center font-bold text-blue-700">{/* 지원자 수 연동 예정 */}0</td>
+                  <td className="px-4 py-2 text-center font-bold text-blue-700">{getApplicationCount(ev.id)}</td>
                   <td className="px-4 py-2 flex gap-2 flex-wrap">
                     <button onClick={() => openEditModal(ev)} className="btn btn-secondary btn-xs">수정</button>
                     <button onClick={() => handleDelete(ev.id)} className="btn btn-danger btn-xs">삭제</button>
-                    <button className="btn btn-info btn-xs">지원 현황</button>
+                    <button onClick={() => handleOpenAppModal(ev.id)} className="btn btn-info btn-xs">지원 현황</button>
                   </td>
                 </tr>
               ))}
@@ -127,6 +141,9 @@ const EventListSection: React.FC = () => {
             <button type="submit" className="btn btn-primary">{editingEvent ? '수정' : '생성'}</button>
           </div>
         </form>
+      </Modal>
+      <Modal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} title="지원자 현황">
+        {selectedEventId && <ApplicationListSection eventId={selectedEventId} />}
       </Modal>
     </div>
   );
