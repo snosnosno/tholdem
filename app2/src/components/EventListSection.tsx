@@ -15,6 +15,7 @@ const EventListSection: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [form, setForm] = useState<Omit<Event, 'id'>>(initialEvent);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const openCreateModal = () => {
     setEditingEvent(null);
@@ -48,40 +49,56 @@ const EventListSection: React.FC = () => {
     }
   };
 
+  // 반응형 테이블 및 검색/필터/지원자수 컬럼/버튼 UX 개선
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">모집 공고 리스트</h2>
-        <button onClick={openCreateModal} className="btn btn-primary">+ 공고 생성</button>
+    <div className="bg-white rounded-lg shadow-md p-4 overflow-x-auto">
+      <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+        <h2 className="text-xl font-bold flex-1">모집 공고 리스트</h2>
+        <input
+          type="text"
+          placeholder="대회명, 장소 등 검색..."
+          className="input-field w-full md:max-w-xs"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <button onClick={openCreateModal} className="btn btn-primary whitespace-nowrap">+ 공고 생성</button>
       </div>
       {loading ? (
         <div>로딩 중...</div>
       ) : error ? (
         <div className="text-red-500">오류: {error.message}</div>
       ) : (
-        <table className="w-full table-auto">
-          <thead className="bg-gray-100">
+        <table className="w-full min-w-[700px] table-auto text-sm">
+          <thead className="bg-blue-100">
             <tr>
               <th className="px-4 py-2">대회명</th>
               <th className="px-4 py-2">장소</th>
               <th className="px-4 py-2">시작일</th>
               <th className="px-4 py-2">종료일</th>
+              <th className="px-4 py-2">지원자 수</th>
               <th className="px-4 py-2">관리</th>
             </tr>
           </thead>
           <tbody>
-            {events.map(ev => (
-              <tr key={ev.id} className="hover:bg-gray-50">
-                <td className="px-4 py-2">{ev.title}</td>
-                <td className="px-4 py-2">{ev.location}</td>
-                <td className="px-4 py-2">{ev.startDate}</td>
-                <td className="px-4 py-2">{ev.endDate}</td>
-                <td className="px-4 py-2">
-                  <button onClick={() => openEditModal(ev)} className="btn btn-secondary btn-xs mr-2">수정</button>
-                  <button onClick={() => handleDelete(ev.id)} className="btn btn-danger btn-xs">삭제</button>
-                </td>
-              </tr>
-            ))}
+            {events
+              .filter(ev =>
+                ev.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                ev.location.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map(ev => (
+                <tr key={ev.id} className="hover:bg-blue-50 transition">
+                  <td className="px-4 py-2 font-semibold text-blue-900 whitespace-nowrap">{ev.title}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{ev.location}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{ev.startDate}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{ev.endDate}</td>
+                  <td className="px-4 py-2 text-center font-bold text-blue-700">{/* 지원자 수 연동 예정 */}0</td>
+                  <td className="px-4 py-2 flex gap-2 flex-wrap">
+                    <button onClick={() => openEditModal(ev)} className="btn btn-secondary btn-xs">수정</button>
+                    <button onClick={() => handleDelete(ev.id)} className="btn btn-danger btn-xs">삭제</button>
+                    <button className="btn btn-info btn-xs">지원 현황</button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       )}
