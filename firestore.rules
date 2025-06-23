@@ -3,69 +3,71 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 사용자의 역할을 가져오는 함수
-    function getRole() {
-      // Allow access if the user is authenticated
-      if (request.auth != null) {
-        return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role;
-      }
-      return '';
-    }
-
-    // 사용자가 TD(Tournament Director)인지 확인하는 함수
-    function isTD() {
-      return getRole() == 'TD';
-    }
-
-    // 로그인한 사용자인지 확인하는 함수
+    // ====================
+    //  Helper Functions
+    // ====================
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Settings 컬렉션: TD만 쓰기 가능, 로그인한 사용자는 읽기 가능
+    function isTD() {
+      // Check if the user is signed in and if their role in the 'staff' collection is 'TD'.
+      return isSignedIn() && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'TD';
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // ====================
+    //  Collection Rules
+    // ====================
+
+    // Settings: Readable by signed-in users, writable only by TDs.
     match /settings/{docId} {
       allow read: if isSignedIn();
       allow write: if isTD();
     }
 
-    // Staff 컬렉션: TD는 모든 쓰기 가능, 본인은 업데이트 가능, 로그인 사용자는 읽기 가능
+    // Staff: Readable by signed-in users. Writable only by TDs.
     match /staff/{staffId} {
       allow read: if isSignedIn();
-      allow write: if isTD(); // TD can create/delete/update any staff
+      allow write: if isTD();
     }
 
-    // Tables 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
+    // Tables: Readable by signed-in users, writable only by TDs.
     match /tables/{tableId} {
       allow read: if isSignedIn();
       allow write: if isTD();
     }
 
-    // WorkLogs 컬렉션: 본인 로그 생성 가능, TD는 업데이트 가능, 로그인 사용자는 읽기 가능
+    // WorkLogs: Readable by signed-in users.
+    // A user can only create their own work log.
+    // Only TDs can update or delete logs.
     match /workLogs/{logId} {
       allow read: if isSignedIn();
-      allow create: if request.auth.uid == request.resource.data.staffId;
-      allow update: if isTD();
-      allow delete: if isTD();
+      allow create: if isOwner(request.resource.data.staffId);
+      allow update, delete: if isTD();
     }
 
-    // Participants 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
+    // Participants: Readable by signed-in users, writable only by TDs.
     match /participants/{participantId} {
       allow read: if isSignedIn();
       allow write: if isTD();
     }
     
-    // Announcements 컬렉션: TD만 쓰기 가능, 로그인 사용자는 읽기 가능
+    // Announcements: Readable by signed-in users, writable only by TDs.
     match /announcements/{announcementId} {
         allow read: if isSignedIn();
         allow write: if isTD();
     }
     
-    // Logs 컬렉션 (내부용): TD만 접근 가능
+    // Logs (internal): Accessible only by TDs.
     match /logs/{logId} {
         allow read, write: if isTD();
     }
     
-    // 기존 Tournaments, Notices 규칙 (호환성 유지)
+    // Legacy rules for compatibility
     match /tournaments/{any} {
       allow read, write: if isTD();
     }
