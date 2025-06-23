@@ -6,15 +6,11 @@ interface DashboardCardProps {
   className?: string;
 }
 
-const DashboardCard: React.FC<DashboardCardProps> = ({ title, children, className = '' }) => {
+export const DashboardCard: React.FC<DashboardCardProps> = ({ title, children, className }) => {
   return (
-    <div className={`bg-white p-6 rounded-lg shadow-md ${className}`}>
-      <h2 className="text-xl font-bold mb-4 text-gray-700">{title}</h2>
-      <div className="text-gray-600">
-        {children}
-      </div>
+    <div className={`bg-white p-6 rounded-xl shadow-md ${className}`}>
+      <h2 className="text-xl font-semibold text-gray-700 mb-4">{title}</h2>
+      <div>{children}</div>
     </div>
   );
 };
-
-export default DashboardCard;

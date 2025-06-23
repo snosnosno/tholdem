@@ -585,3 +585,50 @@ export const submitDealerRating = functions.https.onCall(async (data, context) =
     }
 });
 // endregion
+
+// region DASHBOARD FUNCTIONS
+export const getDashboardStats = functions.https.onCall(async (_, context) => {
+    if (context.auth?.token?.role !== 'admin') {
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can access dashboard statistics.');
+    }
+
+    try {
+        // 1. Get count of ongoing events
+        const now = new Date();
+        const eventsQuery = db.collection('events').where('endDate', '>=', now);
+        const ongoingEventsSnapshot = await eventsQuery.get();
+        const ongoingEventsCount = ongoingEventsSnapshot.size;
+
+        // 2. Get total number of dealers
+        const dealersQuery = db.collection('users').where('role', '==', 'dealer');
+        const dealersSnapshot = await dealersQuery.get();
+        const totalDealersCount = dealersSnapshot.size;
+
+        // 3. Get top 5 rated dealers
+        const topDealersQuery = db.collection('users')
+            .where('role', '==', 'dealer')
+            .orderBy('rating', 'desc')
+            .limit(5);
+        const topDealersSnapshot = await topDealersQuery.get();
+        const topRatedDealers = topDealersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.name,
+                rating: data.rating,
+                ratingCount: data.ratingCount,
+            };
+        });
+
+        return {
+            ongoingEventsCount,
+            totalDealersCount,
+            topRatedDealers,
+        };
+
+    } catch (error) {
+        functions.logger.error('Error getting dashboard stats:', error);
+        throw new functions.https.HttpsError('internal', 'An unexpected error occurred while fetching dashboard statistics.');
+    }
+});
+// endregion
