@@ -17,11 +17,8 @@ const DealerRotationPage: React.FC = () => {
   // const onBreakDealers = useMemo(() => dealers.filter(d => d.status === 'on_break'), [dealers]);
   // const onTableDealers = useMemo(() => dealers.filter(d => d.status === 'on_table'), [dealers]);
 
-  // const loading = staffLoading || tablesLoading;
-  // const error = staffError || tablesError;
   const loading = true; // Always loading
-  const error = null;
-
+  const error: Error | null = null;
 
   const handleManualAssign = async (dealerId: string) => {
     if (!selectedTable) {
@@ -35,9 +32,10 @@ const DealerRotationPage: React.FC = () => {
       await assignDealer({ tableId: selectedTable, dealerId });
       alert(`딜러를 테이블 ${selectedTable}에 성공적으로 배정했습니다.`);
       setSelectedTable(null); // Reset selection after assignment
-    } catch (error) {
-      console.error('Error assigning dealer manually:', error);
-      alert(`수동 배정 중 오류가 발생했습니다: ${error}`);
+    } catch (err) {
+      const e = err as Error;
+      console.error('Error assigning dealer manually:', e);
+      alert(`수동 배정 중 오류가 발생했습니다: ${e.message}`);
     } finally {
       setIsAssigning(false);
     }

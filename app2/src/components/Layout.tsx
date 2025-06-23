@@ -53,6 +53,7 @@ export const Layout = () => {
             <NavItem to="/prizes" label="Prizes" Icon={FaTrophy} isOpen={isSidebarOpen} />
             <NavItem to="/announcements" label="Announcements" Icon={FaBullhorn} isOpen={isSidebarOpen} />
             <NavItem to="/history" label="History" Icon={FaHistory} isOpen={isSidebarOpen} />
+            {/* 
             <NavItem to="/staff" label="Staff" Icon={FaUserShield} isOpen={isSidebarOpen} />
             <div className="pl-4 border-l-2 border-gray-200 ml-4 my-1 space-y-1">
               <NavItem to="/staff-recruit" label="Recruitment" Icon={FaUserPlus} isOpen={isSidebarOpen} />
@@ -61,6 +62,7 @@ export const Layout = () => {
               <NavItem to="/work-log" label="Clock In/Out" Icon={FaClock} isOpen={isSidebarOpen} />
               <NavItem to="/attendance-payroll" label="Payroll" Icon={FaFileInvoiceDollar} isOpen={isSidebarOpen} />
             </div>
+            */}
         </nav>
       </aside>
       <main className="flex-1 p-8 overflow-y-auto bg-gray-100">

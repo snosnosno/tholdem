@@ -11,7 +11,11 @@ import ParticipantsPage from './pages/ParticipantsPage';
 import TablesPage from './pages/TablesPage';
 import BlindsPage from './pages/BlindsPage';
 import PrizesPage from './pages/PrizesPage';
-// import StaffPage from './pages/StaffPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
+import HistoryPage from './pages/HistoryPage';
+import HistoryDetailPage from './pages/HistoryDetailPage';
+import DealerRotationPage from './pages/DealerRotationPage';
+
 // import StaffRecruitPage from './pages/StaffRecruitPage';
 // import StaffAssignmentPage from './pages/StaffAssignmentPage';
 // import AttendancePayrollPage from './pages/AttendancePayrollPage';
@@ -43,7 +47,7 @@ function App() {
                 {/* <Route path="staff-assignment" element={<StaffAssignmentPage />} /> */}
                 {/* <Route path="dealer-rotation" element={<DealerRotationPage />} /> */}
                 {/* <Route path="work-log" element={<WorkLogPage />} /> */}
-                {/* <Route path="attendance-payroll" element={<AttendancePayrollPage />} /> */}
+                {/* <Route path="dealer-rotation" element={<DealerRotationPage />} /> */}
               </Route>
             </Route>
           </Routes>

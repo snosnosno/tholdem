@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useTables, Table } from '../hooks/useTables';
 import { useParticipants, Participant } from '../hooks/useParticipants';
-// import { useStaff } from '../hooks/useStaff';
 import { useSettings } from '../hooks/useSettings';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import TableCard from '../components/TableCard';
@@ -37,13 +36,12 @@ const TablesPage: React.FC = () => {
         updateParticipant 
     } = useParticipants();
 
-    const { staff, loading: staffLoading, error: staffError } = useStaff();
     const { settings, updateSettings, loading: settingsLoading } = useSettings();
     
     const isMobile = useMediaQuery('(max-width: 768px)');
 
-    // const { staff, loading: staffLoading, error: staffError } = useStaff();
-    const { settings, updateSettings, loading: settingsLoading } = useSettings();
+    const [detailModalTable, setDetailModalTable] = useState<Table | null>(null);
+    const [detailModalParticipant, setDetailModalParticipant] = useState<Participant | null>(null);
     const [isMoveSeatModalOpen, setMoveSeatModalOpen] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<{ participant: Participant; table: Table; seatIndex: number } | null>(null);
     const [actionMenu, setActionMenu] = useState<{ x: number, y: number } | null>(null);
@@ -77,9 +75,8 @@ const TablesPage: React.FC = () => {
     };
 
     const getDealerName = (dealerId: string | null): string => {
-        if (!dealerId) return 'N/A';
-        const d = staff.find(s => s.id === dealerId);
-        return d ? d.name : 'Unknown';
+        // This function is kept for prop compatibility but staff is removed.
+        return 'N/A';
     };
 
     const handlePlayerSelect = (participant: Participant | null, table: Table, seatIndex: number, event?: React.MouseEvent) => {
@@ -89,12 +86,11 @@ const TablesPage: React.FC = () => {
             setActionMenu({ x: event.clientX, y: event.clientY });
             setSelectedPlayer({ participant, table, seatIndex });
         }
-    const getDealerName = (dealerId: string | null): string => {
-        // if (!dealerId) return 'N/A';
-        // const d = staff.find(s => s.id === dealerId);
-        // return d ? d.name : 'Unknown';
-        return 'N/A';
     };
+    
+    const handleShowDetails = () => {
+        if (selectedPlayer?.participant) {
+            setDetailModalParticipant(selectedPlayer.participant);
         }
         handleCloseActionMenu();
     };
@@ -146,8 +142,8 @@ const TablesPage: React.FC = () => {
         }
     };
 
-    if (tablesLoading || participantsLoading || staffLoading || settingsLoading) return <div className="p-4">Loading...</div>;
-    if (tablesError || participantsError || staffError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message || staffError?.message}</div>;
+    if (tablesLoading || participantsLoading || settingsLoading) return <div className="p-4">Loading...</div>;
+    if (tablesError || participantsError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message}</div>;
 
     const totalEmptySeats = tables
         .filter(t => t.status === 'open')
@@ -179,8 +175,8 @@ const TablesPage: React.FC = () => {
                     <div className="flex items-center space-x-6">
                         <div className="flex items-center"><FaThList className="mr-2 text-blue-500" /> 테이블: <span className="font-bold ml-1">{tables.length}</span></div>
                         <div className="flex items-center"><FaUserPlus className="mr-2 text-green-500" /> 빈 자리: <span className="font-bold ml-1">{totalEmptySeats}</span></div>
-                    if (tablesLoading || participantsLoading || settingsLoading) return <div className="p-4">Loading...</div>;
-                    if (tablesError || participantsError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message}</div>;
+                    </div>
+                    <div className="flex items-center space-x-2">
                         <label htmlFor="max-seats" className="font-semibold">최대 좌석:</label>
                         <select
                             id="max-seats"
@@ -235,8 +231,7 @@ const TablesPage: React.FC = () => {
                     isOpen={!!actionMenu}
                     onClose={handleCloseActionMenu}
                     position={{ top: actionMenu.y, left: actionMenu.x }}
-                    // getDealerName={getDealerName}
-                    
+                    onBustOut={handleBustOut}
                     onMoveSeat={handleOpenMoveSeatModal}
                     onShowDetails={handleShowDetails}
                 />
