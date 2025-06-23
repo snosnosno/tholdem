@@ -8,7 +8,7 @@ import Modal from '../components/Modal';
 
 // 폼 필드의 타입을 정의합니다.
 interface FormField {
-  id: keyof Staff | `custom_${string}`;
+  id: string; // Keep it simple as string
   label: string;
   type: 'text' | 'select' | 'file';
   options?: string[]; // 'select' 타입일 경우 사용
@@ -25,13 +25,8 @@ const StaffPage: React.FC = () => {
   ]);
   const staffRoles = useMemo(() => formFields.find(f => f.id === 'role')?.options || [], [formFields]);
 
-  // 입력 데이터를 동적으로 관리할 상태
-  const [newStaffData, setNewStaffData] = useState<Partial<Staff>>({});
+  const [newStaffData, setNewStaffData] = useState<Record<string, any>>({});
   
-  // 폼 편집 관련 상태
-  const [isEditingForm, setIsEditingForm] = useState(false);
-  const [editingField, setEditingField] = useState<FormField | null>(null);
-
   const { staff, loading, error, addStaff, updateStaff, deleteStaff } = useStaff();
   
   const [uploading, setUploading] = useState(false);
@@ -41,18 +36,17 @@ const StaffPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-  const [editingStaffData, setEditingStaffData] = useState<Partial<Staff> | null>(null);
+  const [editingStaffData, setEditingStaffData] = useState<Record<string, any> | null>(null);
 
-  const handleInputChange = (id: keyof Staff, value: any) => {
+  const handleInputChange = (id: string, value: any) => {
     setNewStaffData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 필수 필드 유효성 검사
     for (const field of formFields) {
-      if (field.required && !newStaffData[field.id as keyof Staff]) {
+      if (field.required && !newStaffData[field.id]) {
         alert(`'${field.label}'은(는) 필수 항목입니다.`);
         return;
       }
@@ -61,22 +55,19 @@ const StaffPage: React.FC = () => {
     setUploading(true);
 
     try {
-      const dataToSave: Partial<Staff> = { ...newStaffData };
+      const dataToSave: Record<string, any> = { ...newStaffData };
       
       const fileFields = formFields.filter(f => f.type === 'file');
       
-      const uploadPromises = fileFields.map(async (field) => {
-        const fieldId = field.id as keyof Staff;
-        if (dataToSave[fieldId] instanceof File) {
-          const file = dataToSave[fieldId] as File;
+      for (const field of fileFields) {
+        const file = dataToSave[field.id];
+        if (file instanceof File) {
           const imageRef = ref(storage, `staff-profiles/${file.name}_${uuidv4()}`);
           const snapshot = await uploadBytes(imageRef, file);
           const downloadURL = await getDownloadURL(snapshot.ref);
-          dataToSave[fieldId] = downloadURL;
+          dataToSave[field.id] = downloadURL;
         }
-      });
-      
-      await Promise.all(uploadPromises);
+      }
 
       await addStaff(dataToSave as Omit<Staff, 'id'>);
 
@@ -99,14 +90,14 @@ const StaffPage: React.FC = () => {
     if (!editingStaff || !editingStaffData) return;
 
     for (const field of formFields) {
-      if (field.required && !editingStaffData[field.id as keyof Staff]) {
+      if (field.required && !editingStaffData[field.id]) {
         alert(`'${field.label}'은(는) 필수 항목입니다.`);
         return;
       }
     }
 
     try {
-      await updateStaff(editingStaff.id, editingStaffData);
+      await updateStaff(editingStaff.id, editingStaffData as Partial<Staff>);
       setIsEditModalOpen(false);
       setEditingStaff(null);
       setEditingStaffData(null);
@@ -177,8 +168,8 @@ const StaffPage: React.FC = () => {
                   <input
                     id={field.id}
                     type="text"
-                    value={newStaffData[field.id as keyof Staff] || ''}
-                    onChange={(e) => handleInputChange(field.id as keyof Staff, e.target.value)}
+                    value={newStaffData[field.id] || ''}
+                    onChange={(e) => handleInputChange(field.id, e.target.value)}
                     placeholder={field.label}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md"
                     required={field.required}
@@ -187,8 +178,8 @@ const StaffPage: React.FC = () => {
                 {field.type === 'select' && (
                   <select
                     id={field.id}
-                    value={newStaffData[field.id as keyof Staff] || ''}
-                    onChange={(e) => handleInputChange(field.id as keyof Staff, e.target.value)}
+                    value={newStaffData[field.id] || ''}
+                    onChange={(e) => handleInputChange(field.id, e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white"
                     required={field.required}
                   >
@@ -201,11 +192,11 @@ const StaffPage: React.FC = () => {
                 {field.type === 'file' && (
                    <label className="w-full px-4 py-2 border border-gray-300 rounded-md flex items-center justify-center cursor-pointer hover:bg-gray-50">
                      <FaCamera className="mr-2 text-gray-500"/>
-                     <span className="text-sm text-gray-600 truncate">{(newStaffData[field.id as keyof Staff] as File)?.name || '파일 선택'}</span>
+                     <span className="text-sm text-gray-600 truncate">{(newStaffData[field.id] as File)?.name || '파일 선택'}</span>
                      <input
                        id={field.id}
                        type="file"
-                       onChange={(e) => handleInputChange(field.id as keyof Staff, e.target.files ? e.target.files[0] : null)}
+                       onChange={(e) => handleInputChange(field.id, e.target.files ? e.target.files[0] : null)}
                        className="hidden"
                        accept="image/*"
                      />
@@ -237,24 +228,24 @@ const StaffPage: React.FC = () => {
                 <input
                   id={`edit-${field.id}`}
                   type="text"
-                  value={editingStaffData?.[field.id as keyof Staff] || ''}
-                  onChange={(e) => setEditingStaffData({ ...editingStaffData, [field.id as keyof Staff]: e.target.value })}
+                  value={editingStaffData?.[field.id] || ''}
+                  onChange={(e) => setEditingStaffData({ ...editingStaffData, [field.id]: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                 />
               )}
               {field.type === 'select' && (
                 <select
                   id={`edit-${field.id}`}
-                  value={editingStaffData?.[field.id as keyof Staff] || ''}
-                  onChange={(e) => setEditingStaffData({ ...editingStaffData, [field.id as keyof Staff]: e.target.value })}
+                  value={editingStaffData?.[field.id] || ''}
+                  onChange={(e) => setEditingStaffData({ ...editingStaffData, [field.id]: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md bg-white"
                 >
                    {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               )}
               {field.type === 'file' && (
-                editingStaffData?.[field.id as keyof Staff] ? 
-                  <img src={editingStaffData[field.id as keyof Staff] as string} alt={field.label} className="w-24 h-24 object-cover rounded-md"/> :
+                editingStaffData?.[field.id] ? 
+                  <img src={editingStaffData[field.id]} alt={field.label} className="w-24 h-24 object-cover rounded-md"/> :
                   <span className="text-sm text-gray-500">이미지 없음</span>
               )}
             </div>
@@ -287,12 +278,12 @@ const StaffPage: React.FC = () => {
                   <td key={field.id} className="px-6 py-4 whitespace-nowrap">
                     {field.type === 'file' ? (
                       <img 
-                        src={staffMember[field.id as keyof Staff] as string || 'https://via.placeholder.com/40'} 
+                        src={(staffMember as any)[field.id] || 'https://via.placeholder.com/40'} 
                         alt={staffMember.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
-                      (staffMember[field.id as keyof Staff] as string) || '-'
+                      (staffMember as any)[field.id] || '-'
                     )}
                   </td>
                 ))}
