@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { TournamentProvider } from './contexts/TournamentContext';
-import Layout from './components/Layout';
+import { Layout } from './components/Layout'; // Changed to named import
 import AdminLogin from './pages/AdminLogin';
 import ParticipantLivePage from './pages/ParticipantLivePage';
 import PrivateRoute from './components/PrivateRoute';
@@ -19,6 +19,8 @@ import StaffRecruitPage from './pages/StaffRecruitPage';
 import StaffAssignmentPage from './pages/StaffAssignmentPage';
 import AttendancePayrollPage from './pages/AttendancePayrollPage';
 import DealerRotationPage from './pages/DealerRotationPage';
+import WorkLogPage from './pages/WorkLogPage'; // Added WorkLogPage import
+
 function App() {
   return (
     <AuthProvider>
@@ -34,13 +36,18 @@ function App() {
                 <Route path="tables" element={<TablesPage />} />
                 <Route path="blinds" element={<BlindsPage />} />
                 <Route path="prizes" element={<PrizesPage />} />
+                <Route path="announcements" element={<AnnouncementsPage />} />
+                <Route path="history" element={<HistoryPage />} />
+                <Route path="history/:logId" element={<HistoryDetailPage />} />
+
+                {/* Staff Routes */}
                 <Route path="staff" element={<StaffPage />} />
                 <Route path="staff-recruit" element={<StaffRecruitPage />} />
                 <Route path="staff-assignment" element={<StaffAssignmentPage />} />
                 <Route path="dealer-rotation" element={<DealerRotationPage />} />
+                <Route path="work-log" element={<WorkLogPage />} />
                 <Route path="attendance-payroll" element={<AttendancePayrollPage />} />
-                <Route path="history" element={<HistoryPage />} />
-                <Route path="history/:tournamentId" element={<HistoryDetailPage />} />
+
               </Route>
             </Route>
           </Routes>

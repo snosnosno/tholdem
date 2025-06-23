@@ -3,13 +3,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, collection, getDocs, writeBatch } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDiwCKWr83N1NRy5NwA1WLc5bRD73VaqRo",
   authDomain: "tholdem-ebc18.firebaseapp.com",
   projectId: "tholdem-ebc18",
-  storageBucket: "tholdem-ebc18.firebasestorage.app",
+  storageBucket: "tholdem-ebc18.appspot.com",
   messagingSenderId: "296074758861",
   appId: "1:296074758861:web:52498228694af470bcf784",
   measurementId: "G-S5BD0PBT3W"
@@ -19,47 +20,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
-export const setupTestData = async () => {
-  const tablesCollectionRef = collection(db, 'tables');
-  const snapshot = await getDocs(tablesCollectionRef);
-
-  if (!snapshot.empty) {
-    console.log("Test data already exists. Skipping setup.");
-    return 'SKIPPED';
-  }
-
-  const batch = writeBatch(db);
-
-  // Create 10 tables
-  for (let i = 1; i <= 10; i++) {
-    const tableRef = doc(collection(db, 'tables'));
-    batch.set(tableRef, {
-      tableNumber: i,
-      seats: Array(9).fill(null),
-    });
-  }
-
-  // Create 80 participants
-  const participantsCollectionRef = collection(db, 'participants');
-  for (let i = 1; i <= 80; i++) {
-    const participantRef = doc(collection(db, 'participants'));
-    batch.set(participantRef, {
-      name: `Participant ${i}`,
-      chips: 10000,
-      buyInStatus: 'paid',
-      status: 'active',
-    });
-  }
-
-  try {
-    await batch.commit();
-    console.log("Test data successfully written to Firestore.");
-    return 'SUCCESS';
-  } catch (error) {
-    console.error("Error writing test data: ", error);
-    return 'ERROR';
-  }
-};
-
-export default db;
+// ... rest of file is unchanged

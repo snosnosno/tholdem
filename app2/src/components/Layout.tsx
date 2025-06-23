@@ -3,8 +3,8 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { IconType } from 'react-icons';
 import { 
     FaTachometerAlt, FaUsers, FaTable, FaClock, 
-    FaTrophy, FaUserTie, FaBullhorn, FaHistory, FaEye,
-    FaChevronLeft, FaChevronRight, FaUserShield, FaUserPlus, FaFileInvoiceDollar
+    FaTrophy, FaUserTie, FaBullhorn, FaHistory,
+    FaChevronLeft, FaChevronRight, FaUserShield, FaUserPlus, FaFileInvoiceDollar, FaRandom
 } from 'react-icons/fa';
 
 interface NavItemProps {
@@ -26,7 +26,7 @@ const NavItem = ({ to, label, Icon, isOpen }: NavItemProps) => {
     );
 };
 
-const Layout = () => {
+export const Layout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -57,11 +57,12 @@ const Layout = () => {
             <div className="pl-4 border-l-2 border-gray-200 ml-4 my-1 space-y-1">
               <NavItem to="/staff-recruit" label="Recruitment" Icon={FaUserPlus} isOpen={isSidebarOpen} />
               <NavItem to="/staff-assignment" label="Assignment" Icon={FaUserTie} isOpen={isSidebarOpen} />
+              <NavItem to="/dealer-rotation" label="Rotation" Icon={FaRandom} isOpen={isSidebarOpen} />
+              <NavItem to="/work-log" label="Clock In/Out" Icon={FaClock} isOpen={isSidebarOpen} />
               <NavItem to="/attendance-payroll" label="Payroll" Icon={FaFileInvoiceDollar} isOpen={isSidebarOpen} />
             </div>
-            <NavItem to="/staff-assignment" label="Assignment" Icon={FaUserTie} isOpen={isSidebarOpen} />
-            <NavItem to="/dealer-rotation" label="Rotation" Icon={FaUserTie} isOpen={isSidebarOpen} />
-            <NavItem to="/attendance-payroll" label="Payroll" Icon={FaFileInvoiceDollar} isOpen={isSidebarOpen} />
+        </nav>
+      </aside>
       <main className="flex-1 p-8 overflow-y-auto bg-gray-100">
         <Outlet />
       </main>

@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react';
 import db from '../firebase';
 import { 
-  collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, 
-  export interface Staff {
-    id: string;
-    name: string;
-    role: string;
-    contact?: string;
-    profilePictureUrl?: string;
-    status?: 'available' | 'on_table' | 'on_break' | 'clocked_out';
-    assignedTableId?: string | null;
-    lastClockIn?: number | null;
-    lastBreakStart?: number | null;
-    totalWorkMinutes?: number;
-    totalBreakMinutes?: number;
-    [key: string]: any;
-  }
+  collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, QueryDocumentSnapshot, DocumentData 
+} from 'firebase/firestore';
+
+export interface Staff {
+  id: string;
+  name: string;
+  role: string;
+  contact?: string;
   profilePictureUrl?: string;
+  status?: 'available' | 'on_table' | 'on_break' | 'clocked_out';
+  assignedTableId?: string | null;
+  lastClockIn?: number | null;
+  lastBreakStart?: number | null;
+  totalWorkMinutes?: number;
+  totalBreakMinutes?: number;
   [key: string]: any;
 }
 
@@ -61,4 +60,4 @@ export const useStaff = () => {
   };
 
   return { staff, loading, error, addStaff, updateStaff, deleteStaff };
-}; 
+};
