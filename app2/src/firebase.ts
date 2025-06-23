@@ -18,8 +18,48 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-const db = getFirestore(app);
+export const db = getFirestore(app); // Export db as a named export
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// ... rest of file is unchanged
+export const setupTestData = async () => {
+  const tablesCollectionRef = collection(db, 'tables');
+  const snapshot = await getDocs(tablesCollectionRef);
+
+  if (!snapshot.empty) {
+    console.log("Test data already exists. Skipping setup.");
+    return 'SKIPPED';
+  }
+
+  const batch = writeBatch(db);
+
+  // Create 10 tables
+  for (let i = 1; i <= 10; i++) {
+    const tableRef = doc(collection(db, 'tables'));
+    batch.set(tableRef, {
+      tableNumber: i,
+      seats: Array(9).fill(null),
+    });
+  }
+
+  // Create 80 participants
+  const participantsCollectionRef = collection(db, 'participants');
+  for (let i = 1; i <= 80; i++) {
+    const participantRef = doc(collection(db, 'participants'));
+    batch.set(participantRef, {
+      name: `Participant ${i}`,
+      chips: 10000,
+      buyInStatus: 'paid',
+      status: 'active',
+    });
+  }
+
+  try {
+    await batch.commit();
+    console.log("Test data successfully written to Firestore.");
+    return 'SUCCESS';
+  } catch (error) {
+    console.error("Error writing test data: ", error);
+    return 'ERROR';
+  }
+};
