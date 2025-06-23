@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import React, { useState, useMemo } from 'react';
+import { collection, addDoc, serverTimestamp, query } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
-import { useCollection } from '../hooks/useFirestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
+interface Tournament {
+    id: string;
+    name: string;
+}
 
 const JobPostingAdminPage = () => {
-  const { documents: tournaments } = useCollection('tournaments');
-  const { documents: jobPostings, loading } = useCollection('jobPostings');
+  const tournamentsQuery = useMemo(() => query(collection(db, 'tournaments')), []);
+  const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings')), []);
+  
+  const [tournamentsSnap] = useCollection(tournamentsQuery);
+  const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
+  
+  const tournaments = useMemo(() => tournamentsSnap?.docs.map(d => ({ id: d.id, ...d.data() } as Tournament)), [tournamentsSnap]);
+  const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })), [jobPostingsSnap]);
+
   const [formData, setFormData] = useState({
     title: '',
     tournamentId: '',
@@ -37,7 +49,6 @@ const JobPostingAdminPage = () => {
         createdAt: serverTimestamp(),
       });
       alert('Job posting created successfully!');
-      // Reset form
       setFormData({
         title: '',
         tournamentId: '',
@@ -71,11 +82,9 @@ const JobPostingAdminPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      {/* Create Form */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-4">Create Job Posting</h1>
         <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-            {/* Form fields... */}
             <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Posting Title</label>
             <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
@@ -111,12 +120,11 @@ const JobPostingAdminPage = () => {
         </form>
       </div>
       
-      {/* Postings List */}
       <div>
         <h1 className="text-2xl font-bold mb-4">Manage Job Postings</h1>
         <div className="space-y-4">
             {loading && <p>Loading postings...</p>}
-            {jobPostings?.map((post) => (
+            {jobPostings?.map((post: any) => (
                 <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-start">
                         <div>

@@ -1,35 +1,49 @@
 import React, { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useCollection } from '../hooks/useFirestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import DashboardCard from '../components/DashboardCard';
-import { FaUsers, FaBriefcase, FaFileSignature, FaCalendarCheck } from 'react-icons/fa';
+import { FaUsers, FaBriefcase } from 'react-icons/fa';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../firebase';
+
+interface Application {
+    id: string;
+    applicantName: string;
+    postTitle: string;
+    status: 'approved' | 'rejected' | 'pending';
+}
+
+interface Schedule {
+    id: string;
+    staffName: string;
+    tournamentName: string;
+    role: string;
+}
 
 const StaffingDashboardPage = () => {
   const { isAdmin } = useAuth();
 
-  const applicationQueryOptions = useMemo(() => ({
-    orderBy: [['createdAt', 'desc']] as [string, 'asc' | 'desc'][],
-    limit: 5
-  }), []);
+  const staffProfilesQuery = useMemo(() => query(collection(db, 'staffProfiles')), []);
+  const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings')), []);
+  const applicationsQuery = useMemo(() => query(collection(db, 'applications'), orderBy('createdAt', 'desc'), limit(5)), []);
+  const schedulesQuery = useMemo(() => query(collection(db, 'schedules'), orderBy('createdAt', 'desc'), limit(5)), []);
 
-  const scheduleQueryOptions = useMemo(() => ({
-    orderBy: [['createdAt', 'desc']] as [string, 'asc' | 'desc'][],
-    limit: 5
-  }), []);
-  
-  const { documents: staffProfiles, loading: loadingStaff } = useCollection('staffProfiles');
-  const { documents: jobPostings, loading: loadingJobs } = useCollection('jobPostings');
-  const { documents: applications, loading: loadingApps } = useCollection('applications', applicationQueryOptions);
-  const { documents: schedules, loading: loadingSchedules } = useCollection('schedules', scheduleQueryOptions);
+  const [staffProfilesSnap, loadingStaff] = useCollection(staffProfilesQuery);
+  const [jobPostingsSnap, loadingJobs] = useCollection(jobPostingsQuery);
+  const [applicationsSnap, loadingApps] = useCollection(applicationsQuery);
+  const [schedulesSnap, loadingSchedules] = useCollection(schedulesQuery);
 
   const metrics = useMemo(() => {
-    if (!staffProfiles || !jobPostings) return null;
+    if (!staffProfilesSnap || !jobPostingsSnap) return null;
     return {
-      totalStaff: staffProfiles.length,
-      openJobs: jobPostings.filter(job => job.status === 'open').length,
-      // More metrics can be added here
+      totalStaff: staffProfilesSnap.docs.length,
+      openJobs: jobPostingsSnap.docs.filter(doc => doc.data().status === 'open').length,
     };
-  }, [staffProfiles, jobPostings]);
+  }, [staffProfilesSnap, jobPostingsSnap]);
+  
+  const applications = useMemo(() => applicationsSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Application)), [applicationsSnap]);
+  const schedules = useMemo(() => schedulesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Schedule)), [schedulesSnap]);
+
 
   if (!isAdmin) {
     return (
@@ -50,24 +64,21 @@ const StaffingDashboardPage = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Staffing Dashboard</h1>
       
-      {/* Metrics Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <DashboardCard title="Total Staff">
           <div className="flex items-center">
             <FaUsers className="text-3xl text-blue-500 mr-4" />
-            <span className="text-4xl font-bold">{metrics?.totalStaff}</span>
+            <span className="text-4xl font-bold">{metrics?.totalStaff ?? '...'}</span>
           </div>
         </DashboardCard>
         <DashboardCard title="Open Job Postings">
           <div className="flex items-center">
             <FaBriefcase className="text-3xl text-green-500 mr-4" />
-            <span className="text-4xl font-bold">{metrics?.openJobs}</span>
+            <span className="text-4xl font-bold">{metrics?.openJobs ?? '...'}</span>
           </div>
         </DashboardCard>
-        {/* Add more metric cards here */}
       </div>
 
-      {/* Lists Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DashboardCard title="Recent Applications">
           <ul>
