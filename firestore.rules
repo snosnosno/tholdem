@@ -42,6 +42,12 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Notifications: Users can read/update their own. Created by functions.
+    match /notifications/{notificationId} {
+      allow read, update: if request.auth.uid == resource.data.staffId;
+      allow create, delete: if false; // Only backend functions can create
+    }
+
     // Tournaments: Managed by admins. Readable by all signed-in users.
     match /tournaments/{tournamentId} {
       allow read: if isSignedIn();
@@ -91,6 +97,8 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
+
+
 
     // Participants: Live tournament data. Managed by admins.
     match /participants/{participantId} {
