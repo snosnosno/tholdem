@@ -19,69 +19,57 @@ service cloud.firestore {
     // ================= Collection Rules =================
 
     // --- Users Collection ---
-    // Users can read their own data. Admins can read anyone's data.
-    // Users can update their own data. Admins can update anyone's data.
-    // Roles can only be changed by Admins (not explicitly written here, but enforced by not allowing users to write to the role field).
     match /users/{userId} {
       allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
       allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
     }
 
     // --- Events Collection ---
-    // Any signed-in user can view events (for job postings).
-    // Only admins can create, update, or delete events.
     match /events/{eventId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
     // --- Assignments Collection ---
-    // A user can read their own assignments. Admins can read all assignments.
-    // Only admins can create or modify assignments.
-    // Check-in/out logic will be handled by a secure Cloud Function.
     match /assignments/{assignmentId} {
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.userId);
+      // Corrected: Check against the dealerId field in the document
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
       allow create, update, delete: if isAdmin();
+    }
+    
+    // --- Payrolls Collection ---
+    match /payrolls/{payrollId} {
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
+      allow create, update, delete: if isAdmin(); // Only admins can manage payroll entries directly
+    }
+
+    // --- Ratings Collection ---
+    match /ratings/{ratingId} {
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
+      allow create: if isAdmin(); // Only admins can create ratings
+      allow update, delete: if false; // Ratings are immutable
     }
 
     // --- Announcements Collection ---
-    // Any signed-in user can read announcements.
-    // Only admins can create or modify them.
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // --- Notifications Collection (Example) ---
-    // A user can read their own notifications.
+    // --- Notifications Collection ---
     match /notifications/{notificationId} {
         allow read, write: if isSignedIn() && (isOwner(resource.data.staffId) || isAdmin());
     }
 
-    // --- Staff Availability (Example) ---
-    // A user can manage their own availability. Admins can read all.
+    // --- Staff Availability ---
     match /staffAvailability/{staffId} {
         allow read: if isSignedIn() && (isOwner(staffId) || isAdmin());
         allow write: if isSignedIn() && isOwner(staffId);
     }
-  }
-}
-      return request.auth.uid == userId;
-    }
-
-    // ====================
-    //  Collection Rules (Simplified for Development)
-    // ====================
-
-    // Open access for signed-in users during development.
-    // TODO: Refine these rules before production deployment.
-
-    match /{document=**} {
-      allow read, write: if isSignedIn();
-    }
     
-    // Specific rules can be added below if needed, but the wildcard above
-    // will cover all collections for now.
-
+    // Fallback rule: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }

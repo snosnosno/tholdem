@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../firebase';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../firebase';
 
 interface Event {
     id: string;
@@ -10,135 +10,119 @@ interface Event {
 
 interface Payroll {
     id: string;
-    dealerId: string; // We'll need to fetch dealer name
-    dealerName?: string;
-    workDurationInHours: number;
-    hourlyRate: number;
-    calculatedPay: number;
+    dealerId: string;
+    dealerName?: string; // Add optional dealerName
+    amount: number;
     status: string;
+    workHours: number;
 }
 
 const PayrollAdminPage: React.FC = () => {
     const [events, setEvents] = useState<Event[]>([]);
-    const [selectedEventId, setSelectedEventId] = useState<string>('');
+    const [selectedEvent, setSelectedEvent] = useState<string>('');
     const [payrolls, setPayrolls] = useState<Payroll[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
-
-    const functions = getFunctions();
-    const getPayrolls = httpsCallable(functions, 'getPayrolls');
-    const calculatePayrollsForEvent = httpsCallable(functions, 'calculatePayrollsForEvent');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchEvents = async () => {
-            const eventsSnapshot = await getDocs(collection(db, 'events'));
-            const eventsList = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
-            setEvents(eventsList);
+            const eventsCollection = collection(db, 'events');
+            const eventSnapshot = await getDocs(eventsCollection);
+            const eventList = eventSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+            setEvents(eventList);
         };
         fetchEvents();
     }, []);
 
-    const handleFetchPayrolls = async (eventId: string) => {
-        if (!eventId) return;
-        setSelectedEventId(eventId);
+    const handleFetchPayrolls = async () => {
+        if (!selectedEvent) return;
         setLoading(true);
-        setError('');
-        setMessage('');
+        setError(null);
         try {
-            const result: any = await getPayrolls({ eventId });
+            const getPayrollsFunc = httpsCallable(functions, 'getPayrolls');
+            const result: any = await getPayrollsFunc({ eventId: selectedEvent });
+            
             // Fetch dealer names for display
             const payrollsWithNames = await Promise.all(result.data.payrolls.map(async (p: Payroll) => {
-                const userDoc = await getDocs(collection(db, 'users'), p.dealerId);
-                return { ...p, dealerName: userDoc.docs[0]?.data().name || 'Unknown Dealer' };
+                const userDocRef = doc(db, 'users', p.dealerId);
+                const userDoc = await getDoc(userDocRef);
+                return { ...p, dealerName: userDoc.exists() ? userDoc.data().name : 'Unknown Dealer' };
             }));
             setPayrolls(payrollsWithNames);
-        } catch (err: any) {
-            setError(err.message);
-        }
-        setLoading(false);
-    };
 
-    const handleCalculate = async () => {
-        if (!selectedEventId) {
-            setError('Please select an event first.');
-            return;
+        } catch (err) {
+            console.error('Error fetching payrolls:', err);
+            setError('Failed to fetch payrolls.');
+        } finally {
+            setLoading(false);
         }
+    };
+    
+    const handleCalculatePayrolls = async () => {
+        if (!selectedEvent) return;
         setLoading(true);
-        setError('');
-        setMessage('');
+        setError(null);
         try {
-            const result: any = await calculatePayrollsForEvent({ eventId: selectedEventId });
-            setMessage(result.data.message);
-            // Refresh payrolls after calculation
-            handleFetchPayrolls(selectedEventId);
-        } catch (err: any) {
-            setError(err.message);
+            const calculatePayrollsFunc = httpsCallable(functions, 'calculatePayrollsForEvent');
+            await calculatePayrollsFunc({ eventId: selectedEvent });
+            alert('Payrolls calculated successfully! Fetching updated data...');
+            handleFetchPayrolls(); // Refresh the list
+        } catch (err) {
+            console.error('Error calculating payrolls:', err);
+            setError('Failed to calculate payrolls.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Payroll Management</h1>
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+                <h1 className="text-3xl font-bold text-gray-800 mb-6">Payroll Management</h1>
+                
+                <div className="flex items-center space-x-4 mb-6">
+                    <select
+                        value={selectedEvent}
+                        onChange={(e) => setSelectedEvent(e.target.value)}
+                        className="p-2 border rounded-md"
+                    >
+                        <option value="">Select an Event</option>
+                        {events.map(event => (
+                            <option key={event.id} value={event.id}>{event.name}</option>
+                        ))}
+                    </select>
+                    <button onClick={handleFetchPayrolls} className="btn btn-primary" disabled={!selectedEvent || loading}>
+                        {loading ? 'Loading...' : 'Load Payrolls'}
+                    </button>
+                    <button onClick={handleCalculatePayrolls} className="btn btn-secondary" disabled={!selectedEvent || loading}>
+                        {loading ? 'Calculating...' : 'Calculate All Payrolls for Event'}
+                    </button>
+                </div>
 
-            <div className="mb-4">
-                <label htmlFor="event-select" className="block text-sm font-medium text-gray-700">Select Event</label>
-                <select
-                    id="event-select"
-                    value={selectedEventId}
-                    onChange={(e) => handleFetchPayrolls(e.target.value)}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                    <option value="">-- Select an Event --</option>
-                    {events.map(event => (
-                        <option key={event.id} value={event.id}>{event.name}</option>
-                    ))}
-                </select>
-            </div>
+                {error && <p className="text-red-500">{error}</p>}
 
-            {error && <p className="text-red-500 my-2">{error}</p>}
-            {message && <p className="text-green-500 my-2">{message}</p>}
-
-            {selectedEventId && (
-                <button
-                    onClick={handleCalculate}
-                    disabled={loading}
-                    className="my-2 bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
-                >
-                    {loading ? 'Calculating...' : 'Calculate Payroll for Selected Event'}
-                </button>
-            )}
-
-            <div className="mt-6">
-                <h2 className="text-xl font-semibold">Payroll Details</h2>
-                {loading && !payrolls.length ? (
-                    <p>Loading payrolls...</p>
-                ) : (
-                    <table className="min-w-full divide-y divide-gray-200 mt-2">
-                        <thead className="bg-gray-50">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white">
+                        <thead className="bg-gray-100">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dealer</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Worked</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="py-2 px-4 border-b">Dealer Name</th>
+                                <th className="py-2 px-4 border-b">Work Hours (approx.)</th>
+                                <th className="py-2 px-4 border-b">Amount</th>
+                                <th className="py-2 px-4 border-b">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {payrolls.map((p) => (
-                                <tr key={p.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">{p.dealerName}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{p.workDurationInHours.toFixed(2)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">${p.hourlyRate.toFixed(2)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">${p.calculatedPay.toFixed(2)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{p.status}</td>
+                        <tbody>
+                            {payrolls.map(payroll => (
+                                <tr key={payroll.id}>
+                                    <td className="py-2 px-4 border-b text-center">{payroll.dealerName}</td>
+                                    <td className="py-2 px-4 border-b text-center">{payroll.workHours.toFixed(2)}</td>
+                                    <td className="py-2 px-4 border-b text-center">${payroll.amount.toFixed(2)}</td>
+                                    <td className="py-2 px-4 border-b text-center">{payroll.status}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                )}
-                 {payrolls.length === 0 && !loading && <p className="mt-2 text-gray-500">No payroll data to display. Try calculating it.</p>}
+                </div>
             </div>
         </div>
     );

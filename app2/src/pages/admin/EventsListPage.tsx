@@ -7,8 +7,8 @@ import { useAuth } from '../../contexts/AuthContext';
 interface Event {
   id: string;
   name: string;
-  startDate: { toDate: () => Date };
-  endDate: { toDate: () => Date };
+  startDate: any;
+  endDate: any;
   status: 'recruiting' | 'ongoing' | 'completed';
   location: string;
 }
@@ -19,14 +19,17 @@ const EventsListPage: React.FC = () => {
   const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
 
     const q = query(collection(db, 'events'), orderBy('startDate', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const eventsList: Event[] = [];
-      querySnapshot.forEach((doc) => {
-        eventsList.push({ id: doc.id, ...doc.data() } as Event);
-      });
+      const eventsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Event[];
       setEvents(eventsList);
       setLoading(false);
     }, (error) => {
@@ -37,16 +40,23 @@ const EventsListPage: React.FC = () => {
     return () => unsubscribe();
   }, [isAdmin]);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
+  const formatDate = (dateInput: any): string => {
+    if (!dateInput) return 'N/A';
+    if (typeof dateInput.toDate === 'function') {
+      return dateInput.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    if (dateInput instanceof Date) {
+      return dateInput.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    const date = new Date(dateInput);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    return 'Invalid Date';
   };
 
-  if (loading) return <div className="p-6">Loading events...</div>;
-  if (!isAdmin) return <div className="p-6 text-red-500">Access Denied.</div>;
+  if (loading) return <div className="p-6 text-center">Loading events...</div>;
+  if (!isAdmin) return <div className="p-6 text-red-500">Access Denied. You are not authorized to view this page.</div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -76,7 +86,7 @@ const EventsListPage: React.FC = () => {
                 <tr key={event.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{event.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(event.startDate.toDate())} - {formatDate(event.endDate.toDate())}
+                    {formatDate(event.startDate)} - {formatDate(event.endDate)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{event.location}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">

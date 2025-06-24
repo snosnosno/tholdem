@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TournamentProvider } from './contexts/TournamentContext';
 import { Layout } from './components/Layout';
@@ -30,14 +30,15 @@ import JobPostingAdminPage from './pages/JobPostingAdminPage';
 import StaffListPage from './pages/StaffListPage';
 import StaffNewPage from './pages/StaffNewPage';
 import PayrollAdminPage from './pages/admin/PayrollAdminPage';
+import StaffingDashboardPage from './pages/StaffingDashboardPage'; // <-- IMPORT ADDED
 
 // Dealer Pages
 import DealerEventsListPage from './pages/dealer/DealerEventsListPage';
 
 // A component to handle role-based redirection
 const HomeRedirect: React.FC = () => {
-  const { user } = useAuth();
-  if (user?.role === 'admin') {
+  const { isAdmin } = useAuth();
+  if (isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
   // Default to dealer's event list or a general landing page
@@ -48,48 +49,45 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <TournamentProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<AdminLogin />} />
-            <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />
-            
-            <Route element={<PrivateRoute />}>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<HomeRedirect />} />
-                
-                {/* Common pages for both roles might go here if any */}
-                <Route path="profile" element={<ProfilePage />} />
-                
-                {/* Dealer facing routes */}
-                <Route path="events" element={<DealerEventsListPage />} />
-                <Route path="jobs" bgelement={<JobBoardPage />} />
-                <Route path="attendance" element={<AttendancePage />} />
-                <Route path="available-times" element={<AvailableTimesPage />} />
+        <Routes>
+          <Route path="/login" element={<AdminLogin />} />
+          <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />
+          
+          <Route element={<PrivateRoute />}>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomeRedirect />} />
+              
+              <Route path="profile" element={<ProfilePage />} />
+              
+              {/* Dealer facing routes */}
+              <Route path="events" element={<DealerEventsListPage />} />
+              <Route path="jobs" element={<JobBoardPage />} />
+              <Route path="attendance" element={<AttendancePage />} />
+              <Route path="available-times" element={<AvailableTimesPage />} />
 
-                {/* Admin-only routes */}
-                <Route path="admin/dashboard" element={<DashboardPage />} />
-                <Route path="admin/staff" element={<StaffListPage />} />
-                <Route path="admin/staff/new" element={<StaffNewPage />} />
-                <Route path="admin/events" element={<AdminEventsListPage />} />
-                <Route path="admin/events/new" element={<AdminEventNewPage />} />
-                <Route path="admin/events/:eventId" element={<AdminEventDetailPage />} />
-                <Route path="admin/job-postings" element={<JobPostingAdminPage />} />
-                <Route path="admin/dealer-rotation" element={<DealerRotationPage />} />
-                <Route path="admin/payroll" element={<PayrollAdminPage />} />
-                
-                {/* Deprecated/Re-purposed routes for reference if needed */}
-                <Route path="participants" element={<ParticipantsPage />} />
-                <Route path="tables" element={<TablesPage />} />
-                <Route path="blinds" element={<BlindsPage />} />
-                <Route path="prizes" element={<PrizesPage />} />
-                <Route path="announcements" element={<AnnouncementsPage />} />
-                <Route path="history" element={<HistoryPage />} />
-                <Route path="history/:logId" element={<HistoryDetailPage />} />
-
-              </Route>
+              {/* Admin-only routes */}
+              <Route path="admin/dashboard" element={<DashboardPage />} />
+              <Route path="admin/staff" element={<StaffListPage />} />
+              <Route path="admin/staff/new" element={<StaffNewPage />} />
+              <Route path="admin/staffing-dashboard" element={<StaffingDashboardPage />} /> {/* <-- ROUTE ADDED */}
+              <Route path="admin/events" element={<AdminEventsListPage />} />
+              <Route path="admin/events/new" element={<AdminEventNewPage />} />
+              <Route path="admin/events/:eventId" element={<AdminEventDetailPage />} />
+              <Route path="admin/job-postings" element={<JobPostingAdminPage />} />
+              <Route path="admin/dealer-rotation" element={<DealerRotationPage />} />
+              <Route path="admin/payroll" element={<PayrollAdminPage />} />
+              
+              {/* These might be admin-only as well, consider moving them */}
+              <Route path="participants" element={<ParticipantsPage />} />
+              <Route path="tables" element={<TablesPage />} />
+              <Route path="blinds" element={<BlindsPage />} />
+              <Route path="prizes" element={<PrizesPage />} />
+              <Route path="announcements" element={<AnnouncementsPage />} />
+              <Route path="history" element={<HistoryPage />} />
+              <Route path="history/:logId" element={<HistoryDetailPage />} />
             </Route>
-          </Routes>
-        </Router>
+          </Route>
+        </Routes>
       </TournamentProvider>
     </AuthProvider>
   );

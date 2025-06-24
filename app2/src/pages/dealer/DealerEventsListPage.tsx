@@ -6,8 +6,9 @@ import { useAuth } from '../../contexts/AuthContext';
 interface Event {
   id: string;
   name: string;
-  startDate: { toDate: () => Date };
-  endDate: { toDate: () => Date };
+  // Let's be more flexible with date types from Firestore
+  startDate: any;
+  endDate: any;
   location: string;
   description: string;
 }
@@ -15,15 +16,15 @@ interface Event {
 const DealerEventsListPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const q = query(collection(db, 'events'), where('status', '==', 'recruiting'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const eventsList: Event[] = [];
-      querySnapshot.forEach((doc) => {
-        eventsList.push({ id: doc.id, ...doc.data() } as Event);
-      });
+      const eventsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Event[];
       setEvents(eventsList);
       setLoading(false);
     }, (error) => {
@@ -34,11 +35,32 @@ const DealerEventsListPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
+  /**
+   * Safely formats a date that could be a Firestore Timestamp, a Date object, or a date string.
+   */
+  const formatDate = (dateInput: any): string => {
+    if (!dateInput) return 'N/A';
+    
+    // Check if it's a Firestore Timestamp and convert it
+    if (typeof dateInput.toDate === 'function') {
+      return dateInput.toDate().toLocaleDateString('en-US', { dateStyle: 'medium' });
+    }
+    
+    // Check if it's already a Date object
+    if (dateInput instanceof Date) {
+      return dateInput.toLocaleDateString('en-US', { dateStyle: 'medium' });
+    }
+
+    // Try to parse it if it's a string
+    const date = new Date(dateInput);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-US', { dateStyle: 'medium' });
+    }
+
+    return 'Invalid Date';
   };
   
-  if (loading) return <div className="p-6">Loading available events...</div>;
+  if (loading) return <div className="p-6 text-center">Loading available events...</div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -47,15 +69,16 @@ const DealerEventsListPage: React.FC = () => {
         {events.length > 0 ? (
           <div className="space-y-4">
             {events.map(event => (
-              <div key={event.id} className="bg-white p-6 rounded-lg shadow-md">
+              <div key={event.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <h2 className="text-xl font-bold text-gray-900">{event.name}</h2>
                 <p className="text-sm text-gray-500 mt-1">{event.location}</p>
                 <p className="text-sm text-gray-600 mt-2">
-                  {formatDate(event.startDate.toDate())} - {formatDate(event.endDate.toDate())}
+                  {formatDate(event.startDate)} - {formatDate(event.endDate)}
                 </p>
                 <p className="mt-4 text-gray-700">{event.description}</p>
                 <div className="mt-4">
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                  {/* TODO: Implement application logic */}
+                  <button className="btn btn-primary">
                     Apply Now
                   </button>
                 </div>

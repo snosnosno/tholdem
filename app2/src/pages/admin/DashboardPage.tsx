@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { functions } from '../../firebase';
-import { httpsCallable } from 'firebase/functions';
+import { auth } from '../../firebase'; // Import auth
 import { DashboardCard } from '../../components/DashboardCard';
 import { StarIcon } from '@heroicons/react/24/solid';
 
@@ -22,14 +21,40 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        const getDashboardStats = httpsCallable(functions, 'getDashboardStats');
-        const result = await getDashboardStats();
-        setStats(result.data as DashboardStats);
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error("Authentication required. Please sign in.");
+        }
+
+        const idToken = await user.getIdToken();
+
+        // The exact URL of your deployed HTTP function
+        const functionUrl = 'https://us-central1-tholdem-ebc18.cloudfunctions.net/getDashboardStats';
+        
+        const response = await fetch(functionUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          // Use the error message from the backend if available
+          throw new Error(errorData?.data?.error || `Request failed with status ${response.status}`);
+        }
+
+        const result = await response.json();
+        setStats(result.data);
+
       } catch (err: any) {
         console.error("Error fetching dashboard stats:", err);
-        setError(err.message || 'Failed to fetch dashboard statistics.');
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -39,11 +64,11 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-4 text-center">Loading dashboard...</div>;
+    return <div className="p-6 text-center font-semibold">Loading Dashboard...</div>;
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500">Error: {error}</div>;
+    return <div className="p-6 text-center text-red-600 bg-red-50 rounded-md">Error: {error}</div>;
   }
 
   return (
@@ -51,7 +76,6 @@ const DashboardPage: React.FC = () => {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        {/* Key Metrics */}
         <DashboardCard title="Ongoing Events">
           <p className="text-5xl font-bold text-blue-600">{stats?.ongoingEventsCount ?? '0'}</p>
         </DashboardCard>
@@ -68,7 +92,6 @@ const DashboardPage: React.FC = () => {
             </div>
         </DashboardCard>
         
-        {/* Top Rated Dealers */}
         <div className="md:col-span-2 lg:col-span-3">
             <DashboardCard title="Top Rated Dealers">
                 <ul className="space-y-3">

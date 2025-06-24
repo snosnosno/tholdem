@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, signInWithEmailAndPassword, UserCredential } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithEmailAndPassword, UserCredential, signOut } from 'firebase/auth'; // Import signOut
 import { auth } from '../firebase';
 
 interface AuthContextType {
@@ -7,6 +7,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<UserCredential>;
+  signOut: () => Promise<void>; // Add signOut to the type
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +34,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setCurrentUser(user);
       if (user) {
         try {
-          const idTokenResult = await user.getIdTokenResult(true); // Force refresh
+          // Force refresh the token to get the latest custom claims.
+          const idTokenResult = await user.getIdTokenResult(true); 
           const userRole = idTokenResult.claims.role;
           setIsAdmin(userRole === 'admin');
         } catch (error) {
@@ -49,15 +51,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const signIn = (email: string, password: string) => {
+  const handleSignIn = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const handleSignOut = () => {
+    return signOut(auth);
   };
 
   const value = {
     currentUser,
     loading,
     isAdmin,
-    signIn,
+    signIn: handleSignIn,
+    signOut: handleSignOut, // Provide the signOut function
   };
 
   return (

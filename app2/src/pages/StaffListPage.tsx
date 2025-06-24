@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../firebase';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Staff {
   id: string;
   name: string;
   email: string;
-  phone: string | null;
-  experience: string | null;
-  hourlyRate: number;
+  role: string;
+  // Add other relevant staff properties here
 }
 
 const StaffListPage: React.FC = () => {
@@ -19,77 +18,62 @@ const StaffListPage: React.FC = () => {
   const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!isAdmin) return;
+    // Only fetch if user is an admin
+    if (!isAdmin) {
+        setLoading(false);
+        return;
+    };
 
     const q = query(collection(db, 'users'), where('role', '==', 'dealer'));
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const staff: Staff[] = [];
+      const list: Staff[] = [];
       querySnapshot.forEach((doc) => {
-        staff.push({ id: doc.id, ...doc.data() } as Staff);
+        list.push({ id: doc.id, ...doc.data() } as Staff);
       });
-      setStaffList(staff);
+      setStaffList(list);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching staff list: ", error);
-      setLoading(false);
+        console.error("Error fetching staff list: ", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
   }, [isAdmin]);
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">Loading staff list...</div>;
   }
 
   if (!isAdmin) {
-    return <div className="p-6 text-red-500">Access Denied. You must be an admin to view this page.</div>;
+      return <div className="p-6 text-red-500">You do not have permission to view this page.</div>
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Staff Management</h1>
-          <Link
-            to="/admin/staff/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Add New Staff
-          </Link>
+        <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800">Staff Management</h1>
+                <Link to="/admin/staff/new" className="btn btn-primary">
+                    Add New Staff
+                </Link>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+                <ul className="divide-y divide-gray-200">
+                    {staffList.length > 0 ? staffList.map(staff => (
+                        <li key={staff.id} className="p-4 flex justify-between items-center">
+                            <div>
+                                <p className="font-semibold text-gray-900">{staff.name}</p>
+                                <p className="text-sm text-gray-500">{staff.email}</p>
+                            </div>
+                            <span className="text-sm capitalize text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{staff.role}</span>
+                        </li>
+                    )) : (
+                        <p className="text-center text-gray-500 py-4">No staff members found.</p>
+                    )}
+                </ul>
+            </div>
         </div>
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hourly Rate</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {staffList.length > 0 ? (
-                  staffList.map((staff) => (
-                    <tr key={staff.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{staff.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.phone || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.experience || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${staff.hourlyRate?.toFixed(2) || '0.00'}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No staff members found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
