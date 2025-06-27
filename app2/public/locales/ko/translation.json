@@ -1,0 +1,486 @@
+{
+  "adminLogin": {
+    "title": "관리자 로그인",
+    "emailPlaceholder": "이메일 주소",
+    "passwordPlaceholder": "비밀번호",
+    "loginButton": "로그인",
+    "errorMessage": "로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요."
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "jobBoard": "구인구직",
+    "myProfile": "내 프로필",
+    "myAvailability": "가능 시간",
+    "attendance": "출석체크",
+    "staffingDashboard": "스태핑 대시보드",
+    "staffManagement": "스태프 관리",
+    "managePostings": "공고 관리",
+    "manageEvents": "이벤트 관리",
+    "processPayroll": "급여 처리",
+    "participants": "참가자",
+    "tables": "테이블",
+    "blinds": "블라인드",
+    "prizes": "프라이즈",
+    "announcements": "공지사항",
+    "history": "기록",
+    "logout": "로그아웃"
+  },
+  "layout": {
+    "title": "T-홀덤",
+    "subtitle": "토너먼트 관리",
+    "loading": "로딩 중..."
+  },
+  "dashboard": {
+    "loading": "대시보드 로딩 중...",
+    "errorPrefix": "오류",
+    "title": "관리자 대시보드",
+    "ongoingEvents": "진행중인 이벤트",
+    "totalDealers": "총 딜러 수",
+    "quickLinks": "빠른 링크",
+    "manageEventsLink": "이벤트 관리",
+    "manageStaffLink": "스태프 관리",
+    "processPayrollLink": "급여 처리",
+    "topRatedDealers": "상위 평점 딜러",
+    "ratingsCount": "({{count}}개 평점)",
+    "noRatings": "아직 딜러 평점이 없습니다."
+  },
+  "eventsList": {
+    "loading": "이벤트 목록 로딩 중...",
+    "accessDenied": "접근이 거부되었습니다. 이 페이지를 볼 권한이 없습니다.",
+    "title": "이벤트 관리",
+    "createNew": "새 이벤트 생성",
+    "colEventName": "이벤트명",
+    "colDates": "날짜",
+    "colLocation": "장소",
+    "colStatus": "상태",
+    "colActions": "작업",
+    "actionEdit": "수정",
+    "dateNotAvailable": "해당 없음",
+    "dateInvalid": "유효하지 않은 날짜",
+    "status": {
+      "recruiting": "모집중",
+      "ongoing": "진행중",
+      "completed": "완료"
+    }
+  },
+  "eventNew": {
+    "accessDenied": "접근이 거부되었습니다.",
+    "title": "새 이벤트 생성",
+    "errorNoPermission": "이벤트를 생성할 권한이 없습니다.",
+    "errorFailed": "이벤트 생성에 실패했습니다.",
+    "placeholderName": "이벤트명",
+    "placeholderLocation": "장소",
+    "placeholderLatitude": "위도",
+    "placeholderLongitude": "경도",
+    "placeholderDescription": "설명",
+    "buttonCreating": "생성 중...",
+    "buttonCreate": "이벤트 생성"
+  },
+  "eventDetail": {
+    "loading": "이벤트 상세 정보 로딩 중...",
+    "errorPrefix": "오류",
+    "notFound": "이벤트를 찾을 수 없습니다.",
+    "errorIdMissing": "이벤트 ID가 없습니다.",
+    "errorFailedLoad": "이벤트 상세 정보를 불러오는 데 실패했습니다.",
+    "errorFailedAssign": "딜러를 배정하는 데 실패했습니다.",
+    "errorFailedQr": "QR 코드를 생성하는 데 실패했습니다.",
+    "alertRatingRequired": "평점을 선택해주세요.",
+    "alertRatingSuccess": "평점이 성공적으로 제출되었습니다!",
+    "alertRatingFailed": "평점 제출에 실패했습니다. 다시 시도해주세요.",
+    "labelStarts": "시작",
+    "labelEnds": "종료",
+    "labelDescription": "설명",
+    "btnGenerateQr": "출석 QR 생성",
+    "btnAssignDealer": "딜러 배정",
+    "btnRateDealer": "딜러 평가",
+    "btnAssign": "배정",
+    "btnSubmitRating": "평점 제출",
+    "noDealersAssigned": "아직 배정된 딜러가 없습니다.",
+    "modalTitleAssign": "딜러 배정하기",
+    "modalTitleRate": "{{dealerName}} 평가하기",
+    "modalTitleQr": "이벤트 출석 QR 코드",
+    "ratingCommentPlaceholder": "코멘트 추가 (선택 사항)",
+    "qrModalDescription": "딜러는 휴대폰으로 이 코드를 스캔하여 출퇴근을 기록할 수 있습니다.",
+    "qrGenerating": "QR 코드 생성 중..."
+  },
+  "staffList": {
+    "loading": "스태프 목록 로딩 중...",
+    "accessDenied": "이 페이지를 볼 권한이 없습니다.",
+    "title": "스태프 관리",
+    "addNew": "새 스태프 추가",
+    "noStaffFound": "스태프 멤버를 찾을 수 없습니다."
+  },
+  "staffNew": {
+    "accessDeniedAction": "이 작업을 수행할 권한이 없습니다.",
+    "accessDeniedView": "이 페이지를 볼 권한이 없습니다.",
+    "alertSuccess": "스태프가 성공적으로 생성되었습니다!",
+    "errorUnknown": "알 수 없는 오류가 발생했습니다.",
+    "title": "새 스태프 추가",
+    "labelName": "이름",
+    "labelEmail": "이메일 주소",
+    "labelRole": "역할",
+    "roleDealer": "딜러",
+    "roleAdmin": "관리자",
+    "buttonCreating": "생성 중...",
+    "buttonCreate": "스태프 생성"
+  },
+  "payrollAdmin": {
+    "alertSuccess": "급여가 성공적으로 계산되었습니다! 업데이트된 데이터를 가져옵니다...",
+    "errorFetch": "급여 정보를 가져오는 데 실패했습니다.",
+    "errorCalculate": "급여를 계산하는 데 실패했습니다.",
+    "title": "급여 관리",
+    "selectEvent": "이벤트 선택",
+    "buttonLoading": "로딩 중...",
+    "buttonLoadPayrolls": "급여 불러오기",
+    "buttonCalculating": "계산 중...",
+    "buttonCalculateAll": "전체 급여 계산하기",
+    "tableHeaderName": "딜러 이름",
+    "tableHeaderHours": "근무 시간 (근사치)",
+    "tableHeaderAmount": "금액",
+    "tableHeaderStatus": "상태",
+    "unknownDealer": "알 수 없는 딜러"
+  },
+  "dealerEvents": {
+    "loading": "참여 가능한 이벤트를 불러오는 중...",
+    "title": "지원 가능한 이벤트 목록",
+    "applyButton": "지금 지원하기",
+    "noEvents": "현재 모집 중인 이벤트가 없습니다.",
+    "dateNotAvailable": "해당 없음",
+    "dateInvalid": "유효하지 않은 날짜"
+  },
+  "participants": {
+    "loading": "로딩 중...",
+    "errorParticipants": "참가자 로딩 오류:",
+    "errorTables": "테이블 로딩 오류:",
+    "confirmDelete": "정말로 삭제하시겠습니까?",
+    "locationWaiting": "대기중",
+    "title": "참가자 관리",
+    "searchPlaceholder": "이름으로 검색",
+    "addNew": "+ 참가자 추가",
+    "tableHeaderName": "이름",
+    "tableHeaderPhone": "연락처",
+    "tableHeaderStatus": "상태",
+    "tableHeaderChips": "칩",
+    "tableHeaderLocation": "위치",
+    "tableHeaderActions": "관리",
+    "actionEdit": "수정",
+    "actionDelete": "삭제",
+    "modalTitleEdit": "참가자 수정",
+    "modalTitleAdd": "참가자 추가",
+    "modalLabelName": "이름",
+    "modalLabelPhone": "연락처",
+    "modalLabelChips": "칩",
+    "modalButtonCancel": "취소",
+    "modalButtonUpdate": "수정",
+    "modalButtonAdd": "추가"
+  },
+  "tables": {
+    "loading": "로딩 중...",
+    "error": "오류:",
+    "errorMoveFailed": "자리 이동에 실패했습니다:",
+    "title": "테이블 현황",
+    "buttonAutoAssign": "자동 재배치",
+    "buttonAddTable": "테이블 추가",
+    "infoTables": "테이블:",
+    "infoEmptySeats": "빈 자리:",
+    "labelMaxSeats": "최대 좌석:",
+    "participantEmpty": "빈 자리",
+    "participantUnknown": "알 수 없음",
+    "dealerNotApplicable": "해당 없음"
+  },
+  "tableDetailModal": {
+    "changeBorderColorTitle": "테두리 색상 변경",
+    "defaultTableName": "테이블 {{number}}",
+    "infoParticipants": "참가자:",
+    "infoEmptySeats": "빈 좌석:",
+    "labelMaxSeats": "최대 좌석:",
+    "buttonActivate": "테이블 활성화",
+    "buttonClose": "테이블 닫기",
+    "participantUnknown": "알 수 없음"
+  },
+  "playerActionModal": {
+    "showDetails": "상세 정보",
+    "moveSeat": "자리 이동",
+    "bustOut": "탈락 처리"
+  },
+  "moveSeatModal": {
+    "title": "{{name}}님 자리 이동",
+    "sectionTitle": "이동 대상 플레이어",
+    "labelName": "이름:",
+    "labelCurrentLocation": "현재 위치:",
+    "seatSuffix": "번 좌석",
+    "notApplicable": "해당 없음",
+    "defaultTableName": "테이블 {{number}}",
+    "statusOccupied": "(자리 있음)",
+    "statusEmpty": "(빈 자리)",
+    "statusUnavailable": "(이동 불가)",
+    "buttonCancel": "취소",
+    "buttonConfirm": "이동 확인"
+  },
+  "blinds": {
+    "title": "블라인드 컨트롤",
+    "breakTime": "휴식 시간",
+    "level": "레벨 {{level}}",
+    "ante": "앤티 {{ante}}",
+    "next": "다음:",
+    "nextBreak": "휴식",
+    "end": "종료",
+    "buttonPrev": "이전",
+    "buttonPause": "일시정지",
+    "buttonStart": "시작",
+    "buttonNext": "다음"
+  },
+  "prizes": {
+    "alertSaved": "상금 분배가 저장되었습니다.",
+    "title": "상금 계산기",
+    "totalPrizePool": "총상금",
+    "participants": "참가자",
+    "itm": "ITM",
+    "adjustManually": "수동으로 상금 조정",
+    "totalDistributed": "분배된 총액:",
+    "rank": "{{rank}}등",
+    "saveButton": "상금 구조 저장"
+  },
+  "announcements": {
+    "title": "공지 보내기",
+    "placeholder": "플레이어에게 보낼 공지 내용을 입력하세요...",
+    "buttonPost": "공지 게시"
+  },
+  "participantDetailModal": {
+    "title": "참가자 상세 정보",
+    "editTitle": "참가자 정보 수정",
+    "labelName": "이름",
+    "labelPhone": "연락처",
+    "labelChips": "칩",
+    "labelStatus": "상태",
+    "labelTable": "테이블",
+    "statusActive": "참가중",
+    "statusBusted": "탈락",
+    "tableSeatFormat": "{{tableName}} - S{{seatNumber}}",
+    "notAvailable": "없음",
+    "buttonClose": "닫기",
+    "buttonSave": "저장",
+    "buttonEdit": "수정"
+  },
+  "qrScannerModal": {
+    "title": "QR 코드 스캐너",
+    "scanMessage": "출석 체크를 위해 QR 코드를 스캔해주세요."
+  },
+  "attendancePage": {
+    "title": "출석 QR 코드 스캔",
+    "lastScanned": "마지막 스캔: {{scanResult}}",
+    "submitting": "출석 정보 제출 중...",
+    "success": "출석이 성공적으로 기록되었습니다!",
+    "fail": "출석 기록에 실패했습니다."
+  },
+  "availableTimes": {
+    "title": "주간 근무 가능 시간 설정",
+    "days": {
+      "monday": "월요일",
+      "tuesday": "화요일",
+      "wednesday": "수요일",
+      "thursday": "목요일",
+      "friday": "금요일",
+      "saturday": "토요일",
+      "sunday": "일요일"
+    },
+    "times": {
+      "morning": "오전 (8시-12시)",
+      "afternoon": "오후 (12시-16시)",
+      "evening": "저녁 (16시-20시)",
+      "night": "야간 (20시-24시)"
+    },
+    "alerts": {
+      "notLoggedIn": "로그인이 필요합니다.",
+      "updateSuccess": "근무 가능 시간이 성공적으로 업데이트되었습니다!",
+      "updateFailed": "업데이트에 실패했습니다."
+    },
+    "status": {
+      "loading": "데이터 로딩 중...",
+      "error": "오류: {{message}}",
+      "loginRequired": "로그인 후 이용해주세요."
+    },
+    "saveButton": "저장"
+  },
+  "dealerRotation": {
+    "loading": "스태프 및 테이블 정보 로딩 중...",
+    "title": "딜러 순환 대시보드",
+    "onTables": "테이블 근무 중",
+    "tableName": "{{tableNumber}}번 테이블",
+    "noDealerAssigned": "배정된 딜러 없음",
+    "availableDealers": "대기 중인 딜러",
+    "noDealersAvailable": "대기 중인 딜러 없음",
+    "onBreak": "휴식 중",
+    "noDealersOnBreak": "휴식 중인 딜러 없음"
+  },
+  "historyDetail": {
+    "loading": "로딩 중...",
+    "title": "{{name}} 결과",
+    "backToList": "목록으로",
+    "date": "날짜",
+    "participants": "참가자",
+    "playerCount": "{{count}}명",
+    "prizePool": "총상금",
+    "currency": "{{amount, currency}}원",
+    "winner": "우승자",
+    "finalRanking": "최종 순위",
+    "rank": "순위",
+    "name": "이름",
+    "prize": "상금"
+  },
+  "historyPage": {
+    "title": "토너먼트 기록",
+    "tournamentName": "대회명",
+    "date": "날짜",
+    "participants": "참가자 수",
+    "winner": "우승자",
+    "details": "상세",
+    "viewResults": "결과 보기"
+  },
+  "jobBoard": {
+    "alerts": {
+      "loginRequired": "지원을 위해서는 로그인이 필요합니다.",
+      "profileNotFound": "스태프 프로필을 찾을 수 없습니다.",
+      "applicationSuccess": "지원이 성공적으로 제출되었습니다!",
+      "applicationFailed": "지원에 실패했습니다."
+    },
+    "loading": "구인 공고를 불러오는 중...",
+    "title": "구인 게시판",
+    "tournament": "토너먼트: {{name}}",
+    "role": "역할: {{role}}",
+    "applying": "지원 중...",
+    "applied": "지원 완료",
+    "applyNow": "지금 지원하기"
+  },
+  "jobPostingAdmin": {
+    "alerts": {
+      "selectTournament": "토너먼트를 선택해주세요.",
+      "createSuccess": "구인 공고가 성공적으로 생성되었습니다!",
+      "createFailed": "구인 공고 생성에 실패했습니다.",
+      "matchFailed": "자동 매칭 실행에 실패했습니다. 로그를 확인하세요."
+    },
+    "create": {
+      "title": "구인 공고 생성",
+      "postingTitle": "공고 제목",
+      "tournament": "토너먼트",
+      "selectTournament": "토너먼트 선택",
+      "role": "역할",
+      "dealer": "딜러",
+      "floor": "플로어",
+      "registration": "등록",
+      "staffNeeded": "필요 인원 수",
+      "description": "설명 / 조건",
+      "submitting": "제출 중...",
+      "button": "공고 생성"
+    },
+    "manage": {
+      "title": "구인 공고 관리",
+      "loading": "공고 로딩 중...",
+      "roleInfo": "역할: {{role}} | 필요: {{required}}",
+      "matching": "매칭 중...",
+      "button": "자동 매칭"
+    }
+  },
+  "profilePage": {
+    "eventIdMissing": "이벤트 ID가 없습니다",
+    "unknownEvent": "알 수 없는 이벤트",
+    "loginRequired": "프로필을 업데이트하려면 로그인해야 합니다.",
+    "updateSuccess": "프로필이 성공적으로 업데이트되었습니다!",
+    "updateFailed": "프로필 업데이트 실패: {{message}}",
+    "loadingProfile": "프로필 로딩 중...",
+    "error": "오류: {{message}}",
+    "viewProfileLogin": "프로필을 보려면 로그인해주세요.",
+    "ratings": "개 평점",
+    "cancel": "취소",
+    "editProfile": "프로필 수정",
+    "profileDetails": "프로필 상세 정보",
+    "email": "이메일:",
+    "phone": "연락처:",
+    "notProvided": "제공되지 않음",
+    "experience": "경력:",
+    "hourlyRate": "시급:",
+    "editDetails": "정보 수정",
+    "saveChanges": "변경사항 저장",
+    "payrollHistory": "급여 내역",
+    "loadingPayroll": "급여 내역 로딩 중...",
+    "tableEvent": "이벤트",
+    "tableDate": "날짜",
+    "tableHours": "시간",
+    "tablePay": "급여",
+    "tableStatus": "상태",
+    "noPayroll": "급여 내역이 없습니다.",
+    "statusPaid": "지급 완료",
+    "statusPending": "지급 대기중"
+  },
+  "staffingDashboard": {
+    "accessDenied": "이 페이지에 접근할 권한이 없습니다.",
+    "title": "스태핑 대시보드",
+    "totalStaff": "총 스태프",
+    "activeEvents": "진행중인 이벤트",
+    "quickActions": "빠른 작업",
+    "addNewStaff": "새 스태프 추가",
+    "createNewEvent": "새 이벤트 생성",
+    "recentEvents": "최근 이벤트",
+    "loadingEvents": "이벤트 로딩 중...",
+    "errorEvents": "이벤트 로딩 오류.",
+    "status": "상태: {{status}}"
+  },
+  "participantLivePage": {
+    "notFound": "참가자를 찾을 수 없습니다. (ID: {{id}})",
+    "announcements": "📢 공지사항",
+    "table": "테이블: {{tableNumber}}",
+    "seat": "좌석: {{seatNumber}}",
+    "chips": "칩: {{chipCount}}",
+    "nextLevelIn": "다음 레벨까지",
+    "nextBlind": "다음 블라인드: {{blind}}",
+    "tournamentEnd": "토너먼트 종료",
+    "tournamentInfo": "토너먼트 정보",
+    "currentBlind": "현재 블라인드",
+    "remainingPlayers": "남은 플레이어",
+    "avgStack": "평균 스택",
+    "totalChips": "총 칩",
+    "rulesTitle": "대회 규칙",
+    "rule1": "1. TDA 룰을 기본으로 합니다.",
+    "rule2": "2. 참가자 간의 예의를 지켜주세요.",
+    "dummyAnnouncement1": "다음 블라인드 레벨은 5분 후에 시작됩니다.",
+    "dummyAnnouncement2": "10분간 휴식 시간을 갖겠습니다."
+  },
+  "tournamentDashboard": {
+    "loading": "로딩 중...",
+    "seeding": {
+      "success": "테스트 데이터가 성공적으로 생성되었습니다! 페이지를 다시 로드합니다.",
+      "skipped": "테스트 데이터가 이미 존재하여 건너뜁니다.",
+      "error": "테스트 데이터를 생성하는 중에 오류가 발생했습니다.",
+      "unexpectedError": "예상치 못한 오류가 발생했습니다. 콘솔을 확인하세요."
+    },
+    "title": "토너먼트 대시보드",
+    "devTools": {
+      "title": "개발자 도구",
+      "button": "테스트 데이터 생성 (테이블 10개, 플레이어 80명)",
+      "buttonSeeding": "테스트 데이터 생성 중...",
+      "description": "샘플 데이터로 데이터베이스를 채웁니다. 초기 데이터베이스에서만 사용하세요."
+    },
+    "stats": {
+      "totalParticipants": "총 참가자",
+      "currentBlindLevel": "현재 블라인드 레벨",
+      "estimatedPrizePool": "예상 총상금"
+    },
+    "status": {
+      "title": "토너먼트 상태",
+      "welcome": "토너먼트 관리 패널에 오신 것을 환영합니다. 왼쪽 메뉴를 사용하여 이벤트의 다양한 측면을 관리하세요.",
+      "running": "진행중",
+      "paused": "일시중지됨",
+      "stopped": "중지됨"
+    }
+  },
+  "privateRoute": {
+    "loading": "사용자 정보 로딩 중..."
+  },
+  "tableCard": {
+    "dealer": "딜러:",
+    "waiting": "대기중"
+  },
+  "tournament": {
+    "initialName": "T-Holdem 초기 토너먼트"
+  }
+}
