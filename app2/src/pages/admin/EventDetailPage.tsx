@@ -4,6 +4,7 @@ import { doc, getDoc, updateDoc, arrayUnion, collection, query, where, getDocs, 
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
 
 import { db, functions } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -36,6 +37,7 @@ interface Rating {
 
 
 const EventDetailPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<EventData | null>(null);
   const [assignedDealers, setAssignedDealers] = useState<any[]>([]);
@@ -52,24 +54,27 @@ const EventDetailPage: React.FC = () => {
   const { currentUser } = useAuth();
 
   const formatDate = (dateInput: any): string => {
-    if (!dateInput) return 'N/A';
-    // Use toLocaleString which accepts timeStyle
+    if (!dateInput) return t('eventDetail.dateNotAvailable');
+    let date: Date | null = null;
     if (typeof dateInput.toDate === 'function') {
-      return dateInput.toDate().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+      date = dateInput.toDate();
+    } else if (dateInput instanceof Date) {
+      date = dateInput;
+    } else {
+      const parsedDate = new Date(dateInput);
+      if (!isNaN(parsedDate.getTime())) {
+        date = parsedDate;
+      }
     }
-    if (dateInput instanceof Date) {
-      return dateInput.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+    if(date) {
+      return date.toLocaleString(i18n.language, { dateStyle: 'long', timeStyle: 'short' });
     }
-    const date = new Date(dateInput);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
-    }
-    return 'Invalid Date';
+    return t('eventDetail.dateInvalid');
   };
 
   useEffect(() => {
     if (!eventId) {
-      setError("Event ID is missing.");
+      setError(t('eventDetail.errorIdMissing'));
       setLoading(false);
       return;
     }
@@ -96,17 +101,17 @@ const EventDetailPage: React.FC = () => {
             }
 
         } else {
-            setError("Event not found.");
+            setError(t('eventDetail.notFound'));
         }
         setLoading(false);
     }, (err) => {
         console.error("Error fetching event details:", err);
-        setError("Failed to load event details.");
+        setError(t('eventDetail.errorFailedLoad'));
         setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [eventId]);
+  }, [eventId, t]);
 
 
   const fetchAvailableDealers = async () => {
@@ -139,7 +144,7 @@ const EventDetailPage: React.FC = () => {
       setModalOpen(false);
     } catch (error) {
       console.error("Error assigning dealer: ", error);
-      setError("Failed to assign dealer.");
+      setError(t('eventDetail.errorFailedAssign'));
     }
   };
 
@@ -152,7 +157,7 @@ const EventDetailPage: React.FC = () => {
 
   const handleSubmitRating = async () => {
     if (!eventId || !selectedDealer || rating === 0) {
-        alert("Please select a rating.");
+        alert(t('eventDetail.alertRatingRequired'));
         return;
     }
 
@@ -164,11 +169,11 @@ const EventDetailPage: React.FC = () => {
             rating: rating,
             comment: comment
         });
-        alert("Rating submitted successfully!");
+        alert(t('eventDetail.alertRatingSuccess'));
         setRatingModalOpen(false);
     } catch (error) {
         console.error("Error submitting rating:", error);
-        alert("Failed to submit rating. Please try again.");
+        alert(t('eventDetail.alertRatingFailed'));
     }
   };
 
@@ -186,13 +191,13 @@ const EventDetailPage: React.FC = () => {
         }
     } catch (error) {
         console.error("Error generating QR code:", error);
-        setError("Failed to generate QR code.");
+        setError(t('eventDetail.errorFailedQr'));
     }
   };
   
-  if (loading) return <div className="p-6 text-center">Loading event details...</div>;
-  if (error) return <div className="p-6 text-center text-red-500">Error: {error}</div>;
-  if (!event) return <div className="p-6 text-center">Event not found.</div>;
+  if (loading) return <div className="p-6 text-center">{t('eventDetail.loading')}</div>;
+  if (error) return <div className="p-6 text-center text-red-500">{t('eventDetail.errorPrefix')}: {error}</div>;
+  if (!event) return <div className="p-6 text-center">{t('eventDetail.notFound')}</div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -200,50 +205,50 @@ const EventDetailPage: React.FC = () => {
             <h1 className="text-4xl font-extrabold text-gray-800 mb-2">{event.name}</h1>
             <p className="text-lg text-gray-500 mb-4">{event.location}</p>
             <div className="flex items-center space-x-4 text-sm text-gray-600 mb-6 border-b pb-4">
-                <span><strong>Starts:</strong> {formatDate(event.startDate)}</span>
-                <span><strong>Ends:</strong> {formatDate(event.endDate)}</span>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${event.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {event.status}
+                <span><strong>{t('eventDetail.labelStarts')}:</strong> {formatDate(event.startDate)}</span>
+                <span><strong>{t('eventDetail.labelEnds')}:</strong> {formatDate(event.endDate)}</span>
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${event.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {t(`eventDetail.status.${event.status.toLowerCase()}`, event.status)}
                 </span>
             </div>
             
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-700 mb-3">Description</h2>
+                <h2 className="text-2xl font-bold text-gray-700 mb-3">{t('eventDetail.labelDescription')}</h2>
                 <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
             </div>
 
             <div className="flex justify-end space-x-4 mb-6">
-                <button onClick={handleGenerateQrCode} className="btn btn-outline">Generate Attendance QR</button>
-                <button onClick={handleOpenModal} className="btn btn-primary">Assign Dealer</button>
+                <button onClick={handleGenerateQrCode} className="btn btn-outline">{t('eventDetail.btnGenerateQr')}</button>
+                <button onClick={handleOpenModal} className="btn btn-primary">{t('eventDetail.btnAssignDealer')}</button>
             </div>
             
             <div>
-                <h2 className="text-2xl font-bold text-gray-700 mb-3">Assigned Dealers</h2>
+                <h2 className="text-2xl font-bold text-gray-700 mb-3">{t('eventDetail.assignedDealersTitle')}</h2>
                 <ul className="space-y-3">
                     {assignedDealers.length > 0 ? assignedDealers.map(dealer => (
                         <li key={dealer.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
                             <span className="font-semibold text-gray-800">{dealer.name}</span>
-                            <button onClick={() => handleOpenRatingModal(dealer)} className="btn btn-secondary btn-sm">Rate Dealer</button>
+                            <button onClick={() => handleOpenRatingModal(dealer)} className="btn btn-secondary btn-sm">{t('eventDetail.btnRateDealer')}</button>
                         </li>
                     )) : (
-                        <p className="text-gray-500">No dealers assigned yet.</p>
+                        <p className="text-gray-500">{t('eventDetail.noDealersAssigned')}</p>
                     )}
                 </ul>
             </div>
         </div>
 
-        <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Assign a Dealer">
+        <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={t('eventDetail.modalTitleAssign')}>
             <ul className="space-y-2">
                 {availableDealers.map(dealer => (
                     <li key={dealer.id} className="flex justify-between items-center p-2 hover:bg-gray-100 rounded-md">
                         <span>{dealer.name}</span>
-                        <button onClick={() => handleAssignDealer(dealer.id)} className="btn btn-success btn-sm">Assign</button>
+                        <button onClick={() => handleAssignDealer(dealer.id)} className="btn btn-success btn-sm">{t('eventDetail.btnAssign')}</button>
                     </li>
                 ))}
             </ul>
         </Modal>
 
-        <Modal isOpen={isRatingModalOpen} onClose={() => setRatingModalOpen(false)} title={`Rate ${selectedDealer?.name}`}>
+        <Modal isOpen={isRatingModalOpen} onClose={() => setRatingModalOpen(false)} title={t('eventDetail.modalTitleRate', { dealerName: selectedDealer?.name })}>
             <div className="space-y-4">
                 <div className="flex justify-center">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -255,24 +260,24 @@ const EventDetailPage: React.FC = () => {
                 <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Add a comment (optional)"
+                    placeholder={t('eventDetail.ratingCommentPlaceholder')}
                     className="w-full p-2 border rounded-md"
                     rows={4}
                 />
-                <button onClick={handleSubmitRating} className="btn btn-primary w-full">Submit Rating</button>
+                <button onClick={handleSubmitRating} className="btn btn-primary w-full">{t('eventDetail.btnSubmitRating')}</button>
             </div>
         </Modal>
 
-        <Modal isOpen={isQrModalOpen} onClose={() => setQrModalOpen(false)} title="Event Attendance QR Code">
+        <Modal isOpen={isQrModalOpen} onClose={() => setQrModalOpen(false)} title={t('eventDetail.modalTitleQr')}>
              <div className="p-4 flex flex-col items-center">
-                <p className="mb-4 text-center">Dealers can scan this code with their phone to clock in and out.</p>
+                <p className="mb-4 text-center">{t('eventDetail.qrModalDescription')}</p>
                 <div className="p-4 bg-white rounded-lg">
                     {qrCodeValue ? (
                         <div className="flex justify-center">
                            <QRCodeSVG value={qrCodeValue} size={256} />
                         </div>
                     ) : (
-                        <p>Generating QR Code...</p>
+                        <p>{t('eventDetail.qrGenerating')}</p>
                     )}
                 </div>
             </div>

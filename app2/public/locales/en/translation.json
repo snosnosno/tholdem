@@ -101,7 +101,15 @@
     "modalTitleQr": "Event Attendance QR Code",
     "ratingCommentPlaceholder": "Add a comment (optional)",
     "qrModalDescription": "Dealers can scan this code with their phone to clock in and out.",
-    "qrGenerating": "Generating QR Code..."
+    "qrGenerating": "Generating QR Code...",
+    "dateNotAvailable": "N/A",
+    "dateInvalid": "Invalid Date",
+    "assignedDealersTitle": "Assigned Dealers",
+    "status": {
+      "recruiting": "Recruiting",
+      "ongoing": "Ongoing",
+      "completed": "Completed"
+    }
   },
   "staffList": {
     "loading": "Loading staff list...",
