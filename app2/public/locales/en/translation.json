@@ -146,7 +146,11 @@
     "tableHeaderHours": "Work Hours (approx.)",
     "tableHeaderAmount": "Amount",
     "tableHeaderStatus": "Status",
-    "unknownDealer": "Unknown Dealer"
+    "unknownDealer": "Unknown Dealer",
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid"
+    }
   },
   "dealerEvents": {
     "loading": "Loading available events...",
