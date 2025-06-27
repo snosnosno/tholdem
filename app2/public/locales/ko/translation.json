@@ -406,6 +406,7 @@
     "cancel": "취소",
     "editProfile": "프로필 수정",
     "profileDetails": "프로필 상세 정보",
+    "name": "이름:",
     "email": "이메일:",
     "phone": "연락처:",
     "notProvided": "제공되지 않음",
@@ -422,7 +423,8 @@
     "tableStatus": "상태",
     "noPayroll": "급여 내역이 없습니다.",
     "statusPaid": "지급 완료",
-    "statusPending": "지급 대기중"
+    "statusPending": "지급 대기중",
+    "notAvailable": "정보 없음"
   },
   "staffingDashboard": {
     "accessDenied": "이 페이지에 접근할 권한이 없습니다.",

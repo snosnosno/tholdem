@@ -406,6 +406,7 @@
     "cancel": "Cancel",
     "editProfile": "Edit Profile",
     "profileDetails": "Profile Details",
+    "name": "Name:",
     "email": "Email:",
     "phone": "Phone:",
     "notProvided": "Not provided",
@@ -422,7 +423,8 @@
     "tableStatus": "Status",
     "noPayroll": "No payroll history found.",
     "statusPaid": "Paid",
-    "statusPending": "Pending"
+    "statusPending": "Pending",
+    "notAvailable": "N/A"
   },
   "staffingDashboard": {
     "accessDenied": "You do not have access to this page.",

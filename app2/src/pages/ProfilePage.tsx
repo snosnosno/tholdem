@@ -4,6 +4,8 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency, formatDate } from '../i18n-helpers';
 
 interface ProfileData {
   name: string;
@@ -27,6 +29,7 @@ interface Payroll {
 }
 
 const ProfilePage = () => {
+    const { t, i18n } = useTranslation();
     const { currentUser } = useAuth();
     const profileRef = currentUser ? doc(db, 'users', currentUser.uid) : null;
     const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -72,17 +75,15 @@ const ProfilePage = () => {
                 const getPayrolls = httpsCallable(functions, 'getPayrolls');
                 const result: any = await getPayrolls();
                 
-                // Safely access payrolls, default to empty array if not present
                 const payrollData = result.data?.payrolls || [];
 
                 const payrollsWithEventNames = await Promise.all(
                     payrollData.map(async (p: Payroll) => {
                         if (!p.eventId) {
-                            return { ...p, eventName: 'Event ID Missing' };
+                            return { ...p, eventName: t('profilePage.eventIdMissing') };
                         }
                         const eventDoc = await getDoc(doc(db, 'events', p.eventId));
-                        // Use event's "title" field as per Event interface
-                        return { ...p, eventName: eventDoc.data()?.title || 'Unknown Event' };
+                        return { ...p, eventName: eventDoc.data()?.title || t('profilePage.unknownEvent') };
                     })
                 );
                 setPayrolls(payrollsWithEventNames);
@@ -94,7 +95,7 @@ const ProfilePage = () => {
         };
 
         fetchPayrolls();
-    }, [currentUser]);
+    }, [currentUser, t]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -104,7 +105,7 @@ const ProfilePage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!profileRef) {
-            alert("You must be logged in to update your profile.");
+            alert(t('profilePage.loginRequired'));
             return;
         }
         try {
@@ -116,16 +117,16 @@ const ProfilePage = () => {
             }
 
             setIsEditing(false);
-            alert('Profile updated successfully!');
+            alert(t('profilePage.updateSuccess'));
         } catch (err: any) {
             console.error("Error updating profile:", err);
-            alert(`Failed to update profile: ${err.message}`);
+            alert(t('profilePage.updateFailed', { message: err.message }));
         }
     };
 
-    if (loadingProfile) return <div className="p-6 text-center">Loading profile...</div>;
-    if (errorProfile) return <div className="p-6 text-center text-red-500">Error: {errorProfile.message}</div>;
-    if (!currentUser || !profile) return <div className="p-6 text-center">Please log in to view your profile.</div>;
+    if (loadingProfile) return <div className="p-6 text-center">{t('profilePage.loadingProfile')}</div>;
+    if (errorProfile) return <div className="p-6 text-center text-red-500">{t('profilePage.error', { message: errorProfile.message })}</div>;
+    if (!currentUser || !profile) return <div className="p-6 text-center">{t('profilePage.viewProfileLogin')}</div>;
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -139,31 +140,46 @@ const ProfilePage = () => {
                             
                             <div className="flex items-center mt-2">
                                 <StarIcon className="h-6 w-6 text-yellow-400 mr-1" />
-                                <span className="text-lg font-semibold text-gray-700">{profile.rating?.toFixed(1) || 'N/A'}</span>
-                                <span className="text-sm text-gray-500 ml-2">({profile.ratingCount || 0} ratings)</span>
+                                <span className="text-lg font-semibold text-gray-700">{profile.rating?.toFixed(1) || t('profilePage.notAvailable')}</span>
+                                <span className="text-sm text-gray-500 ml-2">({profile.ratingCount || 0} {t('profilePage.ratings')})</span>
                             </div>
                         </div>
                         <button onClick={() => setIsEditing(!isEditing)} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {isEditing ? 'Cancel' : 'Edit Profile'}
+                            {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
                         </button>
                     </div>
 
                     {!isEditing ? (
                         <div className="mt-6 border-t pt-6">
-                            <h2 className="text-xl font-semibold text-gray-700 mb-4">Profile Details</h2>
+                            <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.profileDetails')}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <p><strong>Email:</strong> {profile.email}</p>
-                                <p><strong>Phone:</strong> {profile.phone || 'Not provided'}</p>
-                                <p><strong>Experience:</strong> {profile.experience || 'Not provided'}</p>
-                                <p><strong>Hourly Rate:</strong> ${profile.hourlyRate || '0'}</p>
+                                <p><strong>{t('profilePage.email')}</strong> {profile.email}</p>
+                                <p><strong>{t('profilePage.phone')}</strong> {profile.phone || t('profilePage.notProvided')}</p>
+                                <p><strong>{t('profilePage.experience')}</strong> {profile.experience || t('profilePage.notProvided')}</p>
+                                <p><strong>{t('profilePage.hourlyRate')}</strong> {formatCurrency(profile.hourlyRate || 0, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</p>
                             </div>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="mt-6 border-t pt-6 space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-700">Edit Details</h2>
-                            {/* Form fields... */}
+                            <h2 className="text-xl font-semibold text-gray-700">{t('profilePage.editDetails')}</h2>
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
+                                <input type="text" name="name" id="name" value={formData.name || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                            </div>
+                            <div>
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
+                                <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                            </div>
+                            <div>
+                                <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
+                                <textarea name="experience" id="experience" value={formData.experience || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700">{t('profilePage.hourlyRate')}</label>
+                                <input type="number" name="hourlyRate" id="hourlyRate" value={formData.hourlyRate || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                            </div>
                             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                                Save Changes
+                                {t('profilePage.saveChanges')}
                             </button>
                         </form>
                     )}
@@ -171,35 +187,33 @@ const ProfilePage = () => {
 
                 {/* Payroll History Section */}
                 <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800">Payroll History</h2>
+                    <h2 className="text-xl font-bold mb-4 text-gray-800">{t('profilePage.payrollHistory')}</h2>
                     {loadingPayrolls ? (
-                        <p>Loading payroll history...</p>
+                        <p>{t('profilePage.loadingPayroll')}</p>
                     ) : payrolls.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                {/* Table Head */}
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableEvent')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableDate')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableHours')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tablePay')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableStatus')}</th>
                                     </tr>
                                 </thead>
-                                {/* Table Body */}
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {payrolls.map(p => (
                                         <tr key={p.id}>
                                             <td className="px-6 py-4 whitespace-nowrap">{p.eventName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{new Date(p.calculationDate.toDate()).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{formatDate(p.calculationDate.toDate(), i18n.language)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{p.workDurationInHours.toFixed(2)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">${p.calculatedPay.toFixed(2)}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(p.calculatedPay, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                                     p.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
-                                                    {p.status}
+                                                    {p.status === 'paid' ? t('profilePage.statusPaid') : t('profilePage.statusPending')}
                                                 </span>
                                             </td>
                                         </tr>
@@ -208,7 +222,7 @@ const ProfilePage = () => {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-gray-500">No payroll history found.</p>
+                        <p className="text-gray-500">{t('profilePage.noPayroll')}</p>
                     )}
                 </div>
             </div>
