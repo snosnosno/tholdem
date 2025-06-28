@@ -8,8 +8,9 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return request.auth.token.role == 'admin';
+    // Updated: Check for both 'admin' and 'manager' roles
+    function isPrivileged() {
+      return request.auth.token.role == 'admin' || request.auth.token.role == 'manager';
     }
 
     function isOwner(userId) {
@@ -20,50 +21,49 @@ service cloud.firestore {
 
     // --- Users Collection ---
     match /users/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow read: if isSignedIn() && (isOwner(userId) || isPrivileged());
+      allow write: if isSignedIn() && (isOwner(userId) || isPrivileged());
     }
 
     // --- Events Collection ---
     match /events/{eventId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isPrivileged();
     }
 
     // --- Assignments Collection ---
     match /assignments/{assignmentId} {
-      // Corrected: Check against the dealerId field in the document
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn() && (isPrivileged() || request.auth.uid == resource.data.dealerId);
+      allow create, update, delete: if isPrivileged();
     }
     
     // --- Payrolls Collection ---
     match /payrolls/{payrollId} {
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
-      allow create, update, delete: if isAdmin(); // Only admins can manage payroll entries directly
+      allow read: if isSignedIn() && (isPrivileged() || request.auth.uid == resource.data.dealerId);
+      allow create, update, delete: if isPrivileged();
     }
 
     // --- Ratings Collection ---
     match /ratings/{ratingId} {
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.dealerId);
-      allow create: if isAdmin(); // Only admins can create ratings
+      allow read: if isSignedIn() && (isPrivileged() || request.auth.uid == resource.data.dealerId);
+      allow create: if isPrivileged();
       allow update, delete: if false; // Ratings are immutable
     }
 
     // --- Announcements Collection ---
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isPrivileged();
     }
 
     // --- Notifications Collection ---
     match /notifications/{notificationId} {
-        allow read, write: if isSignedIn() && (isOwner(resource.data.staffId) || isAdmin());
+        allow read, write: if isSignedIn() && (isOwner(resource.data.staffId) || isPrivileged());
     }
 
     // --- Staff Availability ---
     match /staffAvailability/{staffId} {
-        allow read: if isSignedIn() && (isOwner(staffId) || isAdmin());
+        allow read: if isSignedIn() && (isOwner(staffId) || isPrivileged());
         allow write: if isSignedIn() && isOwner(staffId);
     }
     

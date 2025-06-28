@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { Participant } from '../hooks/useParticipants';
+import { useTranslation } from 'react-i18next';
 
 interface ParticipantDetailModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const ParticipantDetailModal: React.FC<ParticipantDetailModalProps> = ({
   tableName,
   seatNumber,
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Participant>>({});
 
@@ -31,6 +33,13 @@ const ParticipantDetailModal: React.FC<ParticipantDetailModalProps> = ({
       });
     }
   }, [participant]);
+
+  useEffect(() => {
+    // If modal is closed, reset editing state
+    if (!isOpen) {
+      setIsEditing(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen || !participant) {
     return null;
@@ -49,46 +58,48 @@ const ParticipantDetailModal: React.FC<ParticipantDetailModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="참가자 상세 정보">
+    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? t('participantDetailModal.editTitle') : t('participantDetailModal.title')}>
         {isEditing ? (
             <div className="space-y-4">
                  <div>
-                    <label className="block text-sm font-medium text-gray-700">이름</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('participantDetailModal.labelName')}</label>
                     <input type="text" name="name" value={formData.name || ''} onChange={handleInputChange} className="input input-bordered w-full" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">연락처</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('participantDetailModal.labelPhone')}</label>
                     <input type="text" name="phone" value={formData.phone || ''} onChange={handleInputChange} className="input input-bordered w-full" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">칩</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('participantDetailModal.labelChips')}</label>
                     <input type="number" name="chips" value={formData.chips || 0} onChange={handleInputChange} className="input input-bordered w-full" />
                 </div>
             </div>
         ) : (
              <div className="space-y-2">
-                <div><span className="font-semibold">이름:</span> {participant.name}</div>
-                <div><span className="font-semibold">연락처:</span> {participant.phone || 'N/A'}</div>
-                <div><span className="font-semibold">칩:</span> {participant.chips.toLocaleString()}</div>
+                <div><span className="font-semibold">{t('participantDetailModal.labelName')}:</span> {participant.name}</div>
+                <div><span className="font-semibold">{t('participantDetailModal.labelPhone')}:</span> {participant.phone || t('participantDetailModal.notAvailable')}</div>
+                <div><span className="font-semibold">{t('participantDetailModal.labelChips')}:</span> {participant.chips.toLocaleString()}</div>
                 <div>
-                    <span className="font-semibold">상태:</span>
+                    <span className="font-semibold">{t('participantDetailModal.labelStatus')}:</span>
                     <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${participant.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {participant.status}
+                        {participant.status === 'active' ? t('participantDetailModal.statusActive') : t('participantDetailModal.statusBusted')}
                     </span>
                 </div>
                 <div>
-                    <span className="font-semibold">테이블:</span> 
-                    {tableName && typeof seatNumber === 'number' ? `${tableName} - S${seatNumber + 1}` : 'N/A'}
+                    <span className="font-semibold">{t('participantDetailModal.labelTable')}:</span> 
+                    {tableName && typeof seatNumber === 'number' 
+                        ? t('participantDetailModal.tableSeatFormat', { tableName, seatNumber: seatNumber + 1}) 
+                        : t('participantDetailModal.notAvailable')}
                 </div>
             </div>
         )}
      
       <div className="flex justify-end mt-6 space-x-2">
-        <button onClick={onClose} className="btn">닫기</button>
+        <button onClick={onClose} className="btn">{t('participantDetailModal.buttonClose')}</button>
         {isEditing ? (
-            <button onClick={handleSave} className="btn btn-primary">저장</button>
+            <button onClick={handleSave} className="btn btn-primary">{t('participantDetailModal.buttonSave')}</button>
         ) : (
-            <button onClick={() => setIsEditing(true)} className="btn btn-secondary">수정</button>
+            <button onClick={() => setIsEditing(true)} className="btn btn-secondary">{t('participantDetailModal.buttonEdit')}</button>
         )}
       </div>
     </Modal>

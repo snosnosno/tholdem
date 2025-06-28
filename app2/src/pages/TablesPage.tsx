@@ -11,8 +11,10 @@ import PlayerActionModal from '../components/PlayerActionModal';
 import MoveSeatModal from '../components/MoveSeatModal';
 import ParticipantDetailModal from '../components/ParticipantDetailModal';
 import { FaPlus, FaThList, FaUserPlus } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const TablesPage: React.FC = () => {
+    const { t } = useTranslation();
     const {
         tables,
         setTables,
@@ -69,14 +71,13 @@ const TablesPage: React.FC = () => {
     };
 
     const getParticipantName = (participantId: string | null): string => {
-        if (!participantId) return 'Empty';
+        if (!participantId) return t('tables.participantEmpty');
         const p = participants.find(p => p.id === participantId);
-        return p ? p.name : 'Unknown';
+        return p ? p.name : t('tables.participantUnknown');
     };
 
     const getDealerName = (dealerId: string | null): string => {
-        // This function is kept for prop compatibility but staff is removed.
-        return 'N/A';
+        return t('tables.dealerNotApplicable');
     };
 
     const handlePlayerSelect = (participant: Participant | null, table: Table, seatIndex: number, event?: React.MouseEvent) => {
@@ -122,7 +123,7 @@ const TablesPage: React.FC = () => {
                 handleCloseMoveSeatModal();
             } catch (error) {
                 console.error("Failed to move participant:", error);
-                alert(`자리 이동에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
+                alert(`${t('tables.errorMoveFailed')} ${error instanceof Error ? error.message : String(error)}`);
             }
         }
     };
@@ -142,8 +143,8 @@ const TablesPage: React.FC = () => {
         }
     };
 
-    if (tablesLoading || participantsLoading || settingsLoading) return <div className="p-4">Loading...</div>;
-    if (tablesError || participantsError) return <div className="p-4 text-red-500">Error: {tablesError?.message || participantsError?.message}</div>;
+    if (tablesLoading || participantsLoading || settingsLoading) return <div className="p-4">{t('tables.loading')}</div>;
+    if (tablesError || participantsError) return <div className="p-4 text-red-500">{t('tables.error')} {tablesError?.message || participantsError?.message}</div>;
 
     const totalEmptySeats = tables
         .filter(t => t.status === 'open')
@@ -156,28 +157,28 @@ const TablesPage: React.FC = () => {
             {/* Header */}
             <div className="mb-6 bg-white p-4 rounded-lg shadow">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-3xl font-bold text-gray-800">테이블 현황</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">{t('tables.title')}</h1>
                     <div className="flex items-center space-x-3">
                         <button 
                             onClick={() => autoAssignSeats(participants.filter(p => p.status === 'active'))}
                             className="btn btn-secondary"
                             disabled={tablesLoading || participantsLoading}
                         >
-                            자동 재배치
+                            {t('tables.buttonAutoAssign')}
                         </button>
                         <button onClick={openNewTable} className="btn btn-primary">
-                            <FaPlus className="mr-2"/>테이블추가
+                            <FaPlus className="mr-2"/>{t('tables.buttonAddTable')}
                         </button>
                     </div>
                 </div>
 
                 <div className="flex justify-between items-center text-gray-600">
                     <div className="flex items-center space-x-6">
-                        <div className="flex items-center"><FaThList className="mr-2 text-blue-500" /> 테이블: <span className="font-bold ml-1">{tables.length}</span></div>
-                        <div className="flex items-center"><FaUserPlus className="mr-2 text-green-500" /> 빈 자리: <span className="font-bold ml-1">{totalEmptySeats}</span></div>
+                        <div className="flex items-center"><FaThList className="mr-2 text-blue-500" /> {t('tables.infoTables')} <span className="font-bold ml-1">{tables.length}</span></div>
+                        <div className="flex items-center"><FaUserPlus className="mr-2 text-green-500" /> {t('tables.infoEmptySeats')} <span className="font-bold ml-1">{totalEmptySeats}</span></div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <label htmlFor="max-seats" className="font-semibold">최대 좌석:</label>
+                        <label htmlFor="max-seats" className="font-semibold">{t('tables.labelMaxSeats')}</label>
                         <select
                             id="max-seats"
                             value={settings.maxSeatsPerTable || 9}

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useTournament } from '../contexts/TournamentContext';
+import { useTranslation } from 'react-i18next';
 
 const AnnouncementsPage: React.FC = () => {
+    const { t } = useTranslation();
     const { dispatch } = useTournament();
     const [message, setMessage] = useState('');
 
@@ -17,17 +19,17 @@ const AnnouncementsPage: React.FC = () => {
 
     return (
         <div className="card">
-            <h2 className="text-2xl font-bold mb-4">공지 보내기</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('announcements.title')}</h2>
             <form onSubmit={handlePost}>
                 <textarea
                     className="input-field w-full"
                     rows={3}
-                    placeholder="플레이어에게 보낼 공지 내용을 입력하세요..."
+                    placeholder={t('announcements.placeholder')}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
                 <button type="submit" className="btn btn-primary w-full mt-2">
-                    공지 게시
+                    {t('announcements.buttonPost')}
                 </button>
             </form>
         </div>

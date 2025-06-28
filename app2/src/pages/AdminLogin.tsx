@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from 'react-i18next';
 
 const AdminLogin: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,7 +18,7 @@ const AdminLogin: React.FC = () => {
       await signIn(email, password);
       navigate("/");
     } catch (err: any) {
-      setError("로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.");
+      setError(t('adminLogin.errorMessage'));
       console.error(err);
     }
   };
@@ -24,7 +26,7 @@ const AdminLogin: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-gray-800">관리자 로그인</h2>
+        <h2 className="text-3xl font-bold text-center text-gray-800">{t('adminLogin.title')}</h2>
         <form className="space-y-6" onSubmit={handleLogin}>
           <div>
             <label htmlFor="email" className="sr-only">Email address</label>
@@ -35,7 +37,7 @@ const AdminLogin: React.FC = () => {
               autoComplete="email"
               required
               className="input-field"
-              placeholder="이메일 주소"
+              placeholder={t('adminLogin.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -49,18 +51,30 @@ const AdminLogin: React.FC = () => {
               autoComplete="current-password"
               required
               className="input-field"
-              placeholder="비밀번호"
+              placeholder={t('adminLogin.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <div className="flex items-center justify-end">
+            <div className="text-sm">
+              <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                {t('adminLogin.forgotPassword')}
+              </Link>
+            </div>
+          </div>
           <div>
             <button type="submit" className="w-full btn btn-primary">
-              로그인
+              {t('adminLogin.loginButton')}
             </button>
           </div>
         </form>
+        <div className="text-sm text-center">
+          <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+            {t('adminLogin.noAccount')}
+          </Link>
+        </div>
       </div>
     </div>
   );

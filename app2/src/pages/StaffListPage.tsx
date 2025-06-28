@@ -3,6 +3,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface Staff {
   id: string;
@@ -13,6 +14,7 @@ interface Staff {
 }
 
 const StaffListPage: React.FC = () => {
+  const { t } = useTranslation();
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin } = useAuth();
@@ -42,20 +44,20 @@ const StaffListPage: React.FC = () => {
   }, [isAdmin]);
 
   if (loading) {
-    return <div className="p-6">Loading staff list...</div>;
+    return <div className="p-6">{t('staffList.loading')}</div>;
   }
 
   if (!isAdmin) {
-      return <div className="p-6 text-red-500">You do not have permission to view this page.</div>
+      return <div className="p-6 text-red-500">{t('staffList.accessDenied')}</div>
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
         <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Staff Management</h1>
+                <h1 className="text-3xl font-bold text-gray-800">{t('staffList.title')}</h1>
                 <Link to="/admin/staff/new" className="btn btn-primary">
-                    Add New Staff
+                    {t('staffList.addNew')}
                 </Link>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md">
@@ -69,7 +71,7 @@ const StaffListPage: React.FC = () => {
                             <span className="text-sm capitalize text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{staff.role}</span>
                         </li>
                     )) : (
-                        <p className="text-center text-gray-500 py-4">No staff members found.</p>
+                        <p className="text-center text-gray-500 py-4">{t('staffList.noStaffFound')}</p>
                     )}
                 </ul>
             </div>

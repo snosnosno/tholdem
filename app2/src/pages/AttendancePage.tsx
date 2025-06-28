@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { QrReader } from 'react-qr-reader';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const AttendancePage: React.FC = () => {
+    const { t } = useTranslation();
     const [scanResult, setScanResult] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -25,10 +27,10 @@ const AttendancePage: React.FC = () => {
                     const functions = getFunctions();
                     const recordAttendance = httpsCallable(functions, 'recordAttendance');
                     await recordAttendance({ qrCodeToken: token });
-                    setFeedback({ type: 'success', message: 'Attendance recorded successfully!' });
+                    setFeedback({ type: 'success', message: t('attendancePage.success') });
                 } catch (err: any) {
                     console.error(err);
-                    setFeedback({ type: 'error', message: err.message || 'Failed to record attendance.' });
+                    setFeedback({ type: 'error', message: err.message || t('attendancePage.fail') });
                 } finally {
                     setIsSubmitting(false);
                     // Optionally clear result after processing
@@ -44,17 +46,17 @@ const AttendancePage: React.FC = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen flex flex-col items-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Scan Attendance QR Code</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">{t('attendancePage.title')}</h1>
             <div className="w-full max-w-md bg-white p-4 rounded-lg shadow-xl">
                 <QrReader
                     onResult={handleScan}
                     constraints={{ facingMode: 'environment' }}
                     containerStyle={{ width: '100%' }}
                 />
-                {scanResult && <p className="mt-4 text-center text-sm text-gray-600">Last Scanned: {scanResult}</p>}
+                {scanResult && <p className="mt-4 text-center text-sm text-gray-600">{t('attendancePage.lastScanned', { scanResult })}</p>}
             </div>
 
-            {isSubmitting && <p className="mt-4 text-blue-600">Submitting attendance...</p>}
+            {isSubmitting && <p className="mt-4 text-blue-600">{t('attendancePage.submitting')}</p>}
             
             {feedback && (
                  <div className={`mt-4 p-4 rounded-md w-full max-w-md text-center ${feedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

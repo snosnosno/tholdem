@@ -1,6 +1,7 @@
 import React from 'react';
 import QrScanner from 'react-qr-scanner';
-import Modal from './Modal'; // Assuming a generic Modal component exists
+import Modal from './Modal';
+import { useTranslation } from 'react-i18next';
 
 interface QRScannerModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface QRScannerModalProps {
 }
 
 const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan, onError }) => {
+  const { t } = useTranslation();
 
   const handleScan = (data: { text: string } | null) => {
     if (data) {
@@ -28,7 +30,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="QR Code Scanner">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('qrScannerModal.title')}>
       {isOpen && (
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
           <QrScanner
@@ -40,7 +42,7 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
         </div>
       )}
       <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-        Please scan the QR code for clock-in.
+        {t('qrScannerModal.scanMessage')}
       </p>
     </Modal>
   );

@@ -23,7 +23,8 @@
     "prizes": "프라이즈",
     "announcements": "공지사항",
     "history": "기록",
-    "logout": "로그아웃"
+    "logout": "로그아웃",
+    "approvals": "가입 승인"
   },
   "layout": {
     "title": "T-홀덤",
@@ -43,6 +44,19 @@
     "topRatedDealers": "상위 평점 딜러",
     "ratingsCount": "({{count}}개 평점)",
     "noRatings": "아직 딜러 평점이 없습니다."
+  },
+  "approvalPage": {
+    "title": "Manager 가입 승인 대기 목록",
+    "noPending": "현재 승인 대기 중인 사용자가 없습니다.",
+    "colName": "이름",
+    "colEmail": "이메일",
+    "colRequestedAt": "신청일",
+    "colActions": "작업",
+    "btnApprove": "승인",
+    "btnReject": "거절",
+    "confirmReject": "'{{name}}' 님의 가입 요청을 거절하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "processing": "처리 중...",
+    "processError": "요청 처리에 실패했습니다. 잠시 후 다시 시도해주세요."
   },
   "eventsList": {
     "loading": "이벤트 목록 로딩 중...",
@@ -436,8 +450,7 @@
     "createNewEvent": "새 이벤트 생성",
     "recentEvents": "최근 이벤트",
     "loadingEvents": "이벤트 로딩 중...",
-    "errorEvents": "이벤트 로딩 오류.",
-    "status": "상태: {{status}}"
+    "errorEvents": "이벤트 로딩 오류."
   },
   "participantLivePage": {
     "notFound": "참가자를 찾을 수 없습니다. (ID: {{id}})",

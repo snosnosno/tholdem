@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-// import { getCompletedTournaments } from "../firebase"; // 나중에 firebase 서비스로 대체
+import { useTranslation } from "react-i18next";
 
 // 임시 데이터
 const dummyTournaments = [
@@ -9,6 +9,7 @@ const dummyTournaments = [
 ];
 
 const HistoryPage: React.FC = () => {
+    const { t } = useTranslation();
     const [tournaments, setTournaments] = useState<any[]>([]);
     
     useEffect(() => {
@@ -22,28 +23,28 @@ const HistoryPage: React.FC = () => {
 
     return (
         <div className="card max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-4">토너먼트 기록</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('historyPage.title')}</h2>
             <div className="overflow-x-auto">
                 <table className="w-full whitespace-nowrap">
                     <thead className="bg-gray-700">
                         <tr className="text-left text-gray-300">
-                            <th className="p-3">대회명</th>
-                            <th className="p-3">날짜</th>
-                            <th className="p-3">참가자 수</th>
-                            <th className="p-3">우승자</th>
-                            <th className="p-3 text-right">상세</th>
+                            <th className="p-3">{t('historyPage.tournamentName')}</th>
+                            <th className="p-3">{t('historyPage.date')}</th>
+                            <th className="p-3">{t('historyPage.participants')}</th>
+                            <th className="p-3">{t('historyPage.winner')}</th>
+                            <th className="p-3 text-right">{t('historyPage.details')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-600">
-                        {tournaments.map((t) => (
-                            <tr key={t.id} className="hover:bg-gray-700">
-                                <td className="p-3">{t.name}</td>
-                                <td className="p-3">{t.date}</td>
-                                <td className="p-3">{t.playerCount}</td>
-                                <td className="p-3">{t.winner || '-'}</td>
+                        {tournaments.map((tournament) => (
+                            <tr key={tournament.id} className="hover:bg-gray-700">
+                                <td className="p-3">{tournament.name}</td>
+                                <td className="p-3">{tournament.date}</td>
+                                <td className="p-3">{tournament.playerCount}</td>
+                                <td className="p-3">{tournament.winner || '-'}</td>
                                 <td className="p-3 text-right">
-                                    <Link to={`/history/${t.id}`} className="btn btn-primary text-xs">
-                                        결과 보기
+                                    <Link to={`/history/${tournament.id}`} className="btn btn-primary text-xs">
+                                        {t('historyPage.viewResults')}
                                     </Link>
                                 </td>
                             </tr>

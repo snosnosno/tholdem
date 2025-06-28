@@ -4,6 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Table } from '../hooks/useTables';
 import { Seat } from './Seat';
 import Modal from './Modal';
+import { useTranslation } from 'react-i18next';
 
 interface TableDetailModalProps {
   table: Table | null;
@@ -42,6 +43,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   updateTableMaxSeats,
   isDimmed = false,
 }) => {
+  const { t } = useTranslation();
   const [isEditingName, setIsEditingName] = useState(false);
   const [tableName, setTableName] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -57,7 +59,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
   const handleMaxSeatsChange = async (newMaxSeats: number) => {
     if (table) {
       try {
-        await updateTableMaxSeats(table.id, newMaxSeats, (id) => getParticipantName(id) || 'Unknown');
+        await updateTableMaxSeats(table.id, newMaxSeats, (id) => getParticipantName(id) || t('tableDetailModal.participantUnknown'));
       } catch (error) {
         alert(error instanceof Error ? error.message : String(error));
       }
@@ -109,7 +111,7 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                     onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}
                     className="w-6 h-6 rounded-full"
                     style={{ backgroundColor: table.borderColor || '#cccccc' }}
-                    title="테두리 색상 변경"
+                    title={t('tableDetailModal.changeBorderColorTitle')}
                 />
                 {showColorPicker && (
                     <div className="absolute z-30 top-8 left-0 bg-white p-2 rounded-md shadow-lg flex gap-2">
@@ -140,17 +142,17 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                   className="text-xl font-bold text-gray-800 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }}
                 >
-                  {table.name || `Table ${table.tableNumber}`}
+                  {table.name || t('tableDetailModal.defaultTableName', { number: table.tableNumber })}
                 </h2>
               )}
             </div>
             <div className="flex items-center gap-2">
                 <div className="text-sm text-gray-600 space-x-4 mr-2">
-                    <span>참가자: {filledSeats}/{totalSeats}</span>
-                    <span>빈 좌석: {emptySeatCount}</span>
+                    <span>{t('tableDetailModal.infoParticipants')} {filledSeats}/{totalSeats}</span>
+                    <span>{t('tableDetailModal.infoEmptySeats')} {emptySeatCount}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <label htmlFor="max-seats-modal" className="text-sm font-semibold">최대 좌석:</label>
+                    <label htmlFor="max-seats-modal" className="text-sm font-semibold">{t('tableDetailModal.labelMaxSeats')}</label>
                     <select
                         id="max-seats-modal"
                         value={totalSeats}
@@ -168,14 +170,14 @@ const TableDetailModal: React.FC<TableDetailModalProps> = ({
                     onClick={handleActivateTableClick}
                     className="btn btn-primary btn-sm"
                   >
-                    테이블 활성화
+                    {t('tableDetailModal.buttonActivate')}
                   </button>
                 )}
                 <button
                   onClick={handleCloseTableClick}
                   className="btn btn-sm bg-red-500 hover:bg-red-600 text-white border-none"
                 >
-                  테이블 닫기
+                  {t('tableDetailModal.buttonClose')}
                 </button>
             </div>
           </div>

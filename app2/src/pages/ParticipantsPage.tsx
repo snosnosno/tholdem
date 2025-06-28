@@ -2,8 +2,10 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useParticipants, Participant } from '../hooks/useParticipants';
 import { useTables, Table } from '../hooks/useTables';
 import Modal from '../components/Modal';
+import { useTranslation } from 'react-i18next';
 
 const ParticipantsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { participants, loading: participantsLoading, error: participantsError, addParticipant, updateParticipant, deleteParticipant, addParticipantAndAssignToSeat } = useParticipants();
   const { tables, loading: tablesLoading, error: tablesError } = useTables();
 
@@ -49,32 +51,32 @@ const ParticipantsPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('정말로 삭제하시겠습니까?')) {
+    if (window.confirm(t('participants.confirmDelete'))) {
       await deleteParticipant(id);
     }
   };
 
   const getParticipantLocation = useCallback((participantId: string) => {
-    return participantLocations.get(participantId) || '대기중';
-  }, [participantLocations]);
+    return participantLocations.get(participantId) || t('participants.locationWaiting');
+  }, [participantLocations, t]);
 
-  if (participantsLoading || tablesLoading) return <div>로딩 중...</div>;
-  if (participantsError) return <div className="text-red-500">참가자 로딩 오류: {participantsError.message}</div>;
-  if (tablesError) return <div className="text-red-500">테이블 로딩 오류: {tablesError.message}</div>;
+  if (participantsLoading || tablesLoading) return <div>{t('participants.loading')}</div>;
+  if (participantsError) return <div className="text-red-500">{t('participants.errorParticipants')} {participantsError.message}</div>;
+  if (tablesError) return <div className="text-red-500">{t('participants.errorTables')} {tablesError.message}</div>;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">참가자 관리</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">{t('participants.title')}</h1>
       <div className="mb-4 flex gap-2">
         <input 
           type="text"
-          placeholder="이름으로 검색"
+          placeholder={t('participants.searchPlaceholder')}
           className="input-field w-full md:w-1/3"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <button onClick={() => handleOpenModal(null)} className="btn btn-primary">
-          + 참가자 추가
+          {t('participants.addNew')}
         </button>
       </div>
 
@@ -82,12 +84,12 @@ const ParticipantsPage: React.FC = () => {
         <table className="w-full table-auto">
           <thead className="bg-gray-200">
             <tr>
-              <th className="px-4 py-2">이름</th>
-              <th className="px-4 py-2">연락처</th>
-              <th className="px-4 py-2">상태</th>
-              <th className="px-4 py-2">칩</th>
-              <th className="px-4 py-2">위치</th>
-              <th className="px-4 py-2">관리</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderName')}</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderPhone')}</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderStatus')}</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderChips')}</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderLocation')}</th>
+              <th className="px-4 py-2">{t('participants.tableHeaderActions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -99,8 +101,8 @@ const ParticipantsPage: React.FC = () => {
                 <td className="px-4 py-2">{p.chips}</td>
                 <td className="px-4 py-2">{getParticipantLocation(p.id)}</td>
                 <td className="px-4 py-2">
-                  <button onClick={() => handleOpenModal(p)} className="btn btn-secondary btn-xs mr-2">수정</button>
-                  <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-xs">삭제</button>
+                  <button onClick={() => handleOpenModal(p)} className="btn btn-secondary btn-xs mr-2">{t('participants.actionEdit')}</button>
+                  <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-xs">{t('participants.actionDelete')}</button>
                 </td>
               </tr>
             ))}
@@ -108,23 +110,23 @@ const ParticipantsPage: React.FC = () => {
         </table>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingParticipant ? '참가자 수정' : '참가자 추가'}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingParticipant ? t('participants.modalTitleEdit') : t('participants.modalTitleAdd')}>
         <form onSubmit={handleAddOrUpdateParticipant} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">이름</label>
+            <label className="block text-sm font-medium mb-1">{t('participants.modalLabelName')}</label>
             <input type="text" value={newParticipant.name} onChange={e => setNewParticipant(p => ({ ...p, name: e.target.value }))} className="input-field w-full" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">연락처</label>
+            <label className="block text-sm font-medium mb-1">{t('participants.modalLabelPhone')}</label>
             <input type="text" value={newParticipant.phone} onChange={e => setNewParticipant(p => ({ ...p, phone: e.target.value }))} className="input-field w-full" />
           </div>
            <div>
-            <label className="block text-sm font-medium mb-1">칩</label>
+            <label className="block text-sm font-medium mb-1">{t('participants.modalLabelChips')}</label>
             <input type="number" value={newParticipant.chips} onChange={e => setNewParticipant(p => ({ ...p, chips: Number(e.target.value) }))} className="input-field w-full" />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">취소</button>
-            <button type="submit" className="btn btn-primary">{editingParticipant ? '수정' : '추가'}</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">{t('participants.modalButtonCancel')}</button>
+            <button type="submit" className="btn btn-primary">{editingParticipant ? t('participants.modalButtonUpdate') : t('participants.modalButtonAdd')}</button>
           </div>
         </form>
       </Modal>

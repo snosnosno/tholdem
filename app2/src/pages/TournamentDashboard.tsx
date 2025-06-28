@@ -3,13 +3,15 @@ import { TournamentContext, Participant } from '../contexts/TournamentContext';
 import { setupTestData } from '../firebase';
 import { IconType } from 'react-icons';
 import { FaUsers, FaClock, FaTrophy } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const TournamentDashboard = () => {
+    const { t } = useTranslation();
     const context = useContext(TournamentContext);
     const [isSeeding, setIsSeeding] = useState(false);
 
     if (!context) {
-        return <div>Loading...</div>;
+        return <div>{t('tournamentDashboard.loading')}</div>;
     }
 
     const { state } = context;
@@ -21,19 +23,19 @@ const TournamentDashboard = () => {
             const result = await setupTestData();
             switch (result) {
                 case 'SUCCESS':
-                    alert('Test data successfully created! The page will now reload.');
+                    alert(t('tournamentDashboard.seeding.success'));
                     window.location.reload();
                     break;
                 case 'SKIPPED':
-                    alert('Test data already exists. Skipped.');
+                    alert(t('tournamentDashboard.seeding.skipped'));
                     break;
                 case 'ERROR':
-                    alert('An error occurred while creating test data.');
+                    alert(t('tournamentDashboard.seeding.error'));
                     break;
             }
         } catch (error) {
             console.error("Error setting up test data:", error);
-            alert('An unexpected error occurred. Check the console for details.');
+            alert(t('tournamentDashboard.seeding.unexpectedError'));
         } finally {
             setIsSeeding(false);
         }
@@ -67,20 +69,20 @@ const TournamentDashboard = () => {
 
     return (
         <div className="container mx-auto p-4 text-gray-800">
-            <h1 className="text-3xl font-bold mb-6 text-gray-800">Tournament Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">{t('tournamentDashboard.title')}</h1>
 
             {process.env.NODE_ENV === 'development' && (
                 <div className="mb-4 p-4 border border-red-400 bg-red-50 rounded-lg">
-                    <h3 className="text-lg font-bold text-red-700 mb-2">Developer Tools</h3>
+                    <h3 className="text-lg font-bold text-red-700 mb-2">{t('tournamentDashboard.devTools.title')}</h3>
                     <button
                         onClick={handleSetupTestData}
                         disabled={isSeeding}
                         className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
                     >
-                        {isSeeding ? 'Creating Test Data...' : 'Generate Test Data (10 Tables, 80 Players)'}
+                        {isSeeding ? t('tournamentDashboard.devTools.buttonSeeding') : t('tournamentDashboard.devTools.button')}
                     </button>
                     <p className="text-sm text-gray-600 mt-2">
-                        This will populate the database with sample data. Only use this on a fresh database.
+                        {t('tournamentDashboard.devTools.description')}
                     </p>
                 </div>
             )}
@@ -88,31 +90,31 @@ const TournamentDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatCard 
                     icon={FaUsers} 
-                    title="Total Participants" 
+                    title={t('tournamentDashboard.stats.totalParticipants')} 
                     value={participants.length}
                     color="bg-blue-500"
                 />
                 <StatCard 
                     icon={FaClock} 
-                    title="Current Blind Level" 
+                    title={t('tournamentDashboard.stats.currentBlindLevel')}
                     value={blindLevel !== null ? `#${blindLevel + 1}` : 'N/A'}
                     color="bg-green-500"
                 />
                 <StatCard 
                     icon={FaTrophy} 
-                    title="Estimated Prize Pool" 
+                    title={t('tournamentDashboard.stats.estimatedPrizePool')}
                     value={`₩${totalPrize.toLocaleString()}`}
                     color="bg-yellow-500"
                 />
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold mb-4 text-gray-800">Tournament Status</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">{t('tournamentDashboard.status.title')}</h2>
                 <p className={`text-lg font-semibold ${tournamentStatus === 'running' ? 'text-green-500' : 'text-red-500'}`}>
-                    {tournamentStatus.charAt(0).toUpperCase() + tournamentStatus.slice(1)}
+                    {t(`tournamentDashboard.status.${tournamentStatus}`)}
                 </p>
                 <p className="text-gray-600 mt-2">
-                    Welcome to the tournament control panel. Use the menu on the left to manage different aspects of the event.
+                    {t('tournamentDashboard.status.welcome')}
                 </p>
             </div>
         </div>

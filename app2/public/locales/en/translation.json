@@ -436,8 +436,7 @@
     "createNewEvent": "Create New Event",
     "recentEvents": "Recent Events",
     "loadingEvents": "Loading events...",
-    "errorEvents": "Error loading events.",
-    "status": "Status: {{status}}"
+    "errorEvents": "Error loading events."
   },
   "participantLivePage": {
     "notFound": "Participant not found. (ID: {{id}})",

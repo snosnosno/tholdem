@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PlayerActionModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
   onMoveSeat,
   onShowDetails,
 }) => {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
                             onClick={onShowDetails}
                             className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                            상세 정보
+                            {t('playerActionModal.showDetails')}
                         </button>
                     </li>
                     <li>
@@ -70,7 +72,7 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
                             onClick={onMoveSeat}
                             className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                            자리 이동
+                            {t('playerActionModal.moveSeat')}
                         </button>
                     </li>
                     <li>
@@ -78,7 +80,7 @@ const PlayerActionModal: React.FC<PlayerActionModalProps> = ({
                             onClick={onBustOut}
                             className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center font-semibold"
                         >
-                            탈락 처리
+                            {t('playerActionModal.bustOut')}
                         </button>
                     </li>
                 </ul>

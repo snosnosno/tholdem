@@ -4,6 +4,7 @@ import { Participant } from '../hooks/useParticipants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FaUsers, FaEllipsisV } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 interface TableCardProps {
   table: Table;
@@ -18,6 +19,7 @@ const TableCard: React.FC<TableCardProps> = ({
   isMobile,
   getDealerName,
 }) => {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -75,13 +77,13 @@ const TableCard: React.FC<TableCardProps> = ({
       {/* Dealer Info */}
       <div className="w-full text-center">
         <p className="text-sm text-gray-500">
-          딜러: {getDealerName(table.assignedDealerId || null)}
+          {t('tableCard.dealer')} {getDealerName(table.assignedDealerId || null)}
         </p>
       </div>
 
       {isStandby && (
           <div className="absolute inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center rounded-lg pointer-events-none">
-              <span className="text-white font-bold text-lg bg-black bg-opacity-50 px-4 py-2 rounded">대기중</span>
+              <span className="text-white font-bold text-lg bg-black bg-opacity-50 px-4 py-2 rounded">{t('tableCard.waiting')}</span>
           </div>
       )}
     </div>

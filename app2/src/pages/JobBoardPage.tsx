@@ -3,6 +3,7 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCollection } from 'react-firebase-hooks/firestore';
+import { useTranslation } from 'react-i18next';
 
 interface JobPosting {
   id: string;
@@ -16,6 +17,7 @@ interface JobPosting {
 }
 
 const JobBoardPage = () => {
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings')), []);
   const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
@@ -52,14 +54,14 @@ const JobBoardPage = () => {
 
   const handleApply = async (postId: string, postTitle: string) => {
     if (!currentUser) {
-      alert('You must be logged in to apply.');
+      alert(t('jobBoard.alerts.loginRequired'));
       return;
     }
     setIsApplying(postId);
     try {
       const staffDoc = await getDoc(doc(db, 'staffProfiles', currentUser.uid));
       if(!staffDoc.exists()){
-        alert('Your staff profile was not found.');
+        alert(t('jobBoard.alerts.profileNotFound'));
         return;
       }
       
@@ -71,36 +73,36 @@ const JobBoardPage = () => {
         status: 'pending',
         appliedAt: serverTimestamp(),
       });
-      alert('Application submitted successfully!');
+      alert(t('jobBoard.alerts.applicationSuccess'));
       setAppliedJobs(prev => new Set(prev).add(postId));
     } catch (error) {
       console.error("Error submitting application: ", error);
-      alert('Failed to submit application.');
+      alert(t('jobBoard.alerts.applicationFailed'));
     } finally {
         setIsApplying(null);
     }
   };
 
   if (loading) {
-    return <div>Loading job postings...</div>;
+    return <div>{t('jobBoard.loading')}</div>;
   }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Job Board</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
       <div className="space-y-4">
         {enrichedPostings.filter(p => p.status === 'open').map((post) => (
           <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-bold">{post.title}</h2>
-            <p className="text-sm text-gray-600">Tournament: {post.tournamentName}</p>
-            <p className="text-sm text-gray-600">Role: {post.role}</p>
+            <p className="text-sm text-gray-600">{t('jobBoard.tournament', { name: post.tournamentName })}</p>
+            <p className="text-sm text-gray-600">{t('jobBoard.role', { role: post.role })}</p>
             <p className="mt-2">{post.description}</p>
             <button
               onClick={() => handleApply(post.id, post.title)}
               disabled={appliedJobs.has(post.id) || isApplying === post.id}
               className="mt-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
             >
-              {isApplying === post.id ? 'Applying...' : appliedJobs.has(post.id) ? 'Applied' : 'Apply Now'}
+              {isApplying === post.id ? t('jobBoard.applying') : appliedJobs.has(post.id) ? t('jobBoard.applied') : t('jobBoard.applyNow')}
             </button>
           </div>
         ))}

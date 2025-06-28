@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import { Table } from '../hooks/useTables';
 import { Participant } from '../hooks/useParticipants';
+import { useTranslation } from 'react-i18next';
 
 interface MoveSeatModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
   onConfirmMove,
   getParticipantName,
 }) => {
+  const { t } = useTranslation();
   const [selectedSeat, setSelectedSeat] = useState<{ tableId: string; seatIndex: number } | null>(null);
 
   if (!isOpen || !movingParticipant) return null;
@@ -41,18 +43,20 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
   const currentSeatInfo = tables.flatMap(t => t.seats.map((pId, sIdx) => ({pId, tId: t.id, sIdx})))
                                 .find(s => s.pId === movingParticipant.id);
   const currentTable = tables.find(t => t.id === currentSeatInfo?.tId);
+  const currentTableName = currentTable?.name || t('moveSeatModal.defaultTableName', { number: currentTable?.tableNumber });
+  const currentLocation = currentSeatInfo ? `${currentTableName} - ${currentSeatInfo.sIdx + 1}${t('moveSeatModal.seatSuffix')}` : t('moveSeatModal.notApplicable');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`${movingParticipant.name}님 자리 이동`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={t('moveSeatModal.title', { name: movingParticipant.name })}>
         <div className="mb-4 bg-blue-50 p-3 rounded-lg">
-            <h4 className="font-bold text-blue-800">이동 대상 플레이어</h4>
-            <p><strong>이름:</strong> {movingParticipant.name}</p>
-            <p><strong>현재 위치:</strong> {currentTable?.name || `Table ${currentTable?.tableNumber}`} - {currentSeatInfo ? currentSeatInfo.sIdx + 1 : 'N/A'}번 좌석</p>
+            <h4 className="font-bold text-blue-800">{t('moveSeatModal.sectionTitle')}</h4>
+            <p><strong>{t('moveSeatModal.labelName')}</strong> {movingParticipant.name}</p>
+            <p><strong>{t('moveSeatModal.labelCurrentLocation')}</strong> {currentLocation}</p>
         </div>
       <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
         {tables.map(table => (
           <div key={table.id} className={`border rounded-lg p-3 ${table.status !== 'open' ? 'bg-gray-100 opacity-70' : ''}`}>
-            <h4 className="font-bold text-lg mb-2">{table.name || `Table ${table.tableNumber}`} <span className="text-sm font-normal text-gray-500">({table.status})</span></h4>
+            <h4 className="font-bold text-lg mb-2">{table.name || t('moveSeatModal.defaultTableName', { number: table.tableNumber })} <span className="text-sm font-normal text-gray-500">({table.status})</span></h4>
             <div className="grid grid-cols-5 gap-2">
               {table.seats.map((participantId, seatIndex) => {
                 const isSelected = selectedSeat?.tableId === table.id && selectedSeat?.seatIndex === seatIndex;
@@ -69,9 +73,9 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
                   >
                     <span className="font-bold text-sm mb-1">{seatIndex + 1}</span>
                     <span className="font-semibold">{getParticipantName(participantId)}</span>
-                    {participantId && <span className="text-xs text-gray-500">(자리 있음)</span>}
-                    {!participantId && table.status === 'open' && <span className="text-xs text-green-600">(빈 자리)</span>}
-                    {!participantId && table.status !== 'open' && <span className="text-xs text-gray-500">(이동 불가)</span>}
+                    {participantId && <span className="text-xs text-gray-500">{t('moveSeatModal.statusOccupied')}</span>}
+                    {!participantId && table.status === 'open' && <span className="text-xs text-green-600">{t('moveSeatModal.statusEmpty')}</span>}
+                    {!participantId && table.status !== 'open' && <span className="text-xs text-gray-500">{t('moveSeatModal.statusUnavailable')}</span>}
                   </div>
                 );
               })}
@@ -81,10 +85,10 @@ const MoveSeatModal: React.FC<MoveSeatModalProps> = ({
       </div>
       <div className="flex justify-end mt-4">
         <button onClick={onClose} className="btn btn-secondary mr-2">
-          취소
+          {t('moveSeatModal.buttonCancel')}
         </button>
         <button onClick={handleConfirm} className="btn btn-primary" disabled={!selectedSeat}>
-          이동 확인
+          {t('moveSeatModal.buttonConfirm')}
         </button>
       </div>
     </Modal>

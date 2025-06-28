@@ -3,6 +3,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { FaUserCircle, FaTable, FaMugHot, FaUserClock } from 'react-icons/fa';
 import { collection, query } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useTranslation } from 'react-i18next';
 
 interface Staff {
   id: string;
@@ -34,6 +35,7 @@ const StaffCard = ({ staff }: { staff: Staff }) => (
 );
 
 const DealerRotationPage: React.FC = () => {
+  const { t } = useTranslation();
   const staffQuery = useMemo(() => query(collection(db, 'staff')), []);
   const tablesQuery = useMemo(() => query(collection(db, 'tables')), []);
   
@@ -60,22 +62,24 @@ const DealerRotationPage: React.FC = () => {
   const loading = staffLoading || tablesLoading;
 
   if (loading) {
-    return <div className="p-4 text-center">Loading staff and table data...</div>;
+    return <div className="p-4 text-center">{t('dealerRotation.loading')}</div>;
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Dealer Rotation Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">{t('dealerRotation.title')}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center"><FaTable className="mr-2"/> On Tables ({onTableDealers.length})</h2>
+          <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
+            <FaTable className="mr-2"/> {t('dealerRotation.onTables')} ({onTableDealers.length})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {tablesWithDealers.map(table => (
               <div key={table.id} className="border border-gray-200 p-4 rounded-lg">
-                <p className="font-bold text-lg text-gray-700">Table {table.tableNumber}</p>
-                {table.dealer ? <StaffCard staff={table.dealer} /> : <p className="text-sm text-gray-500 mt-2">No dealer assigned</p>}
+                <p className="font-bold text-lg text-gray-700">{t('dealerRotation.tableName', { tableNumber: table.tableNumber })}</p>
+                {table.dealer ? <StaffCard staff={table.dealer} /> : <p className="text-sm text-gray-500 mt-2">{t('dealerRotation.noDealerAssigned')}</p>}
               </div>
             ))}
           </div>
@@ -83,18 +87,22 @@ const DealerRotationPage: React.FC = () => {
 
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 text-green-600 flex items-center"><FaUserClock className="mr-2"/> Available Dealers ({availableDealers.length})</h2>
+            <h2 className="text-xl font-semibold mb-4 text-green-600 flex items-center">
+              <FaUserClock className="mr-2"/> {t('dealerRotation.availableDealers')} ({availableDealers.length})
+            </h2>
             <div className="space-y-3">
               {availableDealers.map(dealer => <StaffCard key={dealer.id} staff={dealer} />)}
-              {availableDealers.length === 0 && <p className="text-sm text-gray-500">No dealers available.</p>}
+              {availableDealers.length === 0 && <p className="text-sm text-gray-500">{t('dealerRotation.noDealersAvailable')}</p>}
             </div>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 text-yellow-600 flex items-center"><FaMugHot className="mr-2"/> On Break ({onBreakDealers.length})</h2>
+            <h2 className="text-xl font-semibold mb-4 text-yellow-600 flex items-center">
+              <FaMugHot className="mr-2"/> {t('dealerRotation.onBreak')} ({onBreakDealers.length})
+            </h2>
             <div className="space-y-3">
               {onBreakDealers.map(dealer => <StaffCard key={dealer.id} staff={dealer} />)}
-              {onBreakDealers.length === 0 && <p className="text-sm text-gray-500">No dealers on break.</p>}
+              {onBreakDealers.length === 0 && <p className="text-sm text-gray-500">{t('dealerRotation.noDealersOnBreak')}</p>}
             </div>
           </div>
         </div>
