@@ -26,6 +26,95 @@ export const submitDealerRating = functions.https.onCall(async (data, context) =
 // --- Authentication and Role Management Functions ---
 
 /**
+ * Handles a new user registration request.
+ * - Dealers are created and enabled immediately.
+ * - Managers are created as disabled and await admin approval.
+ */
+export const requestRegistration = functions.https.onCall(async (data) => {
+    const { email, password, name, role } = data;
+
+    if (!email || !password || !name || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
+    }
+    if (role !== 'dealer' && role !== 'manager') {
+        throw new functions.https.HttpsError('invalid-argument', 'Role must be either "dealer" or "manager".');
+    }
+
+    try {
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName: name,
+            disabled: true, // All users are created as disabled initially
+        });
+
+        let userRole = '';
+        if (role === 'dealer') {
+            await admin.auth().updateUser(userRecord.uid, { disabled: false });
+            userRole = 'dealer';
+        } else { // role === 'manager'
+            userRole = 'pending_manager';
+        }
+
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role: userRole });
+
+        await db.collection('users').doc(userRecord.uid).set({
+            name,
+            email,
+            role: userRole,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return { success: true, message: `Registration for ${name} as ${role} is processing.` };
+    } catch (error: any) {
+        console.error("Error during registration request:", error);
+        throw new functions.https.HttpsError('internal', 'An unexpected error occurred.', error.message);
+    }
+});
+
+/**
+ * Processes a registration request for a manager, either approving or rejecting it.
+ * Only callable by an admin.
+ */
+export const processRegistration = functions.https.onCall(async (data, context) => {
+    // Ensure the caller is an admin
+    if (context.auth?.token?.role !== 'admin') {
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can process registration requests.');
+    }
+
+    const { targetUid, action } = data; // action can be 'approve' or 'reject'
+
+    if (!targetUid || !action) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing "targetUid" or "action".');
+    }
+
+    const userRef = db.collection('users').doc(targetUid);
+
+    try {
+        const userDoc = await userRef.get();
+        if (!userDoc.exists || userDoc.data()?.role !== 'pending_manager') {
+            throw new functions.https.HttpsError('not-found', 'The specified user is not awaiting approval.');
+        }
+
+        if (action === 'approve') {
+            await admin.auth().updateUser(targetUid, { disabled: false });
+            await admin.auth().setCustomUserClaims(targetUid, { role: 'manager' });
+            await userRef.update({ role: 'manager' });
+            return { success: true, message: 'User approved as manager.' };
+        } else if (action === 'reject') {
+            await admin.auth().deleteUser(targetUid);
+            await userRef.delete();
+            return { success: true, message: 'User registration rejected.' };
+        } else {
+            throw new functions.https.HttpsError('invalid-argument', 'Action must be "approve" or "reject".');
+        }
+    } catch (error: any) {
+        console.error("Error processing registration:", error);
+        throw new functions.https.HttpsError('internal', 'Failed to process registration.', error.message);
+    }
+});
+
+/**
  * Creates a new user account, stores details in Firestore, and sets a custom role claim.
  */
 export const createUserAccount = functions.https.onCall(async (data, context) => {

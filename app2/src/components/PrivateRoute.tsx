@@ -1,15 +1,18 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const PrivateRoute: React.FC = () => {
   const { currentUser, loading } = useAuth();
+  const { t } = useTranslation();
+  const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>; // 인증 상태 확인 중 로딩 표시
+    return <div className="p-6 text-center">{t('loading')}</div>;
   }
 
-  return currentUser ? <Outlet /> : <Navigate to="/login" />;
+  return currentUser ? <Outlet /> : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
-export default PrivateRoute; 
+export default PrivateRoute;

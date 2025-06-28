@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, signInWithEmailAndPassword, UserCredential, signOut } from 'firebase/auth'; // Import signOut
-import { auth } from '../firebase';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { onAuthStateChanged, User, signOut as firebaseSignOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   isAdmin: boolean;
-  signIn: (email: string, password: string) => Promise<UserCredential>;
-  signOut: () => Promise<void>; // Add signOut to the type
+  role: string | null;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,23 +28,23 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
         try {
-          // Force refresh the token to get the latest custom claims.
-          const idTokenResult = await user.getIdTokenResult(true); 
-          const userRole = idTokenResult.claims.role;
-          setIsAdmin(userRole === 'admin');
+          // Force refresh the token to get the latest custom claims
+          const idTokenResult = await user.getIdTokenResult(true);
+          const userRole = idTokenResult.claims.role as string || null;
+          setRole(userRole);
         } catch (error) {
           console.error("Error fetching user role:", error);
-          setIsAdmin(false);
+          setRole(null);
         }
       } else {
-        setIsAdmin(false);
+        setRole(null);
       }
       setLoading(false);
     });
@@ -51,20 +52,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const handleSignIn = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const signOut = () => {
+    return firebaseSignOut(auth);
   };
+  
+  // Derived state for backwards compatibility
+  const isAdmin = role === 'admin' || role === 'manager';
 
-  const handleSignOut = () => {
-    return signOut(auth);
-  };
-
-  const value = {
+  const value: AuthContextType = {
     currentUser,
     loading,
-    isAdmin,
-    signIn: handleSignIn,
-    signOut: handleSignOut, // Provide the signOut function
+    isAdmin, // Keep for compatibility
+    role,    // Provide the specific role
+    signOut,
   };
 
   return (

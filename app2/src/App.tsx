@@ -6,8 +6,15 @@ import { Layout } from './components/Layout';
 
 // Page Imports
 import AdminLogin from './pages/AdminLogin';
+import ForgotPassword from './pages/ForgotPassword';
+import SignUp from './pages/SignUp';
 import ParticipantLivePage from './pages/ParticipantLivePage';
+
+// Route Guards
 import PrivateRoute from './components/PrivateRoute';
+import RoleBasedRoute from './components/RoleBasedRoute'; // Import the new RoleBasedRoute
+
+// Page Components
 import ParticipantsPage from './pages/ParticipantsPage';
 import TablesPage from './pages/TablesPage';
 import BlindsPage from './pages/BlindsPage';
@@ -15,7 +22,6 @@ import PrizesPage from './pages/PrizesPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import HistoryPage from './pages/HistoryPage';
 import HistoryDetailPage from './pages/HistoryDetailPage';
-import DealerRotationPage from './pages/DealerRotationPage';
 import ProfilePage from './pages/ProfilePage';
 import JobBoardPage from './pages/JobBoardPage';
 import AttendancePage from './pages/AttendancePage';
@@ -30,19 +36,17 @@ import JobPostingAdminPage from './pages/JobPostingAdminPage';
 import StaffListPage from './pages/StaffListPage';
 import StaffNewPage from './pages/StaffNewPage';
 import PayrollAdminPage from './pages/admin/PayrollAdminPage';
-import StaffingDashboardPage from './pages/StaffingDashboardPage'; // <-- IMPORT ADDED
+import StaffingDashboardPage from './pages/StaffingDashboardPage';
+import ApprovalPage from './pages/admin/Approval';
+import DealerRotationPage from './pages/DealerRotationPage';
 
 // Dealer Pages
 import DealerEventsListPage from './pages/dealer/DealerEventsListPage';
 
 // A component to handle role-based redirection
 const HomeRedirect: React.FC = () => {
-  const { isAdmin } = useAuth();
-  if (isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-  // Default to dealer's event list or a general landing page
-  return <Navigate to="/events" replace />;
+  const { isAdmin } = useAuth(); // isAdmin is kept for compatibility
+  return isAdmin ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/events" replace />;
 };
 
 const App: React.FC = () => {
@@ -50,13 +54,16 @@ const App: React.FC = () => {
     <AuthProvider>
       <TournamentProvider>
         <Routes>
+          {/* Public Routes */}
           <Route path="/login" element={<AdminLogin />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />
           
+          {/* Authenticated Routes */}
           <Route element={<PrivateRoute />}>
             <Route path="/" element={<Layout />}>
               <Route index element={<HomeRedirect />} />
-              
               <Route path="profile" element={<ProfilePage />} />
               
               {/* Dealer facing routes */}
@@ -65,26 +72,31 @@ const App: React.FC = () => {
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="available-times" element={<AvailableTimesPage />} />
 
-              {/* Admin-only routes */}
-              <Route path="admin/dashboard" element={<DashboardPage />} />
-              <Route path="admin/staff" element={<StaffListPage />} />
-              <Route path="admin/staff/new" element={<StaffNewPage />} />
-              <Route path="admin/staffing-dashboard" element={<StaffingDashboardPage />} /> {/* <-- ROUTE ADDED */}
-              <Route path="admin/events" element={<AdminEventsListPage />} />
-              <Route path="admin/events/new" element={<AdminEventNewPage />} />
-              <Route path="admin/events/:eventId" element={<AdminEventDetailPage />} />
-              <Route path="admin/job-postings" element={<JobPostingAdminPage />} />
-              <Route path="admin/dealer-rotation" element={<DealerRotationPage />} />
-              <Route path="admin/payroll" element={<PayrollAdminPage />} />
-              
-              {/* These might be admin-only as well, consider moving them */}
-              <Route path="participants" element={<ParticipantsPage />} />
-              <Route path="tables" element={<TablesPage />} />
-              <Route path="blinds" element={<BlindsPage />} />
-              <Route path="prizes" element={<PrizesPage />} />
-              <Route path="announcements" element={<AnnouncementsPage />} />
-              <Route path="history" element={<HistoryPage />} />
-              <Route path="history/:logId" element={<HistoryDetailPage />} />
+              {/* Admin & Manager Routes */}
+              <Route path="admin" element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="staff" element={<StaffListPage />} />
+                <Route path="staff/new" element={<StaffNewPage />} />
+                <Route path="staffing-dashboard" element={<StaffingDashboardPage />} />
+                <Route path="events" element={<AdminEventsListPage />} />
+                <Route path="events/new" element={<AdminEventNewPage />} />
+                <Route path="events/:eventId" element={<AdminEventDetailPage />} />
+                <Route path="job-postings" element={<JobPostingAdminPage />} />
+                <Route path="dealer-rotation" element={<DealerRotationPage />} />
+                <Route path="payroll" element={<PayrollAdminPage />} />
+                <Route path="participants" element={<ParticipantsPage />} />
+                <Route path="tables" element={<TablesPage />} />
+                <Route path="blinds" element={<BlindsPage />} />
+                <Route path="prizes" element={<PrizesPage />} />
+                <Route path="announcements" element={<AnnouncementsPage />} />
+                <Route path="history" element={<HistoryPage />} />
+                <Route path="history/:logId" element={<HistoryDetailPage />} />
+              </Route>
+
+              {/* Admin Only Route */}
+              <Route path="admin" element={<RoleBasedRoute allowedRoles={['admin']} />}>
+                  <Route path="approvals" element={<ApprovalPage />} />
+              </Route>
             </Route>
           </Route>
         </Routes>
