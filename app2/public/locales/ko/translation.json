@@ -487,11 +487,13 @@
       "serving": "서빙",
       "description": "설명 / 조건",
       "submitting": "제출 중...",
-      "button": "공고 생성",
       "location": "지역",
       "startDate": "시작일",
       "endDate": "종료일",
-      "time": "시간"
+      "time": "시간",
+      "timeAndRoles": "시간대 및 역할",
+      "addTimeSlot": "시간대 추가",
+      "removeTimeSlot": "시간대 삭제"
     },
     "manage": {
       "title": "구인 공고 관리",
@@ -534,7 +536,10 @@
       "location": "지역",
       "startDate": "시작일",
       "endDate": "종료일",
-      "time": "시간"
+      "time": "시간",
+      "timeAndRoles": "시간대 및 역할",
+      "addTimeSlot": "시간대 추가",
+      "removeTimeSlot": "시간대 삭제"
     },
     "applicants": {
       "title": "지원자 목록",

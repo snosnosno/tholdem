@@ -487,11 +487,13 @@
       "serving": "Serving",
       "description": "Description / Requirements",
       "submitting": "Submitting...",
-      "button": "Create Posting",
       "location": "Location",
       "startDate": "Start Date",
       "endDate": "End Date",
-      "time": "Time"
+      "time": "Time",
+      "timeAndRoles": "Time Slots & Roles",
+      "addTimeSlot": "Add Time Slot",
+      "removeTimeSlot": "Remove Time Slot"
     },
     "manage": {
       "title": "Manage Job Postings",
@@ -534,7 +536,10 @@
       "location": "Location",
       "startDate": "Start Date",
       "endDate": "End Date",
-      "time": "Time"
+      "time": "Time",
+      "timeAndRoles": "Time Slots & Roles",
+      "addTimeSlot": "Add Time Slot",
+      "removeTimeSlot": "Remove Time Slot"
     },
     "applicants": {
       "title": "Applicant List",

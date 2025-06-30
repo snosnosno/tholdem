@@ -19,9 +19,15 @@ interface RoleRequirement {
     count: number;
 }
 
+interface TimeSlot {
+    time: string;
+    roles: RoleRequirement[];
+}
+
 interface ConfirmedStaff {
     userId: string;
     role: string;
+    timeSlot: string;
 }
 
 const JobPostingAdminPage = () => {
@@ -32,17 +38,15 @@ const JobPostingAdminPage = () => {
 
   const getTodayString = () => new Date().toISOString().split('T')[0];
 
-  const initialRole = { name: 'dealer', count: 1 };
+  const initialTimeSlot = { time: '09:00', roles: [{ name: 'dealer', count: 1 }] };
   const [formData, setFormData] = useState({
     title: '',
-    roles: [initialRole],
-    type: '지원',
+    timeSlots: [initialTimeSlot],
     description: '',
     status: 'open',
     location: '서울',
     startDate: getTodayString(),
     endDate: getTodayString(),
-    time: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,47 +74,90 @@ const JobPostingAdminPage = () => {
     return `${year}-${month}-${day}(${dayOfWeek})`;
   };
 
+  // Form handlers
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleRoleChange = (index: number, field: 'name' | 'count', value: string | number) => {
-    const newRoles = [...formData.roles];
+  const handleTimeSlotChange = (timeSlotIndex: number, value: string) => {
+    const newTimeSlots = [...formData.timeSlots];
+    newTimeSlots[timeSlotIndex].time = value;
+    setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
+  };
+
+  const addTimeSlot = () => {
+    setFormData(prev => ({
+      ...prev,
+      timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: '', count: 1 }] }]
+    }));
+  };
+
+  const removeTimeSlot = (timeSlotIndex: number) => {
+    const newTimeSlots = formData.timeSlots.filter((_, i) => i !== timeSlotIndex);
+    setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
+  };
+
+  const handleRoleChange = (timeSlotIndex: number, roleIndex: number, field: 'name' | 'count', value: string | number) => {
+    const newTimeSlots = [...formData.timeSlots];
     const roleValue = field === 'count' ? (Number(value) < 1 ? 1 : Number(value)) : value;
-    newRoles[index] = { ...newRoles[index], [field]: roleValue };
-    setFormData(prev => ({ ...prev, roles: newRoles }));
+    newTimeSlots[timeSlotIndex].roles[roleIndex] = { ...newTimeSlots[timeSlotIndex].roles[roleIndex], [field]: roleValue };
+    setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
   };
 
-  const addRole = () => {
-    setFormData(prev => ({...prev, roles: [...prev.roles, { name: '', count: 1 }]}));
+  const addRole = (timeSlotIndex: number) => {
+    const newTimeSlots = [...formData.timeSlots];
+    newTimeSlots[timeSlotIndex].roles.push({ name: '', count: 1 });
+    setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
   };
 
-  const removeRole = (index: number) => {
-    const newRoles = formData.roles.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, roles: newRoles }));
+  const removeRole = (timeSlotIndex: number, roleIndex: number) => {
+    const newTimeSlots = [...formData.timeSlots];
+    newTimeSlots[timeSlotIndex].roles = newTimeSlots[timeSlotIndex].roles.filter((_, i) => i !== roleIndex);
+    setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
   };
 
-  const handleEditRoleChange = (index: number, field: 'name' | 'count', value: string | number) => {
-    const newRoles = [...currentPost.roles];
-    const roleValue = field === 'count' ? (Number(value) < 1 ? 1 : Number(value)) : value;
-    newRoles[index] = { ...newRoles[index], [field]: roleValue };
-    setCurrentPost((prev: any) => ({ ...prev, roles: newRoles }));
-  };
+  // Edit Modal Handlers
+    const handleEditTimeSlotChange = (timeSlotIndex: number, value: string) => {
+        const newTimeSlots = [...currentPost.timeSlots];
+        newTimeSlots[timeSlotIndex].time = value;
+        setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
+    };
 
-  const addEditRole = () => {
-    setCurrentPost((prev: any) => ({...prev, roles: [...prev.roles, { name: '', count: 1 }]}));
-  };
+    const addEditTimeSlot = () => {
+        setCurrentPost((prev: any) => ({
+            ...prev,
+            timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: '', count: 1 }] }]
+        }));
+    };
 
-  const removeEditRole = (index: number) => {
-    const newRoles = currentPost.roles.filter((_: any, i: number) => i !== index);
-    setCurrentPost((prev: any) => ({ ...prev, roles: newRoles }));
-  };
+    const removeEditTimeSlot = (timeSlotIndex: number) => {
+        const newTimeSlots = currentPost.timeSlots.filter((_: any, i: number) => i !== timeSlotIndex);
+        setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
+    };
+    
+    const handleEditRoleChange = (timeSlotIndex: number, roleIndex: number, field: 'name' | 'count', value: string | number) => {
+        const newTimeSlots = [...currentPost.timeSlots];
+        const roleValue = field === 'count' ? (Number(value) < 1 ? 1 : Number(value)) : value;
+        newTimeSlots[timeSlotIndex].roles[roleIndex] = { ...newTimeSlots[timeSlotIndex].roles[roleIndex], [field]: roleValue };
+        setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
+    };
 
+    const addEditRole = (timeSlotIndex: number) => {
+        const newTimeSlots = [...currentPost.timeSlots];
+        newTimeSlots[timeSlotIndex].roles.push({ name: '', count: 1 });
+        setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
+    };
+
+    const removeEditRole = (timeSlotIndex: number, roleIndex: number) => {
+        const newTimeSlots = [...currentPost.timeSlots];
+        newTimeSlots[timeSlotIndex].roles = newTimeSlots[timeSlotIndex].roles.filter((_: any, i: number) => i !== roleIndex);
+        setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-     if (formData.roles.some(role => !role.name || role.count < 1)) {
+     if (formData.timeSlots.some(ts => !ts.time || ts.roles.some(r => !r.name || r.count < 1))) {
       alert(t('jobPostingAdmin.alerts.invalidRoleInfo'));
       return;
     }
@@ -124,14 +171,12 @@ const JobPostingAdminPage = () => {
       alert(t('jobPostingAdmin.alerts.createSuccess'));
       setFormData({
         title: '',
-        roles: [initialRole],
-        type: '지원',
+        timeSlots: [initialTimeSlot],
         description: '',
         status: 'open',
         location: '서울',
         startDate: getTodayString(),
         endDate: getTodayString(),
-        time: ''
       });
     } catch (error) {
       console.error("Error creating job posting: ", error);
@@ -142,27 +187,16 @@ const JobPostingAdminPage = () => {
   };
 
   const handleAutoMatch = async (jobPostingId: string) => {
-    setIsMatching(jobPostingId);
-    try {
-        const functions = getFunctions();
-        const autoMatchStaff = httpsCallable(functions, 'autoMatchStaff');
-        const result = await autoMatchStaff({ jobPostingId });
-        alert((result.data as { message: string }).message);
-    } catch (error) {
-        console.error("Error running auto match: ", error);
-        alert(t('jobPostingAdmin.alerts.matchFailed'));
-    } finally {
-        setIsMatching(null);
-    }
+    // This function will need significant updates for the new data structure.
+    alert("자동 매칭 기능은 새로운 시간대별 인원 구조에 맞게 업데이트가 필요합니다.");
   };
 
   const handleOpenEditModal = (post: any) => {
     setCurrentPost({
         ...post,
-        roles: post.roles && post.roles.length > 0 ? post.roles : [initialRole],
+        timeSlots: post.timeSlots && post.timeSlots.length > 0 ? post.timeSlots : [initialTimeSlot],
         startDate: post.startDate || '',
         endDate: post.endDate || '',
-        time: post.time || ''
     });
     setIsEditModalOpen(true);
   };
@@ -170,7 +204,7 @@ const JobPostingAdminPage = () => {
   const handleUpdatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPost) return;
-    if (currentPost.roles.some((role: RoleRequirement) => !role.name || role.count < 1)) {
+    if (currentPost.timeSlots.some((ts: TimeSlot) => !ts.time || ts.roles.some(r => !r.name || r.count < 1))) {
       alert(t('jobPostingAdmin.alerts.invalidRoleInfo'));
       return;
     }
@@ -193,7 +227,7 @@ const JobPostingAdminPage = () => {
         try {
             await deleteDoc(doc(db, 'jobPostings', postId));
             alert(t('jobPostingAdmin.alerts.deleteSuccess'));
-            setIsEditModalOpen(false); // Close modal on successful delete
+            setIsEditModalOpen(false);
         } catch (error) {
             console.error("Error deleting job posting: ", error);
             alert(t('jobPostingAdmin.alerts.deleteFailed'));
@@ -219,83 +253,13 @@ const JobPostingAdminPage = () => {
   };
     
   const handleConfirmApplicant = async (applicant: Applicant) => {
-      const roleToAssign = selectedRole[applicant.id];
-      if (!roleToAssign) {
-                    alert(t('jobPostingAdmin.alerts.selectRoleToAssign'));
-          return;
-      }
-      if (!currentPost) return;
-
-      const jobPostingRef = doc(db, "jobPostings", currentPost.id);
-      const applicationRef = doc(db, "applications", applicant.id);
-
-      try {
-          await runTransaction(db, async (transaction) => {
-              const jobPostingDoc = await transaction.get(jobPostingRef);
-              if (!jobPostingDoc.exists()) {
-                  throw "Job posting does not exist!";
-              }
-
-              const postData = jobPostingDoc.data();
-              const confirmedStaff: ConfirmedStaff[] = postData.confirmedStaff || [];
-              
-              const isAlreadyConfirmed = confirmedStaff.some(staff => staff.userId === applicant.applicantId);
-              if (isAlreadyConfirmed) {
-                  // Already confirmed, maybe alert the user or just ignore.
-                                    alert(t('jobPostingAdmin.alerts.applicantAlreadyConfirmed'));
-                  return;
-              }
-              
-              const newConfirmedStaffMember = { userId: applicant.applicantId, role: roleToAssign };
-
-              transaction.update(jobPostingRef, {
-                  confirmedStaff: arrayUnion(newConfirmedStaffMember)
-              });
-              transaction.update(applicationRef, {
-                  status: 'confirmed',
-                  assignedRole: roleToAssign
-              });
-          });
-          
-                    alert(t('jobPostingAdmin.alerts.applicantConfirmSuccess'));
-          await checkAndClosePosting(currentPost.id);
-          // Refresh applicants list
-          handleViewApplicants(currentPost.id);
-
-      } catch (error) {
-          console.error("Error confirming applicant: ", error);
-                    alert(t('jobPostingAdmin.alerts.applicantConfirmFailed'));
-      }
+      // This logic needs to be completely re-thought for the new data structure
+      alert("지원자 확정 기능은 새로운 시간대별 인원 구조에 맞게 업데이트가 필요합니다.");
   };
 
   const checkAndClosePosting = async (postId: string) => {
-      const jobPostingRef = doc(db, 'jobPostings', postId);
-      try {
-        const jobPostingDoc = await getDocs(query(collection(db, 'jobPostings'), where('__name__', '==', postId)));
-        if(jobPostingDoc.empty){
-          return;
-        }
-        const post = jobPostingDoc.docs[0].data();
-
-        const requiredCounts: { [key: string]: number } = (post.roles as RoleRequirement[]).reduce((acc, role) => {
-            acc[role.name] = role.count;
-            return acc;
-        }, {} as { [key: string]: number });
-
-        const confirmedCounts: { [key: string]: number } = (post.confirmedStaff as ConfirmedStaff[] || []).reduce((acc, staff) => {
-            acc[staff.role] = (acc[staff.role] || 0) + 1;
-            return acc;
-        }, {} as { [key: string]: number });
-
-        const isFullyStaffed = Object.keys(requiredCounts).every(role => (confirmedCounts[role] || 0) >= requiredCounts[role]);
-
-        if (isFullyStaffed) {
-            await updateDoc(jobPostingRef, { status: 'closed' });
-                        alert(t('jobPostingAdmin.alerts.postingClosed'));
-        }
-      } catch (error) {
-          console.error("Error checking and closing posting: ", error);
-      }
+      // This logic needs to be completely re-thought for the new data structure
+      console.log("checkAndClosePosting needs to be updated.");
   };
 
   return (
@@ -327,10 +291,6 @@ const JobPostingAdminPage = () => {
                         {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
                     </select>
                 </div>
-                <div>
-                    <label htmlFor="time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time')}</label>
-                    <input type="time" name="time" id="time" value={formData.time} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
             </div>
   
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -344,56 +304,50 @@ const JobPostingAdminPage = () => {
                 </div>
             </div>
   
-             <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type')}</label>
-                <select name="type" id="type" value={formData.type} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                    <option value="지원">{t('jobPostingAdmin.create.typeApplication')}</option>
-                    <option value="고정">{t('jobPostingAdmin.create.typeFixed')}</option>
-                </select>
-            </div>
-            
-            <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.rolesAndCounts')}</label>
-                {formData.roles.map((role, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                        <div className="flex-1">
-                            <label htmlFor={`role-name-${index}`} className="sr-only">{t('jobPostingAdmin.create.roleName')}</label>
+            <div className="space-y-6">
+                <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.timeAndRoles')}</label>
+                {formData.timeSlots.map((timeSlot, tsIndex) => (
+                    <div key={tsIndex} className="p-4 border border-gray-200 rounded-md">
+                        <div className="flex items-center space-x-2 mb-4">
+                            <label htmlFor={`time-slot-${tsIndex}`} className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time')}</label>
                             <input
-                                type="text"
-                                id={`role-name-${index}`}
-                                value={role.name}
-                                onChange={(e) => handleRoleChange(index, 'name', e.target.value)}
-                                placeholder={t('jobPostingAdmin.create.roleNamePlaceholder')}
-                                list="predefined-roles"
+                                type="time"
+                                id={`time-slot-${tsIndex}`}
+                                value={timeSlot.time}
+                                onChange={(e) => handleTimeSlotChange(tsIndex, e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                                 required
                             />
-                             <datalist id="predefined-roles">
-                                {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
-                            </datalist>
+                            {formData.timeSlots.length > 1 && (
+                                <button type="button" onClick={() => removeTimeSlot(tsIndex)} className="text-red-600 hover:text-red-800">
+                                    {t('jobPostingAdmin.create.removeTimeSlot')}
+                                </button>
+                            )}
                         </div>
-                        <div className="w-24">
-                            <label htmlFor={`role-count-${index}`} className="sr-only">{t('jobPostingAdmin.create.staffNeeded')}</label>
-                            <input
-                                type="number"
-                                id={`role-count-${index}`}
-                                value={role.count}
-                                min="1"
-                                onChange={(e) => handleRoleChange(index, 'count', e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                required
-                            />
-                        </div>
-                        {formData.roles.length > 1 && (
-                            <button type="button" onClick={() => removeRole(index)} className="text-red-600 hover:text-red-800">
-                                {t('jobPostingAdmin.create.remove')}
-                            </button>
-                        )}
+                        {timeSlot.roles.map((role, rIndex) => (
+                            <div key={rIndex} className="flex items-center space-x-2 mb-2">
+                                <div className="flex-1">
+                                    <input type="text" value={role.name} onChange={(e) => handleRoleChange(tsIndex, rIndex, 'name', e.target.value)} placeholder={t('jobPostingAdmin.create.roleNamePlaceholder')} list="predefined-roles" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                </div>
+                                <div className="w-24">
+                                    <input type="number" value={role.count} min="1" onChange={(e) => handleRoleChange(tsIndex, rIndex, 'count', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                </div>
+                                {timeSlot.roles.length > 1 && (
+                                    <button type="button" onClick={() => removeRole(tsIndex, rIndex)} className="text-red-600 hover:text-red-800 text-sm">{t('jobPostingAdmin.create.remove')}</button>
+                                )}
+                            </div>
+                        ))}
+                        <button type="button" onClick={() => addRole(tsIndex)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            + {t('jobPostingAdmin.create.addRole')}
+                        </button>
                     </div>
                 ))}
-                <button type="button" onClick={addRole} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                    + {t('jobPostingAdmin.create.addRole')}
+                <button type="button" onClick={addTimeSlot} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                    + {t('jobPostingAdmin.create.addTimeSlot')}
                 </button>
+                 <datalist id="predefined-roles">
+                    {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
+                </datalist>
             </div>
   
             <div>
@@ -430,18 +384,23 @@ const JobPostingAdminPage = () => {
                                         {post.status}
                                     </span>
                                 </div>
-                                <div className="text-sm text-gray-600 mb-1">
-                                    {post.roles && post.roles.map((r: RoleRequirement, i: number) => (
-                                        <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
-                                    ))}
-                                </div>
                                 <p className="text-sm text-gray-500 mb-1">
                                     {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
                                 </p>
                                 <p className="text-sm text-gray-500 mb-1">
                                     {t('jobPostingAdmin.manage.date')}: {post.endDate && post.endDate !== post.startDate ? `${formattedStartDate} ~ ${formattedEndDate}` : formattedStartDate}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                {post.timeSlots?.map((ts: TimeSlot, index: number) => (
+                                    <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
+                                        <p className="text-sm font-semibold text-gray-700">{t('jobPostingAdmin.manage.time')}: {ts.time}</p>
+                                        <div className="text-sm text-gray-600">
+                                            {ts.roles.map((r: RoleRequirement, i: number) => (
+                                                <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                                <p className="text-sm text-gray-500 mt-2">
                                     {t('jobPostingAdmin.create.description')}: {post.description}
                                 </p>
                             </div>
@@ -480,7 +439,6 @@ const JobPostingAdminPage = () => {
                 <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
                     <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.edit.title')}</h3>
                     <form onSubmit={handleUpdatePost} className="space-y-4">
-                        {/* Edit form fields */}
                          <div>
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
@@ -491,10 +449,6 @@ const JobPostingAdminPage = () => {
                                 <select id="edit-location" name="location" value={currentPost.location} onChange={(e) => setCurrentPost({...currentPost, location: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                     {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
                                 </select>
-                            </div>
-                            <div>
-                                <label htmlFor="edit-time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.time')}</label>
-                                <input type="time" id="edit-time" value={currentPost.time} onChange={(e) => setCurrentPost({...currentPost, time: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                             </div>
                         </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -507,56 +461,51 @@ const JobPostingAdminPage = () => {
                                 <input type="date" id="edit-endDate" value={currentPost.endDate} onChange={(e) => setCurrentPost({...currentPost, endDate: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                             </div>
                         </div>
-                        <div>
-                            <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.type')}</label>
-                            <select id="edit-type" value={currentPost.type} onChange={(e) => setCurrentPost({...currentPost, type: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="지원">{t('jobPostingAdmin.edit.typeApplication')}</option>
-                                <option value="고정">{t('jobPostingAdmin.edit.typeFixed')}</option>
-                            </select>
-                        </div>
-  
-                        <div className="space-y-4">
-                            <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.rolesAndCounts')}</label>
-                            {currentPost.roles.map((role: RoleRequirement, index: number) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                    <div className="flex-1">
-                                         <label htmlFor={`edit-role-name-${index}`} className="sr-only">{t('jobPostingAdmin.edit.roleName')}</label>
-                                         <input
-                                            type="text"
-                                            id={`edit-role-name-${index}`}
-                                            value={role.name}
-                                            onChange={(e) => handleEditRoleChange(index, 'name', e.target.value)}
-                                            placeholder={t('jobPostingAdmin.edit.roleNamePlaceholder')}
-                                            list="predefined-roles-edit"
-                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                            required
-                                        />
-                                        <datalist id="predefined-roles-edit">
-                                            {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.edit.${r}`)}</option>)}
-                                        </datalist>
-                                    </div>
-                                    <div className="w-24">
-                                        <label htmlFor={`edit-role-count-${index}`} className="sr-only">{t('jobPostingAdmin.edit.staffNeeded')}</label>
+                        
+                        <div className="space-y-6">
+                            <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.timeAndRoles')}</label>
+                            {currentPost.timeSlots.map((timeSlot: TimeSlot, tsIndex: number) => (
+                                <div key={tsIndex} className="p-4 border border-gray-200 rounded-md">
+                                    <div className="flex items-center space-x-2 mb-4">
+                                        <label htmlFor={`edit-time-slot-${tsIndex}`} className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.time')}</label>
                                         <input
-                                            type="number"
-                                            id={`edit-role-count-${index}`}
-                                            value={role.count}
-                                            min="1"
-                                            onChange={(e) => handleEditRoleChange(index, 'count', e.target.value)}
+                                            type="time"
+                                            id={`edit-time-slot-${tsIndex}`}
+                                            value={timeSlot.time}
+                                            onChange={(e) => handleEditTimeSlotChange(tsIndex, e.target.value)}
                                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                                             required
                                         />
+                                        {currentPost.timeSlots.length > 1 && (
+                                            <button type="button" onClick={() => removeEditTimeSlot(tsIndex)} className="text-red-600 hover:text-red-800">
+                                                {t('jobPostingAdmin.edit.removeTimeSlot')}
+                                            </button>
+                                        )}
                                     </div>
-                                    {currentPost.roles.length > 1 && (
-                                        <button type="button" onClick={() => removeEditRole(index)} className="text-red-600 hover:text-red-800">
-                                            {t('jobPostingAdmin.edit.remove')}
-                                        </button>
-                                    )}
+                                    {timeSlot.roles.map((role: RoleRequirement, rIndex: number) => (
+                                        <div key={rIndex} className="flex items-center space-x-2 mb-2">
+                                            <div className="flex-1">
+                                                <input type="text" value={role.name} onChange={(e) => handleEditRoleChange(tsIndex, rIndex, 'name', e.target.value)} placeholder={t('jobPostingAdmin.edit.roleNamePlaceholder')} list="predefined-roles-edit" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                            </div>
+                                            <div className="w-24">
+                                                <input type="number" value={role.count} min="1" onChange={(e) => handleEditRoleChange(tsIndex, rIndex, 'count', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                            </div>
+                                            {timeSlot.roles.length > 1 && (
+                                                <button type="button" onClick={() => removeEditRole(tsIndex, rIndex)} className="text-red-600 hover:text-red-800 text-sm">{t('jobPostingAdmin.edit.remove')}</button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button type="button" onClick={() => addEditRole(tsIndex)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                        + {t('jobPostingAdmin.edit.addRole')}
+                                    </button>
                                 </div>
                             ))}
-                            <button type="button" onClick={addEditRole} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                                + {t('jobPostingAdmin.edit.addRole')}
+                            <button type="button" onClick={addEditTimeSlot} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                                + {t('jobPostingAdmin.edit.addTimeSlot')}
                             </button>
+                            <datalist id="predefined-roles-edit">
+                                {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.edit.${r}`)}</option>)}
+                            </datalist>
                         </div>
                         
                         <div>
@@ -606,14 +555,14 @@ const JobPostingAdminPage = () => {
                                                 value={selectedRole[applicant.id] || ''}
                                                 onChange={(e) => setSelectedRole(prev => ({ ...prev, [applicant.id]: e.target.value }))}
                                             >
-                                                                                                <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
-                                                {currentPost?.roles.map((r: RoleRequirement) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                                                <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
+                                                {/* This needs to be updated to select a role within a time slot */}
                                             </select>
                                             <button 
                                                 onClick={() => handleConfirmApplicant(applicant)}
                                                 className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
                                             >
-                                                                                                {t('jobPostingAdmin.applicants.confirm')}
+                                                {t('jobPostingAdmin.applicants.confirm')}
                                             </button>
                                         </div>
                                     )}
