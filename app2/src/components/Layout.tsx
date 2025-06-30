@@ -69,7 +69,8 @@ export const Layout = () => {
             <NavItem to={isAdmin ? "/admin/dashboard" : "/events"} label={t('nav.dashboard')} Icon={FaTachometerAlt} isOpen={isSidebarOpen} />
             <NavItem to="/jobs" label={t('nav.jobBoard')} Icon={FaClipboardList} isOpen={isSidebarOpen} />
             <NavItem to="/profile" label={t('nav.myProfile')} Icon={FaUserCircle} isOpen={isSidebarOpen} />
-            {!isAdmin && <NavItem to="/available-times" label={t('nav.myAvailability')} Icon={FaCalendarAlt} isOpen={isSidebarOpen} />}
+            {/* 딜러 가능시간 페이지 숨김 처리 */}
+            {/* {!isAdmin && <NavItem to="/available-times" label={t('nav.myAvailability')} Icon={FaCalendarAlt} isOpen={isSidebarOpen} />} */}
             {!isAdmin && <NavItem to="/attendance" label={t('nav.attendance')} Icon={FaQrcode} isOpen={isSidebarOpen} />}
             <hr className="my-2 border-t border-gray-200" />
             
