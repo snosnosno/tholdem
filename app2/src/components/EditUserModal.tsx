@@ -83,7 +83,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
         history: user.history || '',
         notes: user.notes || '',
         nationality: user.nationality || '',
-        age: user.age || '',
+        age: user.age ? user.age.toString() : '',
         bankName: user.bankName || '',
         bankAccount: user.bankAccount || '',
       });
