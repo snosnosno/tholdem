@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import EditUserModal from '../../components/EditUserModal';
 
-interface Staff {
+interface User {
   id: string;
   name: string;
   email: string;
@@ -16,13 +16,13 @@ interface Staff {
 
 const UserManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [userList, setUserList] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAdmin } = useAuth();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Staff | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -33,15 +33,15 @@ const UserManagementPage: React.FC = () => {
     const q = query(collection(db, 'users'), where('role', 'in', ['admin', 'dealer', 'manager', 'pending_manager']));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const list: Staff[] = [];
+      const list: User[] = [];
       querySnapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as Staff);
+        list.push({ id: doc.id, ...doc.data() } as User);
       });
-      setStaffList(list);
+      setUserList(list);
       setLoading(false);
     }, (err) => {
-        console.error("Error fetching staff list: ", err);
-        setError(t('staffList.fetchError'));
+        console.error("Error fetching user list: ", err);
+        setError(t('userManagement.fetchError'));
         setLoading(false);
     });
 
@@ -49,7 +49,7 @@ const UserManagementPage: React.FC = () => {
   }, [isAdmin, t]);
 
   const handleDelete = async (userId: string) => {
-    if (!window.confirm(t('staffList.confirmDelete'))) {
+    if (!window.confirm(t('userManagement.confirmDelete'))) {
         return;
     }
     
@@ -57,14 +57,14 @@ const UserManagementPage: React.FC = () => {
     try {
         const deleteUser = httpsCallable(functions, 'deleteUser');
         await deleteUser({ uid: userId });
-        alert(t('staffList.deleteSuccess'));
+        alert(t('userManagement.deleteSuccess'));
     } catch (err: any) {
         console.error("Error deleting user:", err);
-        setError(err.message || t('staffList.deleteError'));
+        setError(err.message || t('userManagement.deleteError'));
     }
   };
 
-  const handleOpenEditModal = (user: Staff) => {
+  const handleOpenEditModal = (user: User) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
   };
@@ -75,7 +75,7 @@ const UserManagementPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="p-6">{t('staffList.loading')}</div>;
+    return <div className="p-6">{t('userManagement.loading')}</div>;
   }
 
   if (error) {
@@ -83,34 +83,34 @@ const UserManagementPage: React.FC = () => {
   }
 
   if (!isAdmin) {
-      return <div className="p-6 text-red-500">{t('staffList.accessDenied')}</div>
+      return <div className="p-6 text-red-500">{t('userManagement.accessDenied')}</div>
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
         <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">{t('staffList.title')}</h1>
+                <h1 className="text-3xl font-bold text-gray-800">{t('userManagement.title')}</h1>
                 <Link to="/admin/staff/new" className="btn btn-primary">
-                    {t('staffList.addNew')}
+                    {t('userManagement.addNew')}
                 </Link>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <ul className="divide-y divide-gray-200">
-                    {staffList.length > 0 ? staffList.map(staff => (
-                        <li key={staff.id} className="p-4 flex justify-between items-center">
+                    {userList.length > 0 ? userList.map(user => (
+                        <li key={user.id} className="p-4 flex justify-between items-center">
                             <div>
-                                <p className="font-semibold text-gray-900">{staff.name}</p>
-                                <p className="text-sm text-gray-500">{staff.email}</p>
+                                <p className="font-semibold text-gray-900">{user.name}</p>
+                                <p className="text-sm text-gray-500">{user.email}</p>
                             </div>
                             <div className="flex items-center space-x-4">
-                                <span className="text-sm capitalize text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{staff.role}</span>
-                                <button onClick={() => handleOpenEditModal(staff)} className="text-blue-600 hover:text-blue-800">{t('staffList.edit')}</button>
-                                <button onClick={() => handleDelete(staff.id)} className="text-red-600 hover:text-red-800">{t('staffList.delete')}</button>
+                                <span className="text-sm capitalize text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{user.role}</span>
+                                <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 hover:text-blue-800">{t('userManagement.edit')}</button>
+                                <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-800">{t('userManagement.delete')}</button>
                             </div>
                         </li>
                     )) : (
-                        <p className="text-center text-gray-500 py-4">{t('staffList.noStaffFound')}</p>
+                        <p className="text-center text-gray-500 py-4">{t('userManagement.noUsersFound')}</p>
                     )}
                 </ul>
             </div>

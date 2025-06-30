@@ -195,13 +195,13 @@
       "completed": "Completed"
     }
   },
-  "staffList": {
-    "loading": "Loading staff list...",
+  "userManagement": {
+    "loading": "Loading user list...",
     "accessDenied": "You do not have permission to view this page.",
-    "title": "Staff Management",
-    "addNew": "Add New Staff",
-    "noStaffFound": "No staff members found.",
-    "fetchError": "Failed to fetch staff list.",
+    "title": "User Management",
+    "addNew": "Add New User",
+    "noUsersFound": "No users found.",
+    "fetchError": "Failed to fetch user list.",
     "confirmDelete": "Are you sure you want to delete this user? This action cannot be undone.",
     "deleteSuccess": "User deleted successfully.",
     "deleteError": "Failed to delete user.",
