@@ -23,6 +23,10 @@
     "해외": "Overseas",
     "기타": "Other"
   },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
   "login": {
     "title": "Login",
     "emailLabel": "Email Address",
@@ -75,7 +79,12 @@
     "emailInUseError": "This email address is already in use.",
     "invalidEmailError": "The email address format is not valid.",
     "weakPasswordError": "The password is too weak. Please use a stronger password.",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "residentIdLabel": "Resident ID",
+    "residentIdPlaceholder": "Enter your 13-digit resident ID",
+    "genderLabel": "Gender",
+    "genderMale": "Male",
+    "genderFemale": "Female"
   },
   "modal": {
     "confirm": "Confirm"
@@ -598,6 +607,10 @@
     "noConfirmedStaff": "No staff have been confirmed for this posting yet.",
     "unknownUser": "Unknown User"
   },
+  "profile": {
+    "residentId": "Resident ID",
+    "gender": "Gender"
+  },
   "profilePage": {
     "eventIdMissing": "Event ID is missing",
     "unknownEvent": "Unknown Event",
@@ -635,7 +648,9 @@
     "bankAccount": "Account Number",
     "privateInfo": "Private Info",
     "notes": "Notes",
-    "selectExperience": "Please select your years of experience"
+    "selectExperience": "Please select your years of experience",
+    "residentId": "Resident ID:",
+    "gender": "Gender:"
   },
   "participantLivePage": {
     "notFound": "Participant not found (ID: {{id}})",

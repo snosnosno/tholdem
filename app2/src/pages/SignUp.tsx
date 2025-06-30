@@ -14,6 +14,8 @@ const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('dealer'); // 'dealer' or 'manager'
+  const [gender, setGender] = useState(''); // 'male' or 'female'
+  const [residentId, setResidentId] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +48,8 @@ const SignUp: React.FC = () => {
         name,
         phone,
         role,
+        gender,
+        residentId,
       });
 
       const successMessage = role === 'dealer' 
@@ -102,7 +106,6 @@ const SignUp: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">{t('signUp.roleTitle')}</label>
             <div className="flex items-center mt-2">
-              {/* Radio buttons for role selection */}
               <input type="radio" id="dealer" name="role" value="dealer" checked={role === 'dealer'} onChange={() => setRole('dealer')} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
               <label htmlFor="dealer" className="ml-2 block text-sm text-gray-900">{t('signUp.roleDealer')}</label>
               <input type="radio" id="manager" name="role" value="manager" checked={role === 'manager'} onChange={() => setRole('manager')} className="ml-4 focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
@@ -117,6 +120,18 @@ const SignUp: React.FC = () => {
 
           <FormField id="name" label={t('signUp.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('signUp.namePlaceholder')} required />
           <FormField id="phone" label={t('signUp.phoneLabel')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('signUp.phonePlaceholder')} />
+          <FormField id="residentId" label={t('signUp.residentIdLabel', '주민등록번호')} value={residentId} onChange={(e) => setResidentId(e.target.value)} placeholder={t('signUp.residentIdPlaceholder', '주민등록번호 13자리를 입력하세요')} />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700">{t('signUp.genderLabel', '성별')}</label>
+            <div className="flex items-center mt-2">
+                <input type="radio" id="male" name="gender" value="male" checked={gender === 'male'} onChange={() => setGender('male')} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" required/>
+                <label htmlFor="male" className="ml-2 block text-sm text-gray-900">{t('signUp.genderMale', '남성')}</label>
+                <input type="radio" id="female" name="gender" value="female" checked={gender === 'female'} onChange={() => setGender('female')} className="ml-4 focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
+                <label htmlFor="female" className="ml-2 block text-sm text-gray-900">{t('signUp.genderFemale', '여성')}</label>
+            </div>
+          </div>
+
           <FormField id="email" label={t('signUp.emailLabel')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('signUp.emailPlaceholder')} required />
           <FormField id="password" label={t('signUp.passwordLabel')} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('signUp.passwordPlaceholder')} required />
 

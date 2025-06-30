@@ -29,12 +29,12 @@ export const submitDealerRating = functions.https.onCall(async (data, context) =
  * Handles a new user registration request.
  * - Dealers are created and enabled immediately.
  * - Managers are created as disabled and await admin approval.
+ * - Passes extra data (phone, gender, residentId) via displayName for the trigger.
  */
 export const requestRegistration = functions.https.onCall(async (data) => {
-    // Log the incoming data for debugging
     functions.logger.info("requestRegistration called with data:", data);
 
-    const { email, password, name, role } = data;
+    const { email, password, name, role, phone, gender, residentId } = data;
 
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
@@ -48,21 +48,26 @@ export const requestRegistration = functions.https.onCall(async (data) => {
     try {
         const isManager = role === 'manager';
 
-        // For managers, append a flag to the display name.
-        // The `createUserData` trigger will use this to set the role to 'pending_manager'.
-        const displayNameForAuth = isManager ? `${name} [PENDING_MANAGER]` : name;
+        // Combine extra profile data into a parsable JSON string.
+        const extraData = JSON.stringify({
+            ...(phone && { phone }),
+            ...(gender && { gender }),
+            ...(residentId && { residentId }),
+        });
 
-        // For pending managers, they should be created as disabled.
-        // The `createUserData` trigger will ensure this state.
+        // Build the displayName with embedded markers for the trigger to parse.
+        // Format: "Real Name [{...extraData}] [PENDING_MANAGER]"
+        let displayNameForAuth = `${name} [${extraData}]`;
+        if (isManager) {
+            displayNameForAuth += ' [PENDING_MANAGER]';
+        }
+
         await admin.auth().createUser({
             email,
             password,
             displayName: displayNameForAuth,
             disabled: isManager,
         });
-
-        // The `createUserData` trigger is now the single source of truth for creating the
-        // Firestore document and setting custom claims. No further action is needed here.
 
         return { success: true, message: `Registration for ${name} as ${role} is processing.` };
 
@@ -91,13 +96,11 @@ export const requestRegistration = functions.https.onCall(async (data) => {
  * Only callable by an admin.
  */
 export const processRegistration = functions.https.onCall(async (data, context) => {
-    // Ensure the caller is an admin
     if (context.auth?.token?.role !== 'admin') {
         throw new functions.https.HttpsError('permission-denied', 'Only admins can process registration requests.');
     }
 
     const { targetUid, action } = data; // action can be 'approve' or 'reject'
-
     if (!targetUid || !action) {
         throw new functions.https.HttpsError('invalid-argument', 'Missing "targetUid" or "action".');
     }
@@ -132,7 +135,6 @@ export const processRegistration = functions.https.onCall(async (data, context) 
  * Creates a new user account, stores details in Firestore, and sets a custom role claim.
  */
 export const createUserAccount = functions.https.onCall(async (data, context) => {
-    // Ensure the caller is an admin
     if (context.auth?.token?.role !== 'admin') {
         throw new functions.https.HttpsError('permission-denied', 'Only admins can create new user accounts.');
     }
@@ -143,20 +145,12 @@ export const createUserAccount = functions.https.onCall(async (data, context) =>
     }
 
     try {
-        // Create the user in Firebase Authentication
-        const userRecord = await admin.auth().createUser({
-            email: email,
-            displayName: name,
-        });
-
-        // Set the custom role claim on the user's token
-        await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
-
-        // Create the user document in Firestore
+        const userRecord = await admin.auth().createUser({ email, displayName: name });
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role });
         await db.collection('users').doc(userRecord.uid).set({
-            name: name,
-            email: email,
-            role: role,
+            name,
+            email,
+            role,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -171,46 +165,62 @@ export const createUserAccount = functions.https.onCall(async (data, context) =>
 /**
  * Firestore trigger that automatically creates a user document in Firestore
  * when a new user is created in Firebase Authentication.
- * This handles all user creation sources (email/password, social, etc.).
+ * This handles all user creation sources and parses extra data from the displayName.
  */
 export const createUserData = functions.auth.user().onCreate(async (user) => {
     const { uid, email, displayName, phoneNumber } = user;
     const userRef = db.collection("users").doc(uid);
 
-    functions.logger.info(`New user created: ${email} (UID: ${uid}). Creating Firestore document.`);
+    functions.logger.info(`New user: ${email} (UID: ${uid}). Parsing displayName: "${displayName}"`);
 
-    let initialRole = 'dealer'; // Default role for all new users, including social sign-ins
+    let initialRole = 'dealer';
+    let finalDisplayName = "Unnamed User";
+    let extraData: { [key: string]: any } = { phone: phoneNumber || null };
 
-    // Special handling for manager registrations initiated via requestRegistration
-    if (displayName?.endsWith('[PENDING_MANAGER]')) {
-      initialRole = 'pending_manager';
+    if (displayName) {
+        const extraDataMatch = displayName.match(/\[(\{.*\})\]/);
+        const pendingManagerMatch = displayName.includes('[PENDING_MANAGER]');
+
+        finalDisplayName = displayName
+            .replace(/\[PENDING_MANAGER\]/g, '')
+            .replace(/\[(\{.*\})\]/g, '')
+            .trim();
+        
+        if (finalDisplayName === "") finalDisplayName = "Unnamed User";
+
+        if (pendingManagerMatch) initialRole = 'pending_manager';
+
+        if (extraDataMatch && extraDataMatch[1]) {
+            try {
+                const parsedData = JSON.parse(extraDataMatch[1]);
+                extraData = { ...extraData, ...parsedData };
+            } catch (e) {
+                functions.logger.error(`Failed to parse extra data from displayName for UID ${uid}`, { displayName, e });
+            }
+        }
     }
 
     try {
         await userRef.set({
-            name: displayName?.replace(' [PENDING_MANAGER]', '') || "Unnamed User",
+            name: finalDisplayName,
             email: email,
             role: initialRole,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            phone: phoneNumber || null,
+            ...extraData,
         });
 
-        // Set the initial custom claim. The onCreate trigger is the single source of truth.
         await admin.auth().setCustomUserClaims(uid, { role: initialRole });
 
-        // If it's a pending manager, they need to be disabled.
-        // The requestRegistration function creates them as disabled already.
         if (initialRole === 'pending_manager') {
              await admin.auth().updateUser(uid, { disabled: true });
         }
 
-
-        functions.logger.info(`Successfully created Firestore document and set claims for UID: ${uid}`);
-        return null;
+        functions.logger.info(`Successfully created Firestore document/claims for UID: ${uid}`);
     } catch (error) {
         functions.logger.error(`Failed to create Firestore document for UID: ${uid}`, error);
-        return null;
     }
+
+    return null;
 });
 
 
@@ -223,7 +233,6 @@ export const onUserRoleChange = functions.firestore.document('users/{uid}').onWr
     const newRole = change.after.exists ? change.after.data()?.role : null;
     const oldRole = change.before.exists ? change.before.data()?.role : null;
 
-    // Only update claims if the role has actually changed to prevent unnecessary writes.
     if (newRole === oldRole) {
         console.log(`User ${uid}: Role unchanged (${newRole}). No action taken.`);
         return null;
@@ -245,7 +254,6 @@ export const onUserRoleChange = functions.firestore.document('users/{uid}').onWr
 export const getDashboardStats = functions.https.onRequest((request, response) => {
   corsHandler(request, response, async () => {
     try {
-      // For security, you should validate the ID token here in a real app.
       const now = new Date();
       const ongoingEventsQuery = db.collection("events").where("endDate", ">=", now);
       const totalDealersQuery = db.collection("users").where("role", "==", "dealer");
@@ -288,7 +296,6 @@ export const getDashboardStats = functions.https.onRequest((request, response) =
  * Only callable by an admin.
  */
 export const updateUser = functions.https.onCall(async (data, context) => {
-    // Ensure the caller is an admin
     if (context.auth?.token?.role !== 'admin') {
         functions.logger.error("updateUser denied", { auth: context.auth });
         throw new functions.https.HttpsError('permission-denied', 'Only admins can update users.');
@@ -304,8 +311,6 @@ export const updateUser = functions.https.onCall(async (data, context) => {
         const userRef = db.collection('users').doc(uid);
         await userRef.update({ name, role });
 
-        // The onUserRoleChange trigger will handle claim updates.
-
         return { success: true, message: `User ${uid} updated successfully.` };
     } catch (error: any) {
         functions.logger.error(`Error updating user ${uid}:`, error);
@@ -318,7 +323,6 @@ export const updateUser = functions.https.onCall(async (data, context) => {
  * Only callable by an admin.
  */
 export const deleteUser = functions.https.onCall(async (data, context) => {
-    // Ensure the caller is an admin
     if (context.auth?.token?.role !== 'admin') {
         functions.logger.error("deleteUser denied", { auth: context.auth });
         throw new functions.https.HttpsError('permission-denied', 'Only admins can delete users.');
@@ -331,11 +335,9 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
     }
 
     try {
-        // Delete from Auth
         await admin.auth().deleteUser(uid);
         functions.logger.info(`Successfully deleted user ${uid} from Auth.`);
 
-        // Delete from Firestore
         const userRef = db.collection('users').doc(uid);
         await userRef.delete();
         functions.logger.info(`Successfully deleted user ${uid} from Firestore.`);

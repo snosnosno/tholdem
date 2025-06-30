@@ -20,6 +20,8 @@ interface ProfileData {
   nationality?: string;
   bankName?: string;
   bankAccount?: string;
+  residentId?: string;
+  gender?: string;
 }
 
 interface Payroll {
@@ -143,7 +145,10 @@ const ProfilePage = () => {
             return;
         }
         try {
-            await setDoc(profileRef, { ...formData, updatedAt: new Date() }, { merge: true });
+            const dataToSave = { ...formData };
+            delete dataToSave.name; // 이름 필드 저장 제외
+
+            await setDoc(profileRef, dataToSave, { merge: true });
             
             const updatedDoc = await getDoc(profileRef);
             if(updatedDoc.exists()) {
@@ -161,6 +166,11 @@ const ProfilePage = () => {
     if (loadingProfile) return <div className="p-6 text-center">{t('profilePage.loadingProfile')}</div>;
     if (errorProfile) return <div className="p-6 text-center text-red-500">{t('profilePage.error', { message: errorProfile.message })}</div>;
     if (!profile) return <div className="p-6 text-center">{t('profilePage.viewProfileLogin')}</div>;
+
+    const genderDisplay = (genderKey: string | undefined) => {
+        if (!genderKey) return t('profilePage.notProvided');
+        return t(`gender.${genderKey.toLowerCase()}`, genderKey);
+    };
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -186,7 +196,7 @@ const ProfilePage = () => {
 
                     {!isEditing || !isOwnProfile ? (
                         <div className="mt-6 border-t pt-6">
-                            <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.profileDetails')}</h2>
+                            <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.profileDetails', '상세 정보')}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
                                 <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.email')}</p>
@@ -199,6 +209,10 @@ const ProfilePage = () => {
                                 <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.nationality', '국적')}</p>
                                     <p>{profile.nationality || t('profilePage.notProvided')}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.gender')}</p>
+                                    <p>{genderDisplay(profile.gender)}</p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <p className="font-semibold text-gray-600">{t('profilePage.experience', '이력')}</p>
@@ -213,6 +227,10 @@ const ProfilePage = () => {
                                     <div className="md:col-span-2 mt-4 border-t pt-4">
                                         <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('profilePage.privateInfo', '개인 정보')}</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                                            <div>
+                                                <p className="font-semibold text-gray-600">{t('profilePage.residentId')}</p>
+                                                <p>{profile.residentId || t('profilePage.notProvided')}</p>
+                                            </div>
                                             <div>
                                                 <p className="font-semibold text-gray-600">{t('profilePage.bankName', '은행명')}</p>
                                                 <p>{profile.bankName || t('profilePage.notProvided')}</p>
@@ -232,7 +250,7 @@ const ProfilePage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
-                                    <input type="text" name="name" id="name" value={formData.name || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                    <input type="text" name="name" id="name" value={formData.name || ''} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
                                 </div>
                                 <div>
                                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
@@ -243,6 +261,10 @@ const ProfilePage = () => {
                                     <input type="text" name="nationality" id="nationality" value={formData.nationality || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div>
+                                    <label htmlFor="gender" className="block text-sm font-medium text-gray-700">{t('profilePage.gender')}</label>
+                                    <input type="text" name="gender" id="gender" value={genderDisplay(formData.gender)} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
+                                </div>
+                                <div className="md:col-span-2">
                                     <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '이력')}</label>
                                     <select
                                         name="experience"
@@ -257,17 +279,26 @@ const ProfilePage = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>
-                                    <input type="text" name="bankName" id="bankName" value={formData.bankName || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700">{t('profilePage.bankAccount', '계좌번호')}</label>
-                                    <input type="text" name="bankAccount" id="bankAccount" value={formData.bankAccount || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                </div>
                                 <div className="md:col-span-2">
                                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
                                     <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                </div>
+                                <div className="md:col-span-2 mt-4 border-t pt-4">
+                                    <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('profilePage.privateInfo', '개인 정보')}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label htmlFor="residentId" className="block text-sm font-medium text-gray-700">{t('profilePage.residentId')}</label>
+                                            <input type="text" name="residentId" id="residentId" value={formData.residentId || ''} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>
+                                            <input type="text" name="bankName" id="bankName" value={formData.bankName || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700">{t('profilePage.bankAccount', '계좌번호')}</label>
+                                            <input type="text" name="bankAccount" id="bankAccount" value={formData.bankAccount || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="mt-6 flex justify-end">
