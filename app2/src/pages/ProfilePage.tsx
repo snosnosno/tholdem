@@ -160,7 +160,6 @@ const ProfilePage = () => {
                     <div className="flex flex-col md:flex-row items-center md:items-start">
                         <div className="md:ml-6 flex-1">
                             <h1 className="text-3xl font-bold text-gray-800">{profile.name}</h1>
-                            <p className="text-md text-gray-500 capitalize">{profile.role}</p>
                             
                             <div className="flex items-center mt-2">
                                 <StarIcon className="h-6 w-6 text-yellow-400 mr-1" />
