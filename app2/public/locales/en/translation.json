@@ -615,7 +615,7 @@
     "email": "Email:",
     "phone": "Phone:",
     "notProvided": "Not provided",
-    "experience": "Experience:",
+    "experience": "Years of Experience:",
     "hourlyRate": "Hourly Rate:",
     "editDetails": "Edit Details",
     "saveChanges": "Save Changes",
@@ -634,7 +634,8 @@
     "bankName": "Bank Name",
     "bankAccount": "Account Number",
     "privateInfo": "Private Info",
-    "notes": "Notes"
+    "notes": "Notes",
+    "selectExperience": "Please select your years of experience"
   },
   "participantLivePage": {
     "notFound": "Participant not found (ID: {{id}})",

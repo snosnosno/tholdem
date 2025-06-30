@@ -36,6 +36,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const experienceLevels = [
+    "1년 미만",
+    "1년",
+    "2년",
+    "3년",
+    "4년",
+    "5년 이상",
+    "10년 이상"
+  ];
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -150,15 +160,19 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '경력')}</label>
-            <textarea
-              name="experience"
-              id="experience"
-              value={formData.experience}
-              onChange={handleChange}
-              rows={3}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
+            <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '이력')}</label>
+            <select
+                name="experience"
+                id="experience"
+                value={formData.experience}
+                onChange={handleChange}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"
+            >
+                <option value="">{t('profilePage.selectExperience', '경력을 선택하세요')}</option>
+                {experienceLevels.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                ))}
+            </select>
           </div>
           <div className="md:col-span-2">
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>

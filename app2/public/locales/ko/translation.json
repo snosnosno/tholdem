@@ -615,7 +615,7 @@
     "email": "이메일:",
     "phone": "연락처:",
     "notProvided": "제공되지 않음",
-    "experience": "경력:",
+    "experience": "이력:",
     "hourlyRate": "시급:",
     "editDetails": "정보 수정",
     "saveChanges": "변경사항 저장",
@@ -634,7 +634,8 @@
     "bankName": "은행명",
     "bankAccount": "계좌번호",
     "privateInfo": "개인 정보",
-    "notes": "기타 사항"
+    "notes": "기타 사항",
+    "selectExperience": "경력을 선택하세요"
   },
   "participantLivePage": {
     "notFound": "참가자를 찾을 수 없습니다. (ID: {{id}})",

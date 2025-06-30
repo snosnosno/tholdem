@@ -51,6 +51,16 @@ const ProfilePage = () => {
 
     const isOwnProfile = !userId || (currentUser?.uid === userId);
 
+    const experienceLevels = [
+        "1년 미만",
+        "1년",
+        "2년",
+        "3년",
+        "4년",
+        "5년 이상",
+        "10년 이상"
+    ];
+
     useEffect(() => {
         const fetchProfile = async () => {
             if (!profileRef) {
@@ -121,7 +131,7 @@ const ProfilePage = () => {
         setIsEditing(!isEditing);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -191,7 +201,7 @@ const ProfilePage = () => {
                                     <p>{profile.nationality || t('profilePage.notProvided')}</p>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.experience', '이력')}</p>
                                     <p className="whitespace-pre-wrap">{profile.experience || t('profilePage.notProvided')}</p>
                                 </div>
                                 <div className="md:col-span-2">
@@ -233,16 +243,27 @@ const ProfilePage = () => {
                                     <input type="text" name="nationality" id="nationality" value={formData.nationality || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div>
+                                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '이력')}</label>
+                                    <select
+                                        name="experience"
+                                        id="experience"
+                                        value={formData.experience || ''}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    >
+                                        <option value="">{t('profilePage.selectExperience', '경력을 선택하세요')}</option>
+                                        {experienceLevels.map(level => (
+                                            <option key={level} value={level}>{level}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>
                                     <input type="text" name="bankName" id="bankName" value={formData.bankName || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div className="md:col-span-2">
                                     <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700">{t('profilePage.bankAccount', '계좌번호')}</label>
                                     <input type="text" name="bankAccount" id="bankAccount" value={formData.bankAccount || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
-                                    <textarea name="experience" id="experience" value={formData.experience || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
