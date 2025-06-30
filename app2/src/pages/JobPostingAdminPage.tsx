@@ -289,118 +289,177 @@ const JobPostingAdminPage = () => {
   };
 
 
-  <div className="container mx-auto p-4">
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">{t('jobPostingAdmin.create.title')}</h1>
-        {!isCreateFormVisible && (
-          <button 
-            onClick={() => setIsCreateFormVisible(true)}
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            {t('jobPostingAdmin.create.button')}
-          </button>
-        )}
-      </div>
-      {isCreateFormVisible && (
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-          {/* Form fields */}
-          <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
-              <input type="text" name="title" id="title" value={formData.title} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.location')}</label>
-                  <select name="location" id="location" value={formData.location} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                      {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
-                  </select>
-              </div>
-              <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time')}</label>
-                  <input type="time" name="time" id="time" value={formData.time} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-              </div>
-          </div>
+  return (
+    <div className="container mx-auto p-4">
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">{t('jobPostingAdmin.create.title')}</h1>
+          {!isCreateFormVisible && (
+            <button 
+              onClick={() => setIsCreateFormVisible(true)}
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              {t('jobPostingAdmin.create.button')}
+            </button>
+          )}
+        </div>
+        {isCreateFormVisible && (
+          <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+            {/* Form fields */}
+            <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
+                <input type="text" name="title" id="title" value={formData.title} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.location')}</label>
+                    <select name="location" id="location" value={formData.location} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time')}</label>
+                    <input type="time" name="time" id="time" value={formData.time} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
   
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.startDate')}</label>
-                  <input type="date" name="startDate" id="startDate" value={formData.startDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-              </div>
-              <div>
-                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.endDate')}</label>
-                  <input type="date" name="endDate" id="endDate" value={formData.endDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-              </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.startDate')}</label>
+                    <input type="date" name="startDate" id="startDate" value={formData.startDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.endDate')}</label>
+                    <input type="date" name="endDate" id="endDate" value={formData.endDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
   
-           <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type')}</label>
-              <select name="type" id="type" value={formData.type} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                  <option value="지원">{t('jobPostingAdmin.create.typeApplication')}</option>
-                  <option value="고정">{t('jobPostingAdmin.create.typeFixed')}</option>
-              </select>
-          </div>
-          
-          <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.rolesAndCounts')}</label>
-              {formData.roles.map((role, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                      <div className="flex-1">
-                          <label htmlFor={`role-name-${index}`} className="sr-only">{t('jobPostingAdmin.create.roleName')}</label>
-                          <input
-                              type="text"
-                              id={`role-name-${index}`}
-                              value={role.name}
-                              onChange={(e) => handleRoleChange(index, 'name', e.target.value)}
-                              placeholder={t('jobPostingAdmin.create.roleNamePlaceholder')}
-                              list="predefined-roles"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                              required
-                          />
-                           <datalist id="predefined-roles">
-                              {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
-                          </datalist>
-                      </div>
-                      <div className="w-24">
-                          <label htmlFor={`role-count-${index}`} className="sr-only">{t('jobPostingAdmin.create.staffNeeded')}</label>
-                          <input
-                              type="number"
-                              id={`role-count-${index}`}
-                              value={role.count}
-                              min="1"
-                              onChange={(e) => handleRoleChange(index, 'count', e.target.value)}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                              required
-                          />
-                      </div>
-                      {formData.roles.length > 1 && (
-                          <button type="button" onClick={() => removeRole(index)} className="text-red-600 hover:text-red-800">
-                              {t('jobPostingAdmin.create.remove')}
-                          </button>
-                      )}
-                  </div>
-              ))}
-              <button type="button" onClick={addRole} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                  + {t('jobPostingAdmin.create.addRole')}
-              </button>
-          </div>
+             <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type')}</label>
+                <select name="type" id="type" value={formData.type} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="지원">{t('jobPostingAdmin.create.typeApplication')}</option>
+                    <option value="고정">{t('jobPostingAdmin.create.typeFixed')}</option>
+                </select>
+            </div>
+            
+            <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.rolesAndCounts')}</label>
+                {formData.roles.map((role, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                        <div className="flex-1">
+                            <label htmlFor={`role-name-${index}`} className="sr-only">{t('jobPostingAdmin.create.roleName')}</label>
+                            <input
+                                type="text"
+                                id={`role-name-${index}`}
+                                value={role.name}
+                                onChange={(e) => handleRoleChange(index, 'name', e.target.value)}
+                                placeholder={t('jobPostingAdmin.create.roleNamePlaceholder')}
+                                list="predefined-roles"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                required
+                            />
+                             <datalist id="predefined-roles">
+                                {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
+                            </datalist>
+                        </div>
+                        <div className="w-24">
+                            <label htmlFor={`role-count-${index}`} className="sr-only">{t('jobPostingAdmin.create.staffNeeded')}</label>
+                            <input
+                                type="number"
+                                id={`role-count-${index}`}
+                                value={role.count}
+                                min="1"
+                                onChange={(e) => handleRoleChange(index, 'count', e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                required
+                            />
+                        </div>
+                        {formData.roles.length > 1 && (
+                            <button type="button" onClick={() => removeRole(index)} className="text-red-600 hover:text-red-800">
+                                {t('jobPostingAdmin.create.remove')}
+                            </button>
+                        )}
+                    </div>
+                ))}
+                <button type="button" onClick={addRole} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    + {t('jobPostingAdmin.create.addRole')}
+                </button>
+            </div>
   
-          <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.description')}</label>
-              <textarea name="description" id="description" value={formData.description} onChange={handleFormChange} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
-          <div className="flex justify-end space-x-2">
+            <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.description')}</label>
+                <textarea name="description" id="description" value={formData.description} onChange={handleFormChange} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
               <button type="button" onClick={() => setIsCreateFormVisible(false)} className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">
                   {t('jobPostingAdmin.edit.cancel')}
               </button>
               <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400">
                   {isSubmitting ? t('jobPostingAdmin.create.submitting') : t('jobPostingAdmin.create.button')}
               </button>
-          </div>
-        </form>
-      )}
-    </div>
+            </div>
+          </form>
+        )}
+      </div>
+      
+      <div>
+        <h1 className="text-2xl font-bold mb-4">{t('jobPostingAdmin.manage.title')}</h1>
+        <div className="space-y-4">
+            {loading && <p>{t('jobPostingAdmin.manage.loading')}</p>}
+            {jobPostings?.map((post: any) => (
+                <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h2 className="text-xl font-bold">{post.title}</h2>
+                            <div className="text-sm text-gray-600">
+                                {post.roles && post.roles.map((r: RoleRequirement, i: number) => (
+                                    <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
+                                ))}
+                            </div>
+                            <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
+                            
+                            <p className="text-sm text-gray-500">
+                                {post.location && <span>{t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}</span>}
+                                {post.startDate && <span className="ml-2">{t('jobPostingAdmin.manage.date')}: {post.endDate ? `${post.startDate} ~ ${post.endDate}` : post.startDate}</span>}
+                                {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time')}: {post.time}</span>}
+                            </p>
+                            
+                            <span className={`mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {post.status}
+                            </span>
+                        </div>
+                        <div className='flex items-center flex-wrap justify-end'>
+                            <button
+                                onClick={() => handleViewApplicants(post.id)}
+                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                            >
+                                {t('jobPostingAdmin.manage.applicants')}
+                            </button>
+                            <button
+                                onClick={() => handleOpenEditModal(post)}
+                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
+                            >
+                                {t('jobPostingAdmin.manage.edit')}
+                            </button>
+                            <button 
+                                onClick={() => handleAutoMatch(post.id)}
+                                disabled={post.status !== 'open' || isMatching === post.id}
+                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                            >
+                                {isMatching === post.id ? t('jobPostingAdmin.manage.matching') : t('jobPostingAdmin.manage.button')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+      </div>
+  
+        {isEditModalOpen && currentPost && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.edit.title')}</h3>
                     <form onSubmit={handleUpdatePost} className="space-y-4">
                         {/* Edit form fields */}
                          <div>
@@ -436,7 +495,7 @@ const JobPostingAdminPage = () => {
                                 <option value="고정">{t('jobPostingAdmin.edit.typeFixed')}</option>
                             </select>
                         </div>
-
+  
                         <div className="space-y-4">
                             <label className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.rolesAndCounts')}</label>
                             {currentPost.roles.map((role: RoleRequirement, index: number) => (
@@ -503,7 +562,7 @@ const JobPostingAdminPage = () => {
                 </div>
             </div>
         )}
-
+  
         {isApplicantsModalOpen && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
                 <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -551,6 +610,5 @@ const JobPostingAdminPage = () => {
         )}
     </div>
   );
-};
 
 export default JobPostingAdminPage;
