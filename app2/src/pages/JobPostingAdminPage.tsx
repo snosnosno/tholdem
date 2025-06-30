@@ -309,7 +309,7 @@ const JobPostingAdminPage = () => {
                             <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
                             
                             <p className="text-sm text-gray-500">
-                                {post.location && <span>{t('jobPostingAdmin.manage.location')}: {t(`locations.${post.location}`, post.location)}</span>}
+                                {post.location && <span>{t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}</span>}
                                 {post.startDate && <span className="ml-2">{t('jobPostingAdmin.manage.date')}: {post.endDate ? `${post.startDate} ~ ${post.endDate}` : post.startDate}</span>}
                                 {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time')}: {post.time}</span>}
                             </p>
