@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardStats = exports.onUserRoleChange = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
+exports.deleteUser = exports.updateUser = exports.getDashboardStats = exports.onUserRoleChange = exports.createUserData = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const cors_1 = __importDefault(require("cors"));
@@ -55,7 +55,7 @@ exports.submitDealerRating = functions.https.onCall(async (data, context) => { }
 exports.requestRegistration = functions.https.onCall(async (data) => {
     // Log the incoming data for debugging
     functions.logger.info("requestRegistration called with data:", data);
-    const { email, password, name, role, phone } = data;
+    const { email, password, name, role } = data;
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
@@ -65,38 +65,36 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
         throw new functions.https.HttpsError('invalid-argument', 'Role must be either "dealer" or "manager".');
     }
     try {
-        const isDealer = role === 'dealer';
-        const userRecord = await admin.auth().createUser({
+        const isManager = role === 'manager';
+        // For managers, append a flag to the display name.
+        // The `createUserData` trigger will use this to set the role to 'pending_manager'.
+        const displayNameForAuth = isManager ? `${name} [PENDING_MANAGER]` : name;
+        // For pending managers, they should be created as disabled.
+        // The `createUserData` trigger will ensure this state.
+        await admin.auth().createUser({
             email,
             password,
-            displayName: name,
-            disabled: !isDealer,
+            displayName: displayNameForAuth,
+            disabled: isManager,
         });
-        const userRole = isDealer ? 'dealer' : 'pending_manager';
-        await admin.auth().setCustomUserClaims(userRecord.uid, { role: userRole });
-        await db.collection('users').doc(userRecord.uid).set({
-            name,
-            email,
-            phone: phone || null,
-            role: userRole,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        // The `createUserData` trigger is now the single source of truth for creating the
+        // Firestore document and setting custom claims. No further action is needed here.
         return { success: true, message: `Registration for ${name} as ${role} is processing.` };
     }
     catch (error) {
         console.error("Error during registration request:", error);
         const errorCode = error.code;
         switch (errorCode) {
-            case 'auth/email-already-in-use':
-                throw new functions.https.HttpsError('already-exists', 'This email address is already in use.');
+            case 'auth/email-already-exists':
+                throw new functions.https.HttpsError('already-exists', 'This email address is already in use by another account.');
             case 'auth/invalid-email':
                 throw new functions.https.HttpsError('invalid-argument', 'The email address is not valid.', { originalCode: errorCode });
             case 'auth/weak-password':
-                throw new functions.https.HttpsError('invalid-argument', 'The password is too weak.', { originalCode: errorCode });
+                throw new functions.https.HttpsError('invalid-argument', 'The password is too weak. Please use a stronger password.', { originalCode: errorCode });
             case 'auth/operation-not-allowed':
                 throw new functions.https.HttpsError('unimplemented', 'Email/password sign-in is not enabled.', { originalCode: errorCode });
             default:
-                throw new functions.https.HttpsError('internal', 'An unexpected error occurred.', { originalCode: errorCode || 'unknown' });
+                throw new functions.https.HttpsError('internal', 'An unexpected error occurred during registration.', { originalCode: errorCode || 'unknown' });
         }
     }
 });
@@ -176,6 +174,43 @@ exports.createUserAccount = functions.https.onCall(async (data, context) => {
     }
 });
 /**
+ * Firestore trigger that automatically creates a user document in Firestore
+ * when a new user is created in Firebase Authentication.
+ * This handles all user creation sources (email/password, social, etc.).
+ */
+exports.createUserData = functions.auth.user().onCreate(async (user) => {
+    const { uid, email, displayName, phoneNumber } = user;
+    const userRef = db.collection("users").doc(uid);
+    functions.logger.info(`New user created: ${email} (UID: ${uid}). Creating Firestore document.`);
+    let initialRole = 'dealer'; // Default role for all new users, including social sign-ins
+    // Special handling for manager registrations initiated via requestRegistration
+    if (displayName === null || displayName === void 0 ? void 0 : displayName.endsWith('[PENDING_MANAGER]')) {
+        initialRole = 'pending_manager';
+    }
+    try {
+        await userRef.set({
+            name: (displayName === null || displayName === void 0 ? void 0 : displayName.replace(' [PENDING_MANAGER]', '')) || "Unnamed User",
+            email: email,
+            role: initialRole,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            phone: phoneNumber || null,
+        });
+        // Set the initial custom claim. The onCreate trigger is the single source of truth.
+        await admin.auth().setCustomUserClaims(uid, { role: initialRole });
+        // If it's a pending manager, they need to be disabled.
+        // The requestRegistration function creates them as disabled already.
+        if (initialRole === 'pending_manager') {
+            await admin.auth().updateUser(uid, { disabled: true });
+        }
+        functions.logger.info(`Successfully created Firestore document and set claims for UID: ${uid}`);
+        return null;
+    }
+    catch (error) {
+        functions.logger.error(`Failed to create Firestore document for UID: ${uid}`, error);
+        return null;
+    }
+});
+/**
  * Firestore trigger that automatically sets a custom user claim whenever a user's role is
  * created or changed in the 'users' collection.
  */
@@ -230,5 +265,61 @@ exports.getDashboardStats = functions.https.onRequest((request, response) => {
             response.status(500).send({ data: { error: "Internal Server Error" } });
         }
     });
+});
+/**
+ * Updates an existing user's details.
+ * Only callable by an admin.
+ */
+exports.updateUser = functions.https.onCall(async (data, context) => {
+    var _a, _b;
+    // Ensure the caller is an admin
+    if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
+        functions.logger.error("updateUser denied", { auth: context.auth });
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can update users.');
+    }
+    const { uid, name, role } = data;
+    if (!uid || !name || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required fields: "uid", "name", or "role".');
+    }
+    try {
+        const userRef = db.collection('users').doc(uid);
+        await userRef.update({ name, role });
+        // The onUserRoleChange trigger will handle claim updates.
+        return { success: true, message: `User ${uid} updated successfully.` };
+    }
+    catch (error) {
+        functions.logger.error(`Error updating user ${uid}:`, error);
+        throw new functions.https.HttpsError('internal', 'Failed to update user.', error.message);
+    }
+});
+/**
+ * Deletes a user from Firebase Authentication and Firestore.
+ * Only callable by an admin.
+ */
+exports.deleteUser = functions.https.onCall(async (data, context) => {
+    var _a, _b;
+    // Ensure the caller is an admin
+    if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
+        functions.logger.error("deleteUser denied", { auth: context.auth });
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can delete users.');
+    }
+    const { uid } = data;
+    if (!uid) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: "uid".');
+    }
+    try {
+        // Delete from Auth
+        await admin.auth().deleteUser(uid);
+        functions.logger.info(`Successfully deleted user ${uid} from Auth.`);
+        // Delete from Firestore
+        const userRef = db.collection('users').doc(uid);
+        await userRef.delete();
+        functions.logger.info(`Successfully deleted user ${uid} from Firestore.`);
+        return { success: true, message: `User ${uid} deleted successfully.` };
+    }
+    catch (error) {
+        functions.logger.error(`Error deleting user ${uid}:`, error);
+        throw new functions.https.HttpsError('internal', 'Failed to delete user.', error.message);
+    }
 });
 //# sourceMappingURL=index.js.map
