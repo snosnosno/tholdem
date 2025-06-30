@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
-import { formatCurrency, formatDate } from '../i18n-helpers';
 
 interface ProfileData {
   name: string;
@@ -26,19 +24,9 @@ interface ProfileData {
   gender?: string;
 }
 
-interface Payroll {
-    id: string;
-    eventId: string;
-    eventName?: string;
-    workDurationInHours: number;
-    calculatedPay: number;
-    status: string;
-    calculationDate: { toDate: () => Date };
-}
-
 const ProfilePage = () => {
-    const { t, i18n } = useTranslation();
-    const { currentUser } = useAuth();
+    const { t } = useTranslation();
+    const { currentUser, isAdmin } = useAuth();
     const { userId } = useParams<{ userId: string }>();
     const profileId = userId || currentUser?.uid;
 
@@ -49,9 +37,6 @@ const ProfilePage = () => {
 
     const [formData, setFormData] = useState<Partial<ProfileData>>({});
     const [isEditing, setIsEditing] = useState(false);
-    
-    const [payrolls, setPayrolls] = useState<Payroll[]>([]);
-    const [loadingPayrolls, setLoadingPayrolls] = useState(true);
 
     const isOwnProfile = !userId || (currentUser?.uid === userId);
 
@@ -119,44 +104,6 @@ const ProfilePage = () => {
 
         fetchProfile();
     }, [profileRef, t]);
-    
-    useEffect(() => {
-        if (!isOwnProfile) {
-            setLoadingPayrolls(false);
-            return;
-        }
-
-        const fetchPayrolls = async () => {
-            if (!currentUser) {
-                setLoadingPayrolls(false);
-                return;
-            }
-            try {
-                const functions = getFunctions();
-                const getPayrolls = httpsCallable(functions, 'getPayrolls');
-                const result: any = await getPayrolls();
-                
-                const payrollData = result.data?.payrolls || [];
-
-                const payrollsWithEventNames = await Promise.all(
-                    payrollData.map(async (p: Payroll) => {
-                        if (!p.eventId) {
-                            return { ...p, eventName: t('profilePage.eventIdMissing') };
-                        }
-                        const eventDoc = await getDoc(doc(db, 'events', p.eventId));
-                        return { ...p, eventName: eventDoc.data()?.title || t('profilePage.unknownEvent') };
-                    })
-                );
-                setPayrolls(payrollsWithEventNames);
-            } catch (err) {
-                console.error("Failed to fetch payrolls:", err);
-            } finally {
-                setLoadingPayrolls(false);
-            }
-        };
-
-        fetchPayrolls();
-    }, [currentUser, isOwnProfile, t]);
 
     const handleEditClick = () => {
         if (!isEditing) {
@@ -205,6 +152,10 @@ const ProfilePage = () => {
         return t(`gender.${genderKey.toLowerCase()}`, genderKey);
     };
 
+    // 딜러인지 확인 (role이 dealer이거나 staff인 경우)
+    const isDealer = profile.role === 'dealer' || profile.role === 'staff';
+    const canViewPayroll = (isOwnProfile && isDealer) || isAdmin;
+
     return (
         <div className="container mx-auto p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
@@ -223,11 +174,21 @@ const ProfilePage = () => {
                                 <span className="text-sm text-gray-500 ml-2">({profile.ratingCount || 0} {t('profilePage.ratings')})</span>
                             </div>
                         </div>
-                        {isOwnProfile && (
-                            <button onClick={handleEditClick} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
-                            </button>
-                        )}
+                        <div className="mt-4 md:mt-0 flex gap-2">
+                            {canViewPayroll && (
+                                <Link
+                                    to={`/payroll${userId ? `/${userId}` : ''}`}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                >
+                                    {t('profilePage.viewPayroll', '급여 내역')}
+                                </Link>
+                            )}
+                            {isOwnProfile && (
+                                <button onClick={handleEditClick} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {!isEditing || !isOwnProfile ? (
@@ -380,48 +341,6 @@ const ProfilePage = () => {
                         </form>
                     )}
                 </div>
-
-                {isOwnProfile && (
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">{t('profilePage.payrollHistory')}</h2>
-                        {loadingPayrolls ? (
-                            <p>{t('profilePage.loadingPayroll')}</p>
-                        ) : payrolls.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableEvent')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableDate')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableHours')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tablePay')}</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableStatus')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {payrolls.map(p => (
-                                            <tr key={p.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap">{p.eventName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{formatDate(p.calculationDate.toDate(), i18n.language)}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{p.workDurationInHours.toFixed(2)}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(p.calculatedPay, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        p.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
-                                                        {p.status === 'paid' ? t('profilePage.statusPaid') : t('profilePage.statusPending')}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <p className="text-gray-500">{t('profilePage.noPayroll')}</p>
-                        )}
-                    </div>
-                )}
             </div>
         </div>
     );

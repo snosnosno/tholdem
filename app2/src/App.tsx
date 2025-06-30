@@ -23,6 +23,7 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import HistoryPage from './pages/HistoryPage';
 import HistoryDetailPage from './pages/HistoryDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import PayrollPage from './pages/PayrollPage';
 import JobBoardPage from './pages/JobBoardPage';
 import AttendancePage from './pages/AttendancePage';
 import AvailableTimesPage from './pages/AvailableTimesPage';
@@ -67,6 +68,8 @@ const App: React.FC = () => {
               <Route index element={<HomeRedirect />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile/:userId" element={<ProfilePage />} />
+              <Route path="payroll" element={<PayrollPage />} />
+              <Route path="payroll/:userId" element={<PayrollPage />} />
               
               {/* Dealer facing routes */}
               <Route path="events" element={<DealerEventsListPage />} />
