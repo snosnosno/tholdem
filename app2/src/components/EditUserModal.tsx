@@ -13,6 +13,7 @@ interface Staff {
   history?: string;
   notes?: string;
   nationality?: string;
+  age?: number;
   bankName?: string;
   bankAccount?: string;
 }
@@ -27,26 +28,26 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
   const { t } = useTranslation();
   
   const countries = [
-    { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
-    { code: 'US', name: 'United States', flag: '🇺🇸' },
-    { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-    { code: 'CN', name: 'China', flag: '🇨🇳' },
-    { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-    { code: 'DE', name: 'Germany', flag: '🇩🇪' },
-    { code: 'FR', name: 'France', flag: '🇫🇷' },
-    { code: 'CA', name: 'Canada', flag: '🇨🇦' },
-    { code: 'AU', name: 'Australia', flag: '🇦🇺' },
-    { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
-    { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
-    { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
-    { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
-    { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
-    { code: 'IN', name: 'India', flag: '🇮🇳' },
-    { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
-    { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
-    { code: 'RU', name: 'Russia', flag: '🇷🇺' },
-    { code: 'IT', name: 'Italy', flag: '🇮🇹' },
-    { code: 'ES', name: 'Spain', flag: '🇪🇸' }
+    { code: 'KR', name: 'South Korea', flag: '🌸' },
+    { code: 'US', name: 'United States', flag: '🗽' },
+    { code: 'JP', name: 'Japan', flag: '🎌' },
+    { code: 'CN', name: 'China', flag: '🐼' },
+    { code: 'GB', name: 'United Kingdom', flag: '☂️' },
+    { code: 'DE', name: 'Germany', flag: '🍺' },
+    { code: 'FR', name: 'France', flag: '🥖' },
+    { code: 'CA', name: 'Canada', flag: '🍁' },
+    { code: 'AU', name: 'Australia', flag: '🦘' },
+    { code: 'TH', name: 'Thailand', flag: '🐘' },
+    { code: 'VN', name: 'Vietnam', flag: '🌾' },
+    { code: 'PH', name: 'Philippines', flag: '🏖️' },
+    { code: 'MY', name: 'Malaysia', flag: '🕌' },
+    { code: 'SG', name: 'Singapore', flag: '🦁' },
+    { code: 'IN', name: 'India', flag: '🐅' },
+    { code: 'BR', name: 'Brazil', flag: '⚽' },
+    { code: 'MX', name: 'Mexico', flag: '🌮' },
+    { code: 'RU', name: 'Russia', flag: '🐻' },
+    { code: 'IT', name: 'Italy', flag: '🍝' },
+    { code: 'ES', name: 'Spain', flag: '💃' }
   ];
   
   const [formData, setFormData] = useState({
@@ -56,6 +57,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
     history: '',
     notes: '',
     nationality: '',
+    age: '',
     bankName: '',
     bankAccount: '',
   });
@@ -81,6 +83,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
         history: user.history || '',
         notes: user.notes || '',
         nationality: user.nationality || '',
+        age: user.age || '',
         bankName: user.bankName || '',
         bankAccount: user.bankAccount || '',
       });
@@ -169,6 +172,19 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label htmlFor="age" className="block text-sm font-medium text-gray-700">{t('profilePage.age', '나이')}</label>
+            <input
+              type="number"
+              name="age"
+              id="age"
+              value={formData.age}
+              onChange={handleChange}
+              min="18"
+              max="100"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
           </div>
           <div>
             <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>

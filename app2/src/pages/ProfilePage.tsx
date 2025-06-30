@@ -19,6 +19,7 @@ interface ProfileData {
   rating?: number;
   ratingCount?: number;
   nationality?: string;
+  age?: number;
   bankName?: string;
   bankAccount?: string;
   residentId?: string;
@@ -65,27 +66,27 @@ const ProfilePage = () => {
     ];
     
     const countries = [
-        { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
-        { code: 'US', name: 'United States', flag: '🇺🇸' },
-        { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-        { code: 'CN', name: 'China', flag: '🇨🇳' },
-        { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-        { code: 'DE', name: 'Germany', flag: '🇩🇪' },
-        { code: 'FR', name: 'France', flag: '🇫🇷' },
-        { code: 'CA', name: 'Canada', flag: '🇨🇦' },
-        { code: 'AU', name: 'Australia', flag: '🇦🇺' },
-        { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
-        { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
-        { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
-        { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
-        { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
-        { code: 'IN', name: 'India', flag: '🇮🇳' },
-        { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
-        { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
-        { code: 'RU', name: 'Russia', flag: '🇷🇺' },
-        { code: 'IT', name: 'Italy', flag: '🇮🇹' },
-        { code: 'ES', name: 'Spain', flag: '🇪🇸' }
-    ];
+        { code: 'KR', name: 'South Korea', flag: '🌸' },
+        { code: 'US', name: 'United States', flag: '🗽' },
+        { code: 'JP', name: 'Japan', flag: '🎌' },
+        { code: 'CN', name: 'China', flag: '🐼' },
+        { code: 'GB', name: 'United Kingdom', flag: '☂️' },
+        { code: 'DE', name: 'Germany', flag: '🍺' },
+        { code: 'FR', name: 'France', flag: '🥖' },
+        { code: 'CA', name: 'Canada', flag: '🍁' },
+        { code: 'AU', name: 'Australia', flag: '🦘' },
+        { code: 'TH', name: 'Thailand', flag: '🐘' },
+        { code: 'VN', name: 'Vietnam', flag: '🌾' },
+        { code: 'PH', name: 'Philippines', flag: '🏖️' },
+        { code: 'MY', name: 'Malaysia', flag: '🕌' },
+        { code: 'SG', name: 'Singapore', flag: '🦁' },
+        { code: 'IN', name: 'India', flag: '🐅' },
+        { code: 'BR', name: 'Brazil', flag: '⚽' },
+        { code: 'MX', name: 'Mexico', flag: '🌮' },
+        { code: 'RU', name: 'Russia', flag: '🐻' },
+        { code: 'IT', name: 'Italy', flag: '🍝' },
+        { code: 'ES', name: 'Spain', flag: '💃' }
+        ];
     
     const getNationalityDisplay = (nationality?: string) => {
         if (!nationality) return t('profilePage.notProvided');
@@ -247,6 +248,10 @@ const ProfilePage = () => {
                                     <p>{genderDisplay(profile.gender)}</p>
                                 </div>
                                 <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.age', '나이')}</p>
+                                    <p>{profile.age ? `${profile.age}세` : t('profilePage.notProvided')}</p>
+                                </div>
+                                <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
                                     <p>{profile.experience || t('profilePage.notProvided')}</p>
                                 </div>
@@ -315,6 +320,10 @@ const ProfilePage = () => {
                                 <div>
                                     <label htmlFor="gender" className="block text-sm font-medium text-gray-700">{t('profilePage.gender')}</label>
                                     <input type="text" name="gender" id="gender" value={genderDisplay(formData.gender)} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
+                                </div>
+                                <div>
+                                    <label htmlFor="age" className="block text-sm font-medium text-gray-700">{t('profilePage.age', '나이')}</label>
+                                    <input type="number" name="age" id="age" value={formData.age || ''} onChange={handleChange} min="18" max="100" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div>
                                     <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
