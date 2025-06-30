@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 interface Applicant {
     id: string;
@@ -34,6 +35,7 @@ interface ConfirmedStaff {
 
 const JobPostingAdminPage = () => {
   const { t } = useTranslation();
+  const { currentUser } = useAuth(); // Get current user
   const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings')), []);
   const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
   const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })), [jobPostingsSnap]);
@@ -164,10 +166,15 @@ const JobPostingAdminPage = () => {
       alert(t('jobPostingAdmin.alerts.invalidRoleInfo'));
       return;
     }
+    if (!currentUser) {
+        alert(t('jobPostingAdmin.alerts.notLoggedIn'));
+        return;
+    }
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'jobPostings'), {
         ...formData,
+        managerId: currentUser.uid, // Add managerId
         createdAt: serverTimestamp(),
         confirmedStaff: [],
       });

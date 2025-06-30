@@ -281,6 +281,7 @@ export const getDashboardStats = functions.https.onRequest((request, response) =
       response.status(500).send({ data: { error: "Internal Server Error" } });
     }
   });
+});
 
 /**
  * Updates an existing user's details.
@@ -345,4 +346,3 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', 'Failed to delete user.', error.message);
     }
 });
-
