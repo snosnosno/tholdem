@@ -230,6 +230,13 @@
     "buttonCreating": "생성 중...",
     "buttonCreate": "스태프 생성"
   },
+  "staffListPage": {
+    "title": "내 확정된 스태프",
+    "fetchError": "스태프 정보를 가져오는 데 실패했습니다.",
+    "noPostings": "생성한 구인 공고가 없습니다.",
+    "noConfirmedStaff": "이 공고에 확정된 스태프가 아직 없습니다.",
+    "unknownUser": "알 수 없는 사용자"
+  },
   "editUserModal": {
     "title": "사용자 정보 수정",
     "updateSuccess": "사용자 정보가 성공적으로 업데이트되었습니다!",
@@ -247,7 +254,8 @@
   "common": {
     "cancel": "취소",
     "save": "저장",
-    "saving": "저장 중..."
+    "saving": "저장 중...",
+    "all": "전체"
   },
   "payrollAdmin": {
     "alertSuccess": "급여가 성공적으로 계산되었습니다! 업데이트된 데이터를 가져옵니다...",

@@ -230,6 +230,13 @@
     "buttonCreating": "Creating...",
     "buttonCreate": "Create Staff"
   },
+  "staffListPage": {
+    "title": "My Confirmed Staff",
+    "fetchError": "Failed to fetch staff data.",
+    "noPostings": "You have not created any job postings.",
+    "noConfirmedStaff": "No staff have been confirmed for this posting yet.",
+    "unknownUser": "Unknown User"
+  },
   "editUserModal": {
     "title": "Edit User Information",
     "updateSuccess": "User updated successfully!",
@@ -247,7 +254,8 @@
   "common": {
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "all": "All"
   },
   "payrollAdmin": {
     "alertSuccess": "Payrolls calculated successfully! Fetching updated data...",
