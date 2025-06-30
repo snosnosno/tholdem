@@ -34,7 +34,7 @@ export const requestRegistration = functions.https.onCall(async (data) => {
     // Log the incoming data for debugging
     functions.logger.info("requestRegistration called with data:", data);
 
-    const { email, password, name, role, phone } = data;
+    const { email, password, name, role } = data;
 
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
@@ -46,47 +46,42 @@ export const requestRegistration = functions.https.onCall(async (data) => {
     }
 
     try {
-        const isDealer = role === 'dealer';
+        const isManager = role === 'manager';
 
-        const userRecord = await admin.auth().createUser({
-            try {
-                const isManager = role === 'manager';
-                
-                // For managers, append a flag to the display name.
-                // The `createUserData` trigger will use this to set the role to 'pending_manager'.
-                const displayNameForAuth = isManager ? `${name} [PENDING_MANAGER]` : name;
-            
-                // For pending managers, they should be created as disabled.
-                // The `createUserData` trigger will ensure this state.
-                await admin.auth().createUser({
-                    email,
-                    password,
-                    displayName: displayNameForAuth,
-                    disabled: isManager, 
-                });
-            
-                // The `createUserData` trigger is now the single source of truth for creating the 
-                // Firestore document and setting custom claims. No further action is needed here.
-                
-                return { success: true, message: `Registration for ${name} as ${role} is processing.` };
-            
-            } catch (error: any) {
-                console.error("Error during registration request:", error);
-                
-                const errorCode = error.code;
-                switch (errorCode) {
-                    case 'auth/email-already-in-use':
-                        throw new functions.https.HttpsError('already-exists', 'This email address is already in use by another account.');
-                    case 'auth/invalid-email':
-                        throw new functions.https.HttpsError('invalid-argument', 'The email address is not valid.', { originalCode: errorCode });
-                    case 'auth/weak-password':
-                        throw new functions.https.HttpsError('invalid-argument', 'The password is too weak. Please use a stronger password.', { originalCode: errorCode });
-                    case 'auth/operation-not-allowed':
-                         throw new functions.https.HttpsError('unimplemented', 'Email/password sign-in is not enabled.', { originalCode: errorCode });
-                    default:
-                        throw new functions.https.HttpsError('internal', 'An unexpected error occurred during registration.', { originalCode: errorCode || 'unknown' });
-                }
-            }
+        // For managers, append a flag to the display name.
+        // The `createUserData` trigger will use this to set the role to 'pending_manager'.
+        const displayNameForAuth = isManager ? `${name} [PENDING_MANAGER]` : name;
+
+        // For pending managers, they should be created as disabled.
+        // The `createUserData` trigger will ensure this state.
+        await admin.auth().createUser({
+            email,
+            password,
+            displayName: displayNameForAuth,
+            disabled: isManager,
+        });
+
+        // The `createUserData` trigger is now the single source of truth for creating the
+        // Firestore document and setting custom claims. No further action is needed here.
+
+        return { success: true, message: `Registration for ${name} as ${role} is processing.` };
+
+    } catch (error: any) {
+        console.error("Error during registration request:", error);
+
+        const errorCode = error.code;
+        switch (errorCode) {
+            case 'auth/email-already-in-use':
+                throw new functions.https.HttpsError('already-exists', 'This email address is already in use by another account.');
+            case 'auth/invalid-email':
+                throw new functions.https.HttpsError('invalid-argument', 'The email address is not valid.', { originalCode: errorCode });
+            case 'auth/weak-password':
+                throw new functions.https.HttpsError('invalid-argument', 'The password is too weak. Please use a stronger password.', { originalCode: errorCode });
+            case 'auth/operation-not-allowed':
+                throw new functions.https.HttpsError('unimplemented', 'Email/password sign-in is not enabled.', { originalCode: errorCode });
+            default:
+                throw new functions.https.HttpsError('internal', 'An unexpected error occurred during registration.', { originalCode: errorCode || 'unknown' });
+        }
     }
 });
 
@@ -199,7 +194,7 @@ export const createUserData = functions.auth.user().onCreate(async (user) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             phone: phoneNumber || null,
         });
-        
+
         // Set the initial custom claim. The onCreate trigger is the single source of truth.
         await admin.auth().setCustomUserClaims(uid, { role: initialRole });
 
