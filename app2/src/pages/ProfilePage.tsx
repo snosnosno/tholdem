@@ -195,6 +195,10 @@ const ProfilePage = () => {
                                     <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
                                     <p className="whitespace-pre-wrap">{profile.experience || t('profilePage.notProvided')}</p>
                                 </div>
+                                <div className="md:col-span-2">
+                                    <p className="font-semibold text-gray-600">{t('profilePage.notes', '기타 사항')}</p>
+                                    <p>{profile.notes || t('profilePage.notProvided', '없음')}</p>
+                                </div>
                                 
                                 {isOwnProfile && (
                                     <div className="md:col-span-2 mt-4 border-t pt-4">
@@ -211,11 +215,6 @@ const ProfilePage = () => {
                                         </div>
                                     </div>
                                 )}
-
-                                <div className="md:col-span-2">
-                                    <p className="font-semibold text-gray-600">{t('profilePage.notes', '기타 사항')}</p>
-                                    <p>{profile.notes || t('profilePage.notProvided', '없음')}</p>
-                                </div>
                             </div>
                         </div>
                     ) : (
