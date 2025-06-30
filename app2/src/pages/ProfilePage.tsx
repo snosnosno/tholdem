@@ -13,7 +13,7 @@ interface ProfileData {
   email: string;
   role: string;
   experience: string;
-  hourlyRate: number;
+  notes?: string;
   rating?: number;
   ratingCount?: number;
 }
@@ -99,7 +99,7 @@ const ProfilePage = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'hourlyRate' ? Number(value) : value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -156,7 +156,7 @@ const ProfilePage = () => {
                                 <p><strong>{t('profilePage.email')}</strong> {profile.email}</p>
                                 <p><strong>{t('profilePage.phone')}</strong> {profile.phone || t('profilePage.notProvided')}</p>
                                 <p><strong>{t('profilePage.experience')}</strong> {profile.experience || t('profilePage.notProvided')}</p>
-                                <p><strong>{t('profilePage.hourlyRate')}</strong> {formatCurrency(profile.hourlyRate || 0, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</p>
+                                <p><strong>{t('profilePage.notes', '기타 사항')}</strong> {profile.notes || t('profilePage.notProvided')}</p>
                             </div>
                         </div>
                     ) : (
@@ -175,8 +175,8 @@ const ProfilePage = () => {
                                 <textarea name="experience" id="experience" value={formData.experience || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
                             </div>
                             <div>
-                                <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700">{t('profilePage.hourlyRate')}</label>
-                                <input type="number" name="hourlyRate" id="hourlyRate" value={formData.hourlyRate || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
+                                <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
                             </div>
                             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                                 {t('profilePage.saveChanges')}
