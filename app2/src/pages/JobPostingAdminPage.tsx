@@ -210,7 +210,7 @@ const JobPostingAdminPage = () => {
   const handleConfirmApplicant = async (applicant: Applicant) => {
       const roleToAssign = selectedRole[applicant.id];
       if (!roleToAssign) {
-          alert("Please select a role to assign.");
+                    alert(t('jobPostingAdmin.alerts.selectRoleToAssign'));
           return;
       }
       if (!currentPost) return;
@@ -231,7 +231,7 @@ const JobPostingAdminPage = () => {
               const isAlreadyConfirmed = confirmedStaff.some(staff => staff.userId === applicant.applicantId);
               if (isAlreadyConfirmed) {
                   // Already confirmed, maybe alert the user or just ignore.
-                  alert("This applicant is already confirmed.");
+                                    alert(t('jobPostingAdmin.alerts.applicantAlreadyConfirmed'));
                   return;
               }
               
@@ -246,14 +246,14 @@ const JobPostingAdminPage = () => {
               });
           });
           
-          alert("Applicant confirmed successfully.");
+                    alert(t('jobPostingAdmin.alerts.applicantConfirmSuccess'));
           await checkAndClosePosting(currentPost.id);
           // Refresh applicants list
           handleViewApplicants(currentPost.id);
 
       } catch (error) {
           console.error("Error confirming applicant: ", error);
-          alert("Failed to confirm applicant.");
+                    alert(t('jobPostingAdmin.alerts.applicantConfirmFailed'));
       }
   };
 
@@ -280,7 +280,7 @@ const JobPostingAdminPage = () => {
 
         if (isFullyStaffed) {
             await updateDoc(jobPostingRef, { status: 'closed' });
-            alert('All roles have been filled. The job posting is now closed.');
+                        alert(t('jobPostingAdmin.alerts.postingClosed'));
         }
       } catch (error) {
           console.error("Error checking and closing posting: ", error);
@@ -558,8 +558,8 @@ const JobPostingAdminPage = () => {
                                     <div>
                                       <p className="font-semibold">{applicant.applicantName}</p>
                                       <p className="text-sm text-gray-600">
-                                        Status: <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
-                                        {applicant.status === 'confirmed' && ` as ${applicant.assignedRole}`}
+                                        {t('jobPostingAdmin.applicants.status')}<span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
+                                        {applicant.status === 'confirmed' && `${t('jobPostingAdmin.applicants.as')}${applicant.assignedRole}`}
                                       </p>
                                     </div>
                                     {applicant.status === 'applied' && (
@@ -569,14 +569,14 @@ const JobPostingAdminPage = () => {
                                                 value={selectedRole[applicant.id] || ''}
                                                 onChange={(e) => setSelectedRole(prev => ({ ...prev, [applicant.id]: e.target.value }))}
                                             >
-                                                <option value="" disabled>Select role</option>
+                                                                                                <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
                                                 {currentPost?.roles.map((r: RoleRequirement) => <option key={r.name} value={r.name}>{r.name}</option>)}
                                             </select>
                                             <button 
                                                 onClick={() => handleConfirmApplicant(applicant)}
                                                 className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
                                             >
-                                                Confirm
+                                                                                                {t('jobPostingAdmin.applicants.confirm')}
                                             </button>
                                         </div>
                                     )}

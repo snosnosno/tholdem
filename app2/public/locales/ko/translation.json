@@ -461,7 +461,12 @@
       "confirmDelete": "정말로 이 공고를 삭제하시겠습니까?",
       "deleteSuccess": "공고가 성공적으로 삭제되었습니다.",
       "deleteFailed": "공고 삭제에 실패했습니다.",
-      "invalidRoleInfo": "역할 이름과 필요 인원(1 이상)을 모두 올바르게 입력해주세요."
+      "invalidRoleInfo": "역할 이름과 필요 인원(1 이상)을 모두 올바르게 입력해주세요.",
+      "selectRoleToAssign": "배정할 역할을 선택해주세요.",
+      "applicantAlreadyConfirmed": "이미 확정된 지원자입니다.",
+      "applicantConfirmSuccess": "지원자가 성공적으로 확정되었습니다.",
+      "applicantConfirmFailed": "지원자 확정에 실패했습니다.",
+      "postingClosed": "모든 역할이 채워졌습니다. 구인 공고가 마감되었습니다."
     },
     "create": {
       "title": "구인 공고 생성",
@@ -534,7 +539,11 @@
       "title": "지원자 목록",
       "loading": "지원자 정보를 불러오는 중...",
       "none": "아직 지원자가 없습니다.",
-      "close": "닫기"
+      "close": "닫기",
+      "status": "상태: ",
+      "as": " (으)로",
+      "selectRole": "역할 선택",
+      "confirm": "확정"
     }
   },
   "staffListPage": {
