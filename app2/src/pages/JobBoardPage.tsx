@@ -59,7 +59,7 @@ const JobBoardPage = () => {
     }
     setIsApplying(postId);
     try {
-      const staffDoc = await getDoc(doc(db, 'staffProfiles', currentUser.uid));
+      const staffDoc = await getDoc(doc(db, 'users', currentUser.uid));
       if(!staffDoc.exists()){
         alert(t('jobBoard.alerts.profileNotFound'));
         return;
