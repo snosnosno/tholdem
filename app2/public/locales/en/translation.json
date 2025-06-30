@@ -470,6 +470,7 @@
     },
     "create": {
       "title": "Create Job Posting",
+      "button": "Create New Posting",
       "postingTitle": "Posting Title",
       "type": "Employment Type",
       "typeApplication": "Application",
