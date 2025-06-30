@@ -5,11 +5,6 @@ import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useTranslation } from 'react-i18next';
 
-interface Tournament {
-    id: string;
-    name: string;
-}
-
 interface Applicant {
     id: string;
     applicantName: string;
@@ -23,25 +18,22 @@ interface RoleRequirement {
 
 const JobPostingAdminPage = () => {
   const { t } = useTranslation();
-  const tournamentsQuery = useMemo(() => query(collection(db, 'tournaments')), []);
   const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings')), []);
-  
-  const [tournamentsSnap] = useCollection(tournamentsQuery);
   const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
-  
-  const tournaments = useMemo(() => tournamentsSnap?.docs.map(d => ({ id: d.id, ...d.data() } as Tournament)), [tournamentsSnap]);
   const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })), [jobPostingsSnap]);
+
+  const getTodayString = () => new Date().toISOString().split('T')[0];
 
   const initialRole = { name: 'dealer', count: 1 };
   const [formData, setFormData] = useState({
     title: '',
-    tournamentId: '',
     roles: [initialRole],
     type: '지원',
     description: '',
     status: 'open',
-    location: '',
-    date: '',
+    location: '서울',
+    startDate: getTodayString(),
+    endDate: '',
     time: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +45,10 @@ const JobPostingAdminPage = () => {
   const [loadingApplicants, setLoadingApplicants] = useState(false);
 
   const predefinedRoles = ['dealer', 'floor', 'registration', 'serving'];
+  const locations = [
+    '서울', '경기', '인천', '강원', '대전', '세종', '충남', '충북', 
+    '광주', '전남', '전북', '대구', '경북', '부산', '울산', '경남', '제주', '해외'
+  ];
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -94,10 +90,6 @@ const JobPostingAdminPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.tournamentId) {
-        alert(t('jobPostingAdmin.alerts.selectTournament'));
-        return;
-    }
      if (formData.roles.some(role => !role.name || role.count < 1)) {
       alert(t('jobPostingAdmin.alerts.invalidRoleInfo'));
       return;
@@ -111,13 +103,13 @@ const JobPostingAdminPage = () => {
       alert(t('jobPostingAdmin.alerts.createSuccess'));
       setFormData({
         title: '',
-        tournamentId: '',
         roles: [initialRole],
         type: '지원',
         description: '',
         status: 'open',
-        location: '',
-        date: '',
+        location: '서울',
+        startDate: getTodayString(),
+        endDate: '',
         time: ''
       });
     } catch (error) {
@@ -147,7 +139,8 @@ const JobPostingAdminPage = () => {
     setCurrentPost({
         ...post,
         roles: post.roles && post.roles.length > 0 ? post.roles : [initialRole],
-        date: post.date || '',
+        startDate: post.startDate || '',
+        endDate: post.endDate || '',
         time: post.time || ''
     });
     setIsEditModalOpen(true);
@@ -212,29 +205,31 @@ const JobPostingAdminPage = () => {
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
                 <input type="text" name="title" id="title" value={formData.title} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
             </div>
-            <div>
-                <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.tournament')}</label>
-                <select name="tournamentId" id="tournamentId" value={formData.tournamentId} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                    <option value="" disabled>{t('jobPostingAdmin.create.selectTournament')}</option>
-                    {tournaments?.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.location')}</label>
-                    <input type="text" name="location" id="location" value={formData.location} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-                <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.date')}</label>
-                    <input type="date" name="date" id="date" value={formData.date} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                    <select name="location" id="location" value={formData.location} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
+                    </select>
                 </div>
                 <div>
                     <label htmlFor="time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time')}</label>
                     <input type="time" name="time" id="time" value={formData.time} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                 </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.startDate')}</label>
+                    <input type="date" name="startDate" id="startDate" value={formData.startDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.endDate')}</label>
+                    <input type="date" name="endDate" id="endDate" value={formData.endDate} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
+
              <div>
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type')}</label>
                 <select name="type" id="type" value={formData.type} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -312,13 +307,13 @@ const JobPostingAdminPage = () => {
                                 ))}
                             </div>
                             <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
-                            {(post.location || post.date || post.time) && (
-                                <p className="text-sm text-gray-500">
-                                    {post.location && <span>{t('jobPostingAdmin.manage.location')}: {post.location}</span>}
-                                    {post.date && <span className="ml-2">{t('jobPostingAdmin.manage.date')}: {post.date}</span>}
-                                    {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time')}: {post.time}</span>}
-                                </p>
-                            )}
+                            
+                            <p className="text-sm text-gray-500">
+                                {post.location && <span>{t('jobPostingAdmin.manage.location')}: {t(`locations.${post.location}`, post.location)}</span>}
+                                {post.startDate && <span className="ml-2">{t('jobPostingAdmin.manage.date')}: {post.endDate ? `${post.startDate} ~ ${post.endDate}` : post.startDate}</span>}
+                                {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time')}: {post.time}</span>}
+                            </p>
+                            
                             <span className={`mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {post.status}
                             </span>
@@ -365,18 +360,26 @@ const JobPostingAdminPage = () => {
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div>
                                 <label htmlFor="edit-location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.location')}</label>
-                                <input type="text" id="edit-location" value={currentPost.location} onChange={(e) => setCurrentPost({...currentPost, location: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                            </div>
-                            <div>
-                                <label htmlFor="edit-date" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.date')}</label>
-                                <input type="date" id="edit-date" value={currentPost.date} onChange={(e) => setCurrentPost({...currentPost, date: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                                <select id="edit-location" name="location" value={currentPost.location} onChange={(e) => setCurrentPost({...currentPost, location: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    {locations.map(loc => <option key={loc} value={loc}>{t(`locations.${loc}`, loc)}</option>)}
+                                </select>
                             </div>
                             <div>
                                 <label htmlFor="edit-time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.time')}</label>
                                 <input type="time" id="edit-time" value={currentPost.time} onChange={(e) => setCurrentPost({...currentPost, time: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
+                        </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label htmlFor="edit-startDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.startDate')}</label>
+                                <input type="date" id="edit-startDate" value={currentPost.startDate} onChange={(e) => setCurrentPost({...currentPost, startDate: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
+                            <div>
+                                <label htmlFor="edit-endDate" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.endDate')}</label>
+                                <input type="date" id="edit-endDate" value={currentPost.endDate} onChange={(e) => setCurrentPost({...currentPost, endDate: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                             </div>
                         </div>
                         <div>

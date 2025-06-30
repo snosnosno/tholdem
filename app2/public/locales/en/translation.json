@@ -2,6 +2,26 @@
   "approve": "Approve",
   "reject": "Reject",
   "loading": "Loading...",
+  "locations": {
+    "서울": "Seoul",
+    "경기": "Gyeonggi",
+    "인천": "Incheon",
+    "강원": "Gangwon",
+    "대전": "Daejeon",
+    "세종": "Sejong",
+    "충남": "Chungnam",
+    "충북": "Chungbuk",
+    "광주": "Gwangju",
+    "전남": "Jeonnam",
+    "전북": "Jeonbuk",
+    "대구": "Daegu",
+    "경북": "Gyeongbuk",
+    "부산": "Busan",
+    "울산": "Ulsan",
+    "경남": "Gyeongnam",
+    "제주": "Jeju",
+    "해외": "Overseas"
+  },
   "login": {
     "title": "Login",
     "emailLabel": "Email Address",
@@ -422,7 +442,6 @@
     },
     "loading": "Loading job postings...",
     "title": "Job Board",
-    "tournament": "Tournament: {{name}}",
     "role": "Role: {{role}}",
     "applying": "Applying...",
     "applied": "Applied",
@@ -430,7 +449,6 @@
   },
   "jobPostingAdmin": {
     "alerts": {
-      "selectTournament": "Please select a tournament.",
       "createSuccess": "Job posting created successfully!",
       "createFailed": "Failed to create job posting.",
       "matchFailed": "Failed to run auto-match. Check logs.",
@@ -445,8 +463,6 @@
     "create": {
       "title": "Create Job Posting",
       "postingTitle": "Posting Title",
-      "tournament": "Tournament",
-      "selectTournament": "Select a tournament",
       "type": "Employment Type",
       "typeApplication": "Application",
       "typeFixed": "Fixed",
@@ -464,7 +480,8 @@
       "submitting": "Submitting...",
       "button": "Create Posting",
       "location": "Location",
-      "date": "Date",
+      "startDate": "Start Date",
+      "endDate": "End Date",
       "time": "Time"
     },
     "manage": {
@@ -506,7 +523,8 @@
       "cancel": "Cancel",
       "save": "Save",
       "location": "Location",
-      "date": "Date",
+      "startDate": "Start Date",
+      "endDate": "End Date",
       "time": "Time"
     },
     "applicants": {
