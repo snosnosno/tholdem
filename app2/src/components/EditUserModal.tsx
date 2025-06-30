@@ -223,17 +223,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
                 ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
-            <textarea
-              name="notes"
-              id="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={2}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
           <div className="md:col-span-2">
             <label htmlFor="history" className="block text-sm font-medium text-gray-700">{t('profilePage.history')}</label>
             <textarea
@@ -244,6 +233,17 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
               rows={4}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               placeholder={t('profilePage.historyPlaceholder')}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
+            <textarea
+              name="notes"
+              id="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
         </div>
