@@ -440,13 +440,18 @@
       "profileNotFound": "Could not find staff profile.",
       "applicationSuccess": "Application submitted successfully!",
       "applicationFailed": "Failed to submit application.",
-      "selectAssignment": "Please select a time and role to apply for."
+      "selectAssignment": "Please select a time and role to apply for.",
+      "confirmCancel": "Are you sure you want to cancel your application?",
+      "cancelSuccess": "Application cancelled successfully.",
+      "cancelFailed": "Failed to cancel application."
     },
     "loading": "Loading job postings...",
     "title": "Job Board",
     "applying": "Applying...",
+    "cancelling": "Cancelling...",
     "applied": "Applied",
     "applyNow": "Apply",
+    "cancelApplication": "Cancel Application",
     "viewDetails": "View Details",
     "unknownApplicant": "Unknown Applicant",
     "applyModal": {
