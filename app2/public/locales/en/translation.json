@@ -20,7 +20,8 @@
     "울산": "Ulsan",
     "경남": "Gyeongnam",
     "제주": "Jeju",
-    "해외": "Overseas"
+    "해외": "Overseas",
+    "기타": "Other"
   },
   "login": {
     "title": "Login",
