@@ -43,8 +43,8 @@ const SignUp: React.FC = () => {
       await requestRegistration({
         email,
         password,
-        displayName: name,
-        phoneNumber: phone,
+        name,
+        phone,
         role,
       });
 
