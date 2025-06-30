@@ -596,7 +596,11 @@
       "as": " (으)로",
       "selectRole": "역할 선택",
       "confirm": "확정",
-      "viewProfile": "프로필 보기"
+      "viewProfile": "프로필 보기",
+      "gender": "성별",
+      "age": "나이",
+      "ageUnit": "세",
+      "experience": "경력"
     }
   },
   "staffListPage": {

@@ -596,7 +596,11 @@
       "as": " as ",
       "selectRole": "Select role",
       "confirm": "Confirm",
-      "viewProfile": "View Profile"
+      "viewProfile": "View Profile",
+      "gender": "Gender",
+      "age": "Age",
+      "ageUnit": " years old",
+      "experience": "Experience"
     }
   },
   "staffListPage": {

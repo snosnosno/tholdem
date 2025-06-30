@@ -15,6 +15,10 @@ interface Applicant {
     assignedRole?: string;
     assignedTime?: string;
     appliedAt: any;
+    // 추가된 사용자 정보
+    gender?: string;
+    age?: number;
+    experience?: string;
 }
 
 interface RoleRequirement {
@@ -253,10 +257,33 @@ const JobPostingAdminPage = () => {
         const q = query(collection(db, 'applications'), where('postId', '==', postId));
         const querySnapshot = await getDocs(q);
         const fetchedApplicants = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Applicant));
-        setApplicants(fetchedApplicants);
+        
+        // 사용자 정보를 추가로 가져오기
+        const applicantsWithUserInfo = await Promise.all(
+            fetchedApplicants.map(async (applicant) => {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', applicant.applicantId));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        return {
+                            ...applicant,
+                            gender: userData.gender,
+                            age: userData.age,
+                            experience: userData.experience
+                        };
+                    }
+                    return applicant;
+                } catch (error) {
+                    console.error(`Error fetching user data for ${applicant.applicantId}:`, error);
+                    return applicant;
+                }
+            })
+        );
+        
+        setApplicants(applicantsWithUserInfo);
         
         const initialAssignments: { [key: string]: { timeSlot: string, role: string } } = {};
-        fetchedApplicants.forEach(applicant => {
+        applicantsWithUserInfo.forEach(applicant => {
             if (applicant.assignedTime && applicant.assignedRole) {
                 initialAssignments[applicant.id] = { timeSlot: applicant.assignedTime, role: applicant.assignedRole };
             } else {
@@ -643,9 +670,14 @@ const JobPostingAdminPage = () => {
                         <ul className="space-y-3">
                             {applicants.length > 0 ? applicants.map(applicant => (
                                 <li key={applicant.id} className="p-3 border rounded-md flex justify-between items-center">
-                                    <div>
+                                    <div className="flex-grow">
                                       <p className="font-semibold">{applicant.applicantName}</p>
-                                      <p className="text-sm text-gray-600">
+                                      <div className="flex flex-wrap gap-2 text-sm text-gray-600 mt-1">
+                                        <span>{t('jobPostingAdmin.applicants.gender', '성별')}: {applicant.gender ? t(`gender.${applicant.gender}`, applicant.gender) : 'N/A'}</span>
+                                        <span>{t('jobPostingAdmin.applicants.age', '나이')}: {applicant.age || 'N/A'}{t('jobPostingAdmin.applicants.ageUnit', '세')}</span>
+                                        <span>{t('jobPostingAdmin.applicants.experience', '경력')}: {applicant.experience || 'N/A'}</span>
+                                      </div>
+                                      <p className="text-sm text-gray-600 mt-1">
                                         {t('jobPostingAdmin.applicants.status')}
                                         <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
                                         {(applicant.assignedTime || applicant.assignedRole) && (
