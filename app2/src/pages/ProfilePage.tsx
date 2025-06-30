@@ -73,6 +73,7 @@ const ProfilePage = () => {
                 const docSnap = await getDoc(profileRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data() as ProfileData;
+                    console.log('Profile data loaded:', data); // 디버깅용 로그
                     setProfile(data);
                 } else {
                     console.log("No profile document found for the given user ID.");
@@ -216,7 +217,7 @@ const ProfilePage = () => {
                                     <p>{genderDisplay(profile.gender)}</p>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <p className="font-semibold text-gray-600">{t('profilePage.experience', '이력')}</p>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
                                     <p className="whitespace-pre-wrap">{profile.experience || t('profilePage.notProvided')}</p>
                                 </div>
                                 <div className="md:col-span-2">
@@ -269,7 +270,7 @@ const ProfilePage = () => {
                                     <input type="text" name="gender" id="gender" value={genderDisplay(formData.gender)} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '이력')}</label>
+                                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
                                     <select
                                         name="experience"
                                         id="experience"
