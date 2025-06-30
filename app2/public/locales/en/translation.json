@@ -600,14 +600,13 @@
       "gender": "Gender",
       "age": "Age",
       "ageUnit": " years old",
-      "experience": "Experience"
+      "experience": "Experience",
+      "statusValue": {
+        "applied": "Applied",
+        "confirmed": "Confirmed",
+        "rejected": "Rejected"
+      }
     }
-  },
-  "staffListPage": {
-    "title": "My Confirmed Staff",
-    "fetchError": "Failed to fetch staff data.",
-    "noPostings": "You have not created any job postings.",
-    "noConfirmedStaff": "No staff have been confirmed for this posting yet.",
     "unknownUser": "Unknown User"
   },
   "profile": {

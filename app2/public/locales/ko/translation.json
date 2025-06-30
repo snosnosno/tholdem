@@ -600,14 +600,13 @@
       "gender": "성별",
       "age": "나이",
       "ageUnit": "세",
-      "experience": "경력"
+      "experience": "경력",
+      "statusValue": {
+        "applied": "지원",
+        "confirmed": "확정",
+        "rejected": "거절"
+      }
     }
-  },
-  "staffListPage": {
-    "title": "내 확정된 스태프",
-    "fetchError": "스태프 정보를 가져오는 데 실패했습니다.",
-    "noPostings": "생성한 구인 공고가 없습니다.",
-    "noConfirmedStaff": "이 공고에 확정된 스태프가 아직 없습니다.",
     "unknownUser": "알 수 없는 사용자"
   },
   "profile": {

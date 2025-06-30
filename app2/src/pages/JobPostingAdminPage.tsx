@@ -679,7 +679,7 @@ const JobPostingAdminPage = () => {
                                       </div>
                                       <p className="text-sm text-gray-600 mt-1">
                                         {t('jobPostingAdmin.applicants.status')}
-                                        <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
+                                        <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{t(`jobPostingAdmin.applicants.statusValue.${applicant.status}`, applicant.status)}</span>
                                         {(applicant.assignedTime || applicant.assignedRole) && (
                                             ` (${applicant.assignedTime || 'N/A'} / ${applicant.assignedRole ? t(`jobPostingAdmin.create.${applicant.assignedRole}`, applicant.assignedRole) : 'N/A'})`
                                         )}
