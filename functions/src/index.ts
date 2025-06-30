@@ -71,7 +71,7 @@ export const requestRegistration = functions.https.onCall(async (data) => {
 
         const errorCode = error.code;
         switch (errorCode) {
-            case 'auth/email-already-in-use':
+            case 'auth/email-already-exists':
                 throw new functions.https.HttpsError('already-exists', 'This email address is already in use by another account.');
             case 'auth/invalid-email':
                 throw new functions.https.HttpsError('invalid-argument', 'The email address is not valid.', { originalCode: errorCode });
