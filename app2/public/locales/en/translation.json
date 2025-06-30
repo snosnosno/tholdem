@@ -443,10 +443,12 @@
     },
     "loading": "Loading job postings...",
     "title": "Job Board",
+    "tournament": "Tournament: {{name}}",
     "role": "Role: {{role}}",
     "applying": "Applying...",
     "applied": "Applied",
-    "applyNow": "Apply Now"
+    "applyNow": "Apply Now",
+    "unknownApplicant": "Unknown Applicant"
   },
   "jobPostingAdmin": {
     "alerts": {

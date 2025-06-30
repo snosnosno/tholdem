@@ -67,7 +67,7 @@ const JobBoardPage = () => {
       
       await addDoc(collection(db, 'applications'), {
         applicantId: currentUser.uid,
-        applicantName: staffDoc.data().name || 'Unknown Applicant',
+        applicantName: staffDoc.data().name || t('jobBoard.unknownApplicant'),
         postId: postId,
         postTitle: postTitle,
         status: 'applied',

@@ -443,10 +443,12 @@
     },
     "loading": "구인 공고를 불러오는 중...",
     "title": "구인 게시판",
+    "tournament": "토너먼트: {{name}}",
     "role": "역할: {{role}}",
     "applying": "지원 중...",
     "applied": "지원 완료",
-    "applyNow": "지금 지원하기"
+    "applyNow": "지금 지원하기",
+    "unknownApplicant": "알 수 없는 지원자"
   },
   "jobPostingAdmin": {
     "alerts": {
