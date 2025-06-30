@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -31,6 +31,7 @@ const JobPostingAdminPage = () => {
     title: '',
     tournamentId: '',
     role: 'dealer',
+    type: '지원', // '고정' or '지원'
     requiredCount: 1,
     description: '',
     status: 'open',
@@ -66,6 +67,7 @@ const JobPostingAdminPage = () => {
         title: '',
         tournamentId: '',
         role: 'dealer',
+        type: '지원',
         requiredCount: 1,
         description: '',
         status: 'open',
@@ -107,6 +109,7 @@ const JobPostingAdminPage = () => {
       await updateDoc(postRef, {
         title: currentPost.title,
         role: currentPost.role,
+        type: currentPost.type,
         requiredCount: Number(currentPost.requiredCount),
         description: currentPost.description,
         status: currentPost.status,
@@ -117,6 +120,18 @@ const JobPostingAdminPage = () => {
     } catch (error) {
       console.error("Error updating job posting: ", error);
       alert(t('jobPostingAdmin.alerts.updateFailed'));
+    }
+  };
+  
+  const handleDelete = async (postId: string) => {
+    if (window.confirm(t('jobPostingAdmin.alerts.confirmDelete', '정말로 이 공고를 삭제하시겠습니까?'))) {
+        try {
+            await deleteDoc(doc(db, 'jobPostings', postId));
+            alert(t('jobPostingAdmin.alerts.deleteSuccess', '공고가 성공적으로 삭제되었습니다.'));
+        } catch (error) {
+            console.error("Error deleting job posting: ", error);
+            alert(t('jobPostingAdmin.alerts.deleteFailed', '공고 삭제에 실패했습니다.'));
+        }
     }
   };
 
@@ -156,6 +171,13 @@ const JobPostingAdminPage = () => {
                 </select>
             </div>
             <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type', '고용 형태')}</label>
+                <select name="type" id="type" value={formData.type} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="지원">{t('jobPostingAdmin.create.typeApplication', '지원')}</option>
+                    <option value="고정">{t('jobPostingAdmin.create.typeFixed', '고정')}</option>
+                </select>
+            </div>
+            <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.role')}</label>
                 <select name="role" id="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                     <option value="dealer">{t('jobPostingAdmin.create.dealer')}</option>
@@ -187,11 +209,12 @@ const JobPostingAdminPage = () => {
                         <div>
                             <h2 className="text-xl font-bold">{post.title}</h2>
                             <p className="text-sm text-gray-600">{t('jobPostingAdmin.manage.roleInfo', { role: post.role, required: post.requiredCount })}</p>
+                            <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type', '고용 형태')}: {t(`jobPostingAdmin.manage.${post.type}`, post.type)}</p>
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {post.status}
                             </span>
                         </div>
-                        <div className='flex'>
+                        <div className='flex items-center'>
                             <button
                                 onClick={() => handleViewApplicants(post.id)}
                                 className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
@@ -203,6 +226,12 @@ const JobPostingAdminPage = () => {
                                 className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
                             >
                                 {t('jobPostingAdmin.manage.edit')}
+                            </button>
+                             <button
+                                onClick={() => handleDelete(post.id)}
+                                className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                            >
+                                {t('jobPostingAdmin.manage.delete', '삭제')}
                             </button>
                             <button 
                                 onClick={() => handleAutoMatch(post.id)}
@@ -226,6 +255,13 @@ const JobPostingAdminPage = () => {
                         <div>
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" name="title" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.type', '고용 형태')}</label>
+                            <select name="type" id="edit-type" value={currentPost.type} onChange={(e) => setCurrentPost({...currentPost, type: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="지원">{t('jobPostingAdmin.edit.typeApplication', '지원')}</option>
+                                <option value="고정">{t('jobPostingAdmin.edit.typeFixed', '고정')}</option>
+                            </select>
                         </div>
                         <div>
                             <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.role')}</label>
