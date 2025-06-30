@@ -610,5 +610,6 @@ const JobPostingAdminPage = () => {
         )}
     </div>
   );
+  };
 
 export default JobPostingAdminPage;
