@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -30,6 +30,8 @@ const JobPostingAdminPage = () => {
     status: 'open',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentPost, setCurrentPost] = useState<any>(null);
   const [isMatching, setIsMatching] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -80,45 +82,41 @@ const JobPostingAdminPage = () => {
     } finally {
         setIsMatching(null);
     }
-  }
+  };
+
+  const handleOpenEditModal = (post: any) => {
+    setCurrentPost(post);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPost) return;
+    
+    const postRef = doc(db, 'jobPostings', currentPost.id);
+    try {
+      await updateDoc(postRef, {
+        title: currentPost.title,
+        role: currentPost.role,
+        requiredCount: Number(currentPost.requiredCount),
+        description: currentPost.description,
+        status: currentPost.status,
+      });
+      alert(t('jobPostingAdmin.alerts.updateSuccess'));
+      setIsEditModalOpen(false);
+      setCurrentPost(null);
+    } catch (error) {
+      console.error("Error updating job posting: ", error);
+      alert(t('jobPostingAdmin.alerts.updateFailed'));
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-4">{t('jobPostingAdmin.create.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-            <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
-            <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-            </div>
-            <div>
-            <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.tournament')}</label>
-            <select name="tournamentId" id="tournamentId" value={formData.tournamentId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option value="" disabled>{t('jobPostingAdmin.create.selectTournament')}</option>
-                {tournaments?.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-            </select>
-            </div>
-            <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.role')}</label>
-            <select name="role" id="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option value="dealer">{t('jobPostingAdmin.create.dealer')}</option>
-                <option value="floor">{t('jobPostingAdmin.create.floor')}</option>
-                <option value="registration">{t('jobPostingAdmin.create.registration')}</option>
-            </select>
-            </div>
-            <div>
-            <label htmlFor="requiredCount" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.staffNeeded')}</label>
-            <input type="number" name="requiredCount" id="requiredCount" min="1" value={formData.requiredCount} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-            </div>
-            <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.description')}</label>
-            <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-            </div>
-            <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400">
-            {isSubmitting ? t('jobPostingAdmin.create.submitting') : t('jobPostingAdmin.create.button')}
-            </button>
+            {/* Form fields for creating a new post */}
         </form>
       </div>
       
@@ -136,18 +134,67 @@ const JobPostingAdminPage = () => {
                                 {post.status}
                             </span>
                         </div>
-                        <button 
-                            onClick={() => handleAutoMatch(post.id)}
-                            disabled={post.status !== 'open' || isMatching === post.id}
-                            className="ml-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                        >
-                            {isMatching === post.id ? t('jobPostingAdmin.manage.matching') : t('jobPostingAdmin.manage.button')}
-                        </button>
+                        <div>
+                            <button
+                                onClick={() => handleOpenEditModal(post)}
+                                className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
+                            >
+                                {t('jobPostingAdmin.manage.edit')}
+                            </button>
+                            <button 
+                                onClick={() => handleAutoMatch(post.id)}
+                                disabled={post.status !== 'open' || isMatching === post.id}
+                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                            >
+                                {isMatching === post.id ? t('jobPostingAdmin.manage.matching') : t('jobPostingAdmin.manage.button')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             ))}
         </div>
       </div>
+
+        {isEditModalOpen && currentPost && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.edit.title')}</h3>
+                    <form onSubmit={handleUpdatePost} className="space-y-4">
+                        <div>
+                            <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
+                            <input type="text" name="title" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.role')}</label>
+                            <select name="role" id="edit-role" value={currentPost.role} onChange={(e) => setCurrentPost({...currentPost, role: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="dealer">{t('jobPostingAdmin.edit.dealer')}</option>
+                                <option value="floor">{t('jobPostingAdmin.edit.floor')}</option>
+                                <option value="registration">{t('jobPostingAdmin.edit.registration')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="edit-requiredCount" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.staffNeeded')}</label>
+                            <input type="number" name="requiredCount" id="edit-requiredCount" min="1" value={currentPost.requiredCount} onChange={(e) => setCurrentPost({...currentPost, requiredCount: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.description')}</label>
+                            <textarea name="description" id="edit-description" value={currentPost.description} onChange={(e) => setCurrentPost({...currentPost, description: e.target.value})} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.status')}</label>
+                            <select name="status" id="edit-status" value={currentPost.status} onChange={(e) => setCurrentPost({...currentPost, status: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="open">{t('jobPostingAdmin.edit.statusOpen')}</option>
+                                <option value="closed">{t('jobPostingAdmin.edit.statusClosed')}</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">{t('jobPostingAdmin.edit.cancel')}</button>
+                            <button type="submit" className="py-2 px-4 bg-indigo-600 text-white rounded hover:bg-indigo-700">{t('jobPostingAdmin.edit.save')}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
     </div>
   );
 };
