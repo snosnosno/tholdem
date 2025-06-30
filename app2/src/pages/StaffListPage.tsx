@@ -11,7 +11,12 @@ interface StaffData {
   email?: string;
   phone?: string;
   role?: string;
-  timeSlot?: string;
+  gender?: string;
+  age?: number;
+  experience?: string;
+  nationality?: string;
+  history?: string;
+  notes?: string;
   postingId: string;
   postingTitle: string;
 }
@@ -90,7 +95,12 @@ const StaffListPage: React.FC = () => {
               email: userDetails?.email,
               phone: userDetails?.phone,
               role: staff.role,
-              timeSlot: staff.timeSlot,
+              gender: userDetails?.gender,
+              age: userDetails?.age,
+              experience: userDetails?.experience,
+              nationality: userDetails?.nationality,
+              history: userDetails?.history,
+              notes: userDetails?.notes,
               postingId: posting.id,
               postingTitle: posting.title,
             };
@@ -128,7 +138,13 @@ const StaffListPage: React.FC = () => {
       sortableItems = sortableItems.filter(staff =>
         staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         staff.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+        staff.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.gender?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.experience?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.nationality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.history?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.notes?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -208,26 +224,34 @@ const StaffListPage: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <SortableHeader sortKey="postingTitle" label={t('jobPostingAdmin.manage.title')} />
-                <SortableHeader sortKey="name" label={t('staffNew.labelName')} />
-                <SortableHeader sortKey="email" label={t('staffNew.labelEmail')} />
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('signUp.phoneLabel')}</th>
                 <SortableHeader sortKey="role" label={t('jobPostingAdmin.create.roleName')} />
-                <SortableHeader sortKey="timeSlot" label={t('jobPostingAdmin.create.time')} />
-              </tr>
+                <SortableHeader sortKey="name" label={t('staffNew.labelName')} />
+                <SortableHeader sortKey="gender" label={t('signUp.genderLabel')} />
+                <SortableHeader sortKey="age" label={t('profilePage.age')} />
+                <SortableHeader sortKey="experience" label={t('profilePage.experience')} />
+                <SortableHeader sortKey="phone" label={t('signUp.phoneLabel')} />
+                <SortableHeader sortKey="email" label={t('staffNew.labelEmail')} />
+                <SortableHeader sortKey="nationality" label={t('profilePage.nationality')} />
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAndSortedStaff.length > 0 ? filteredAndSortedStaff.map((staff) => (
                 <tr key={staff.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{staff.postingTitle}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.phone || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.timeSlot}</td>
-                </tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.gender ? t(`gender.${staff.gender.toLowerCase()}`, staff.gender) : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.age ? `${staff.age}세` : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.experience || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.phone || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.nationality || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.history || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.notes || '-'}</td>
               )) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={11} className="px-6 py-4 text-center text-sm text-gray-500">
                     {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
