@@ -281,4 +281,68 @@ export const getDashboardStats = functions.https.onRequest((request, response) =
       response.status(500).send({ data: { error: "Internal Server Error" } });
     }
   });
+
+/**
+ * Updates an existing user's details.
+ * Only callable by an admin.
+ */
+export const updateUser = functions.https.onCall(async (data, context) => {
+    // Ensure the caller is an admin
+    if (context.auth?.token?.role !== 'admin') {
+        functions.logger.error("updateUser denied", { auth: context.auth });
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can update users.');
+    }
+
+    const { uid, name, role } = data;
+
+    if (!uid || !name || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required fields: "uid", "name", or "role".');
+    }
+
+    try {
+        const userRef = db.collection('users').doc(uid);
+        await userRef.update({ name, role });
+
+        // The onUserRoleChange trigger will handle claim updates.
+
+        return { success: true, message: `User ${uid} updated successfully.` };
+    } catch (error: any) {
+        functions.logger.error(`Error updating user ${uid}:`, error);
+        throw new functions.https.HttpsError('internal', 'Failed to update user.', error.message);
+    }
 });
+
+/**
+ * Deletes a user from Firebase Authentication and Firestore.
+ * Only callable by an admin.
+ */
+export const deleteUser = functions.https.onCall(async (data, context) => {
+    // Ensure the caller is an admin
+    if (context.auth?.token?.role !== 'admin') {
+        functions.logger.error("deleteUser denied", { auth: context.auth });
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can delete users.');
+    }
+
+    const { uid } = data;
+
+    if (!uid) {
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required field: "uid".');
+    }
+
+    try {
+        // Delete from Auth
+        await admin.auth().deleteUser(uid);
+        functions.logger.info(`Successfully deleted user ${uid} from Auth.`);
+
+        // Delete from Firestore
+        const userRef = db.collection('users').doc(uid);
+        await userRef.delete();
+        functions.logger.info(`Successfully deleted user ${uid} from Firestore.`);
+
+        return { success: true, message: `User ${uid} deleted successfully.` };
+    } catch (error: any) {
+        functions.logger.error(`Error deleting user ${uid}:`, error);
+        throw new functions.https.HttpsError('internal', 'Failed to delete user.', error.message);
+    }
+});
+

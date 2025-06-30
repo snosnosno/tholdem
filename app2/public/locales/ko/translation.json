@@ -201,7 +201,13 @@
     "accessDenied": "이 페이지를 볼 권한이 없습니다.",
     "title": "스태프 관리",
     "addNew": "새 스태프 추가",
-    "noStaffFound": "스태프 멤버를 찾을 수 없습니다."
+    "noStaffFound": "스태프 멤버를 찾을 수 없습니다.",
+    "fetchError": "스태프 목록을 불러오는 데 실패했습니다.",
+    "confirmDelete": "정말로 이 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "deleteSuccess": "사용자가 성공적으로 삭제되었습니다.",
+    "deleteError": "사용자 삭제에 실패했습니다.",
+    "edit": "수정",
+    "delete": "삭제"
   },
   "staffNew": {
     "accessDeniedAction": "이 작업을 수행할 권한이 없습니다.",
@@ -216,6 +222,25 @@
     "roleAdmin": "관리자",
     "buttonCreating": "생성 중...",
     "buttonCreate": "스태프 생성"
+  },
+  "editUserModal": {
+    "title": "사용자 정보 수정",
+    "updateSuccess": "사용자 정보가 성공적으로 업데이트되었습니다!",
+    "updateError": "사용자 정보 업데이트에 실패했습니다.",
+    "labelName": "이름",
+    "labelEmail": "이메일",
+    "labelRole": "역할"
+  },
+  "roles": {
+    "dealer": "딜러",
+    "manager": "매니저",
+    "admin": "관리자",
+    "pending_manager": "승인 대기중인 매니저"
+  },
+  "common": {
+    "cancel": "취소",
+    "save": "저장",
+    "saving": "저장 중..."
   },
   "payrollAdmin": {
     "alertSuccess": "급여가 성공적으로 계산되었습니다! 업데이트된 데이터를 가져옵니다...",

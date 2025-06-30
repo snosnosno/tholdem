@@ -201,7 +201,13 @@
     "accessDenied": "You do not have permission to view this page.",
     "title": "Staff Management",
     "addNew": "Add New Staff",
-    "noStaffFound": "No staff members found."
+    "noStaffFound": "No staff members found.",
+    "fetchError": "Failed to fetch staff list.",
+    "confirmDelete": "Are you sure you want to delete this user? This action cannot be undone.",
+    "deleteSuccess": "User deleted successfully.",
+    "deleteError": "Failed to delete user.",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "staffNew": {
     "accessDeniedAction": "You do not have permission to perform this action.",
@@ -216,6 +222,25 @@
     "roleAdmin": "Admin",
     "buttonCreating": "Creating...",
     "buttonCreate": "Create Staff"
+  },
+  "editUserModal": {
+    "title": "Edit User Information",
+    "updateSuccess": "User updated successfully!",
+    "updateError": "Failed to update user.",
+    "labelName": "Name",
+    "labelEmail": "Email",
+    "labelRole": "Role"
+  },
+  "roles": {
+    "dealer": "Dealer",
+    "manager": "Manager",
+    "admin": "Admin",
+    "pending_manager": "Pending Manager"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
   },
   "payrollAdmin": {
     "alertSuccess": "Payrolls calculated successfully! Fetching updated data...",
