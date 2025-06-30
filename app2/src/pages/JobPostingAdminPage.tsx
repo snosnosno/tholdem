@@ -209,7 +209,7 @@ const JobPostingAdminPage = () => {
                         <div>
                             <h2 className="text-xl font-bold">{post.title}</h2>
                             <p className="text-sm text-gray-600">{t('jobPostingAdmin.manage.roleInfo', { role: post.role, required: post.requiredCount })}</p>
-                            <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type', '고용 형태')}: {t(`jobPostingAdmin.manage.${post.type}`, post.type)}</p>
+                            <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {post.status}
                             </span>
