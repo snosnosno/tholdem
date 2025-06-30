@@ -428,18 +428,60 @@
     "applied": "Applied",
     "applyNow": "Apply Now"
   },
-  "jobPostingAdminPage": {
-    "title": "Manage Job Postings",
-    "createPosting": "Create New Posting",
-    "formTitle": "Job Title",
-    "formDescription": "Description",
-    "formRoles": "Roles Required (comma-separated)",
-    "formDate": "Event Date",
-    "submit": "Submit",
-    "viewApplicants": "View Applicants",
-    "applicants": "Applicants",
-    "close": "Close",
-    "noApplicants": "No applicants for this position yet."
+  "jobPostingAdmin": {
+    "alerts": {
+      "selectTournament": "Please select a tournament.",
+      "createSuccess": "Job posting created successfully!",
+      "createFailed": "Failed to create job posting.",
+      "matchFailed": "Failed to run auto-match. Check logs.",
+      "updateSuccess": "Job posting updated successfully.",
+      "updateFailed": "Failed to update job posting.",
+      "fetchApplicantsFailed": "Failed to fetch applicants."
+    },
+    "create": {
+      "title": "Create Job Posting",
+      "postingTitle": "Posting Title",
+      "tournament": "Tournament",
+      "selectTournament": "Select a tournament",
+      "role": "Role",
+      "dealer": "Dealer",
+      "floor": "Floor",
+      "registration": "Registration",
+      "staffNeeded": "Number of Staff Needed",
+      "description": "Description / Requirements",
+      "submitting": "Submitting...",
+      "button": "Create Posting"
+    },
+    "manage": {
+      "title": "Manage Job Postings",
+      "loading": "Loading postings...",
+      "roleInfo": "Role: {{role}} | Required: {{required}}",
+      "matching": "Matching...",
+      "button": "Auto Match",
+      "edit": "Edit",
+      "viewApplicants": "View Applicants"
+    },
+    "edit": {
+        "title": "Edit Job Posting",
+        "postingTitle": "Posting Title",
+        "role": "Role",
+        "dealer": "Dealer",
+        "floor": "Floor",
+        "registration": "Registration",
+        "staffNeeded": "Staff Needed",
+        "description": "Description",
+        "status": "Status",
+        "statusOpen": "Open",
+        "statusClosed": "Closed",
+        "cancel": "Cancel",
+        "save": "Save"
+    },
+    "applicants": {
+      "title": "Applicant List",
+      "loading": "Loading applicants...",
+      "none": "No applicants yet.",
+      "close": "Close"
+    }
   },
   "staffListPage": {
     "title": "My Confirmed Staff",
