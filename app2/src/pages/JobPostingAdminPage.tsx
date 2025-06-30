@@ -442,7 +442,7 @@ const JobPostingAdminPage = () => {
                                     {t('jobPostingAdmin.manage.date')}: {post.endDate && post.endDate !== post.startDate ? `${formattedStartDate} ~ ${formattedEndDate}` : formattedStartDate}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                    {t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}
+                                    {t('jobPostingAdmin.create.description')}: {post.description}
                                 </p>
                             </div>
                             <div className='flex flex-col items-end'>
