@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -31,7 +32,10 @@ interface Payroll {
 const ProfilePage = () => {
     const { t, i18n } = useTranslation();
     const { currentUser } = useAuth();
-    const profileRef = currentUser ? doc(db, 'users', currentUser.uid) : null;
+    const { userId } = useParams<{ userId: string }>();
+    const profileId = userId || currentUser?.uid;
+
+    const profileRef = profileId ? doc(db, 'users', profileId) : null;
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [errorProfile, setErrorProfile] = useState<Error | null>(null);
@@ -42,17 +46,22 @@ const ProfilePage = () => {
     const [payrolls, setPayrolls] = useState<Payroll[]>([]);
     const [loadingPayrolls, setLoadingPayrolls] = useState(true);
 
+    const isOwnProfile = !userId || (currentUser?.uid === userId);
+
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!profileRef) return;
+            if (!profileRef) {
+                setLoadingProfile(false);
+                return;
+            }
             try {
                 const docSnap = await getDoc(profileRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data() as ProfileData;
                     setProfile(data);
-                    // Editing form data is now set when the edit button is clicked
                 } else {
-                    console.log("No profile document found for current user.");
+                    console.log("No profile document found for the given user ID.");
+                    setErrorProfile(new Error(t('profilePage.userNotFound')));
                 }
             } catch (err: any) {
                 setErrorProfile(err);
@@ -62,9 +71,14 @@ const ProfilePage = () => {
         };
 
         fetchProfile();
-    }, [profileRef]);
+    }, [profileRef, t]);
     
     useEffect(() => {
+        if (!isOwnProfile) {
+            setLoadingPayrolls(false);
+            return;
+        }
+
         const fetchPayrolls = async () => {
             if (!currentUser) {
                 setLoadingPayrolls(false);
@@ -95,11 +109,10 @@ const ProfilePage = () => {
         };
 
         fetchPayrolls();
-    }, [currentUser, t]);
+    }, [currentUser, isOwnProfile, t]);
 
     const handleEditClick = () => {
         if (!isEditing) {
-            // Pre-fill form with current profile data when starting to edit
             setFormData(profile || {});
         }
         setIsEditing(!isEditing);
@@ -134,7 +147,7 @@ const ProfilePage = () => {
 
     if (loadingProfile) return <div className="p-6 text-center">{t('profilePage.loadingProfile')}</div>;
     if (errorProfile) return <div className="p-6 text-center text-red-500">{t('profilePage.error', { message: errorProfile.message })}</div>;
-    if (!currentUser || !profile) return <div className="p-6 text-center">{t('profilePage.viewProfileLogin')}</div>;
+    if (!profile) return <div className="p-6 text-center">{t('profilePage.viewProfileLogin')}</div>;
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -152,12 +165,14 @@ const ProfilePage = () => {
                                 <span className="text-sm text-gray-500 ml-2">({profile.ratingCount || 0} {t('profilePage.ratings')})</span>
                             </div>
                         </div>
-                        <button onClick={handleEditClick} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
-                        </button>
+                        {isOwnProfile && (
+                            <button onClick={handleEditClick} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
+                            </button>
+                        )}
                     </div>
 
-                    {!isEditing ? (
+                    {!isEditing || !isOwnProfile ? (
                         <div className="mt-6 border-t pt-6">
                             <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.profileDetails')}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,46 +208,47 @@ const ProfilePage = () => {
                     )}
                 </div>
 
-                {/* Payroll History Section */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800">{t('profilePage.payrollHistory')}</h2>
-                    {loadingPayrolls ? (
-                        <p>{t('profilePage.loadingPayroll')}</p>
-                    ) : payrolls.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableEvent')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableDate')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableHours')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tablePay')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableStatus')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {payrolls.map(p => (
-                                        <tr key={p.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap">{p.eventName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{formatDate(p.calculationDate.toDate(), i18n.language)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{p.workDurationInHours.toFixed(2)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(p.calculatedPay, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    p.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                    {p.status === 'paid' ? t('profilePage.statusPaid') : t('profilePage.statusPending')}
-                                                </span>
-                                            </td>
+                {isOwnProfile && (
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">{t('profilePage.payrollHistory')}</h2>
+                        {loadingPayrolls ? (
+                            <p>{t('profilePage.loadingPayroll')}</p>
+                        ) : payrolls.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableEvent')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableDate')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableHours')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tablePay')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.tableStatus')}</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">{t('profilePage.noPayroll')}</p>
-                    )}
-                </div>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {payrolls.map(p => (
+                                            <tr key={p.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap">{p.eventName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">{formatDate(p.calculationDate.toDate(), i18n.language)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">{p.workDurationInHours.toFixed(2)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(p.calculatedPay, i18n.language === 'ko' ? 'KRW' : 'USD', i18n.language)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        p.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                        {p.status === 'paid' ? t('profilePage.statusPaid') : t('profilePage.statusPending')}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-gray-500">{t('profilePage.noPayroll')}</p>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
@@ -57,7 +58,7 @@ const JobPostingAdminPage = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
   const [isCreateFormVisible, setIsCreateFormVisible] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<{ [key: string]: { timeSlot: string, role: string } | null }>({});
+  const [selectedAssignment, setSelectedAssignment] = useState<{ [key: string]: { timeSlot: string, role: string } }>({});
 
 
   const predefinedRoles = ['dealer', 'floor', 'registration', 'serving'];
@@ -91,7 +92,7 @@ const JobPostingAdminPage = () => {
   const addTimeSlot = () => {
     setFormData(prev => ({
       ...prev,
-      timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: '', count: 1 }] }]
+      timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: 'dealer', count: 1 }] }]
     }));
   };
 
@@ -109,7 +110,7 @@ const JobPostingAdminPage = () => {
 
   const addRole = (timeSlotIndex: number) => {
     const newTimeSlots = [...formData.timeSlots];
-    newTimeSlots[timeSlotIndex].roles.push({ name: '', count: 1 });
+    newTimeSlots[timeSlotIndex].roles.push({ name: 'dealer', count: 1 });
     setFormData(prev => ({ ...prev, timeSlots: newTimeSlots }));
   };
 
@@ -129,7 +130,7 @@ const JobPostingAdminPage = () => {
     const addEditTimeSlot = () => {
         setCurrentPost((prev: any) => ({
             ...prev,
-            timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: '', count: 1 }] }]
+            timeSlots: [...prev.timeSlots, { time: '', roles: [{ name: 'dealer', count: 1 }] }]
         }));
     };
 
@@ -147,7 +148,7 @@ const JobPostingAdminPage = () => {
 
     const addEditRole = (timeSlotIndex: number) => {
         const newTimeSlots = [...currentPost.timeSlots];
-        newTimeSlots[timeSlotIndex].roles.push({ name: '', count: 1 });
+        newTimeSlots[timeSlotIndex].roles.push({ name: 'dealer', count: 1 });
         setCurrentPost((prev: any) => ({ ...prev, timeSlots: newTimeSlots }));
     };
 
@@ -246,6 +247,19 @@ const JobPostingAdminPage = () => {
         const querySnapshot = await getDocs(q);
         const fetchedApplicants = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Applicant));
         setApplicants(fetchedApplicants);
+        
+        const initialAssignments: { [key: string]: { timeSlot: string, role: string } } = {};
+        fetchedApplicants.forEach(applicant => {
+            if (applicant.assignedTime && applicant.assignedRole) {
+                initialAssignments[applicant.id] = { timeSlot: applicant.assignedTime, role: applicant.assignedRole };
+            } else {
+                 // Find first available role or default
+                const firstAvailable = currentPost?.timeSlots?.[0]?.roles?.[0];
+                initialAssignments[applicant.id] = { timeSlot: currentPost?.timeSlots?.[0]?.time || '', role: firstAvailable?.name || 'dealer' };
+            }
+        });
+        setSelectedAssignment(initialAssignments);
+
     } catch (error) {
         console.error("Error fetching applicants: ", error);
         alert(t('jobPostingAdmin.alerts.fetchApplicantsFailed'));
@@ -256,7 +270,7 @@ const JobPostingAdminPage = () => {
     
   const handleConfirmApplicant = async (applicant: Applicant) => {
     const assignment = selectedAssignment[applicant.id];
-    if (!assignment) {
+    if (!assignment || !assignment.timeSlot || !assignment.role) {
         alert(t('jobPostingAdmin.alerts.selectRoleToAssign'));
         return;
     }
@@ -401,7 +415,14 @@ const JobPostingAdminPage = () => {
                         {timeSlot.roles.map((role, rIndex) => (
                             <div key={rIndex} className="flex items-center space-x-2 mb-2">
                                 <div className="flex-1">
-                                    <input type="text" value={role.name} onChange={(e) => handleRoleChange(tsIndex, rIndex, 'name', e.target.value)} placeholder={t('jobPostingAdmin.create.roleNamePlaceholder')} list="predefined-roles" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                    <select 
+                                        value={role.name} 
+                                        onChange={(e) => handleRoleChange(tsIndex, rIndex, 'name', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required
+                                    >
+                                        <option value="" disabled>{t('jobPostingAdmin.create.roleNamePlaceholder')}</option>
+                                        {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
+                                    </select>
                                 </div>
                                 <div className="w-24">
                                     <input type="number" value={role.count} min="1" onChange={(e) => handleRoleChange(tsIndex, rIndex, 'count', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
@@ -419,9 +440,6 @@ const JobPostingAdminPage = () => {
                 <button type="button" onClick={addTimeSlot} className="text-indigo-600 hover:text-indigo-800 font-medium">
                     + {t('jobPostingAdmin.create.addTimeSlot')}
                 </button>
-                 <datalist id="predefined-roles">
-                    {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.create.${r}`)}</option>)}
-                </datalist>
             </div>
   
             <div>
@@ -559,7 +577,13 @@ const JobPostingAdminPage = () => {
                                     {timeSlot.roles.map((role: RoleRequirement, rIndex: number) => (
                                         <div key={rIndex} className="flex items-center space-x-2 mb-2">
                                             <div className="flex-1">
-                                                <input type="text" value={role.name} onChange={(e) => handleEditRoleChange(tsIndex, rIndex, 'name', e.target.value)} placeholder={t('jobPostingAdmin.edit.roleNamePlaceholder')} list="predefined-roles-edit" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                                <select 
+                                                    value={role.name} 
+                                                    onChange={(e) => handleEditRoleChange(tsIndex, rIndex, 'name', e.target.value)} 
+                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required
+                                                >
+                                                    {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.edit.${r}`)}</option>)}
+                                                </select>
                                             </div>
                                             <div className="w-24">
                                                 <input type="number" value={role.count} min="1" onChange={(e) => handleEditRoleChange(tsIndex, rIndex, 'count', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
@@ -577,9 +601,6 @@ const JobPostingAdminPage = () => {
                             <button type="button" onClick={addEditTimeSlot} className="text-indigo-600 hover:text-indigo-800 font-medium">
                                 + {t('jobPostingAdmin.edit.addTimeSlot')}
                             </button>
-                            <datalist id="predefined-roles-edit">
-                                {predefinedRoles.map(r => <option key={r} value={r}>{t(`jobPostingAdmin.edit.${r}`)}</option>)}
-                            </datalist>
                         </div>
                         
                         <div>
@@ -618,38 +639,46 @@ const JobPostingAdminPage = () => {
                                     <div>
                                       <p className="font-semibold">{applicant.applicantName}</p>
                                       <p className="text-sm text-gray-600">
-                                        {t('jobPostingAdmin.applicants.status')}<span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
-                                        {applicant.status === 'confirmed' && ` - ${applicant.assignedTime} / ${applicant.assignedRole}`}
+                                        {t('jobPostingAdmin.applicants.status')}
+                                        <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
+                                        {(applicant.assignedTime || applicant.assignedRole) && (
+                                            ` (${applicant.assignedTime || 'N/A'} / ${applicant.assignedRole ? t(`jobPostingAdmin.create.${applicant.assignedRole}`, applicant.assignedRole) : 'N/A'})`
+                                        )}
                                       </p>
                                     </div>
-                                    {applicant.status === 'applied' && (
-                                        <div className="flex items-center space-x-2">
-                                            <select 
-                                                className="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-                                                value={selectedAssignment[applicant.id] ? `${selectedAssignment[applicant.id]?.timeSlot}__${selectedAssignment[applicant.id]?.role}` : ''}
-                                                onChange={(e) => {
-                                                    const [timeSlot, role] = e.target.value.split('__');
-                                                    setSelectedAssignment(prev => ({ ...prev, [applicant.id]: { timeSlot, role } }));
-                                                }}
-                                            >
-                                                <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
-                                                {currentPost?.timeSlots?.flatMap((ts: TimeSlot) => 
-                                                    ts.roles.map((r: RoleRequirement) => (
-                                                        <option key={`${ts.time}-${r.name}`} value={`${ts.time}__${r.name}`}>
-                                                            {ts.time} - {t(`jobPostingAdmin.create.${r.name}`, r.name)}
-                                                        </option>
-                                                    ))
-                                                )}
-                                            </select>
-                                            <button 
-                                                onClick={() => handleConfirmApplicant(applicant)}
-                                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                                                disabled={!selectedAssignment[applicant.id]}
-                                            >
-                                                {t('jobPostingAdmin.applicants.confirm')}
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center space-x-2">
+                                        <Link to={`/profile/${applicant.applicantId}`} target="_blank" className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                          {t('jobPostingAdmin.applicants.viewProfile', '프로필 보기')}
+                                        </Link>
+                                        {applicant.status === 'applied' && (
+                                            <>
+                                                <select 
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+                                                    value={selectedAssignment[applicant.id] ? `${selectedAssignment[applicant.id]?.timeSlot}__${selectedAssignment[applicant.id]?.role}` : ''}
+                                                    onChange={(e) => {
+                                                        const [timeSlot, role] = e.target.value.split('__');
+                                                        setSelectedAssignment(prev => ({ ...prev, [applicant.id]: { timeSlot, role } }));
+                                                    }}
+                                                >
+                                                    <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
+                                                    {currentPost?.timeSlots?.flatMap((ts: TimeSlot) => 
+                                                        ts.roles.map((r: RoleRequirement) => (
+                                                            <option key={`${ts.time}-${r.name}`} value={`${ts.time}__${r.name}`}>
+                                                                {ts.time} - {t(`jobPostingAdmin.create.${r.name}`, r.name)}
+                                                            </option>
+                                                        ))
+                                                    )}
+                                                </select>
+                                                <button 
+                                                    onClick={() => handleConfirmApplicant(applicant)}
+                                                    className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                                                    disabled={!selectedAssignment[applicant.id]}
+                                                >
+                                                    {t('jobPostingAdmin.applicants.confirm')}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </li>
                             )) : <p>{t('jobPostingAdmin.applicants.none')}</p>}
                         </ul>

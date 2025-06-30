@@ -439,16 +439,24 @@
       "loginRequired": "You must be logged in to apply.",
       "profileNotFound": "Could not find staff profile.",
       "applicationSuccess": "Application submitted successfully!",
-      "applicationFailed": "Failed to submit application."
+      "applicationFailed": "Failed to submit application.",
+      "selectAssignment": "Please select a time and role to apply for."
     },
     "loading": "Loading job postings...",
     "title": "Job Board",
-    "tournament": "Tournament: {{name}}",
-    "role": "Role: {{role}}",
     "applying": "Applying...",
     "applied": "Applied",
-    "applyNow": "Apply Now",
-    "unknownApplicant": "Unknown Applicant"
+    "applyNow": "Apply",
+    "viewDetails": "View Details",
+    "unknownApplicant": "Unknown Applicant",
+    "applyModal": {
+      "title": "Apply for '{{postTitle}}'",
+      "selectAssignment": "Select Time & Role",
+      "selectPlaceholder": "Select a time and role",
+      "full": "Full",
+      "cancel": "Cancel",
+      "confirm": "Confirm Application"
+    }
   },
   "jobPostingAdmin": {
     "alerts": {
@@ -549,7 +557,8 @@
       "status": "Status: ",
       "as": " as ",
       "selectRole": "Select role",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "viewProfile": "View Profile"
     }
   },
   "staffListPage": {

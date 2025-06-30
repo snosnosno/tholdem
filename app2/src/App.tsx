@@ -66,6 +66,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Layout />}>
               <Route index element={<HomeRedirect />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile/:userId" element={<ProfilePage />} />
               
               {/* Dealer facing routes */}
               <Route path="events" element={<DealerEventsListPage />} />
