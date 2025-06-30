@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -11,6 +11,7 @@ interface Applicant {
     applicantId: string;
     status: 'applied' | 'confirmed' | 'rejected';
     assignedRole?: string;
+    assignedTime?: string;
     appliedAt: any;
 }
 
@@ -56,7 +57,8 @@ const JobPostingAdminPage = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
   const [isCreateFormVisible, setIsCreateFormVisible] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<{ [key: string]: string }>({});
+  const [selectedAssignment, setSelectedAssignment] = useState<{ [key: string]: { timeSlot: string, role: string } | null }>({});
+
 
   const predefinedRoles = ['dealer', 'floor', 'registration', 'serving'];
   const locations = [
@@ -253,14 +255,86 @@ const JobPostingAdminPage = () => {
   };
     
   const handleConfirmApplicant = async (applicant: Applicant) => {
-      // This logic needs to be completely re-thought for the new data structure
-      alert("지원자 확정 기능은 새로운 시간대별 인원 구조에 맞게 업데이트가 필요합니다.");
+    const assignment = selectedAssignment[applicant.id];
+    if (!assignment) {
+        alert(t('jobPostingAdmin.alerts.selectRoleToAssign'));
+        return;
+    }
+    if (!currentPost) return;
+
+    const { timeSlot, role } = assignment;
+    const jobPostingRef = doc(db, "jobPostings", currentPost.id);
+    const applicationRef = doc(db, "applications", applicant.id);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const jobPostingDoc = await transaction.get(jobPostingRef);
+            if (!jobPostingDoc.exists()) throw "Job posting does not exist!";
+
+            const postData = jobPostingDoc.data();
+            const confirmedStaff: ConfirmedStaff[] = postData.confirmedStaff || [];
+            
+            const isAlreadyConfirmed = confirmedStaff.some(staff => staff.userId === applicant.applicantId);
+            if (isAlreadyConfirmed) {
+                alert(t('jobPostingAdmin.alerts.applicantAlreadyConfirmed'));
+                return;
+            }
+            
+            const newConfirmedStaffMember = { userId: applicant.applicantId, role, timeSlot };
+
+            transaction.update(jobPostingRef, {
+                confirmedStaff: arrayUnion(newConfirmedStaffMember)
+            });
+            transaction.update(applicationRef, {
+                status: 'confirmed',
+                assignedRole: role,
+                assignedTime: timeSlot,
+            });
+        });
+        
+        alert(t('jobPostingAdmin.alerts.applicantConfirmSuccess'));
+        await checkAndClosePosting(currentPost.id);
+        handleViewApplicants(currentPost.id); // Refresh applicants list
+    } catch (error) {
+        console.error("Error confirming applicant: ", error);
+        alert(t('jobPostingAdmin.alerts.applicantConfirmFailed'));
+    }
   };
 
   const checkAndClosePosting = async (postId: string) => {
-      // This logic needs to be completely re-thought for the new data structure
-      console.log("checkAndClosePosting needs to be updated.");
+      const jobPostingRef = doc(db, 'jobPostings', postId);
+      try {
+        const jobPostingDoc = await getDoc(jobPostingRef);
+        if(!jobPostingDoc.exists()){
+          return;
+        }
+        const post = jobPostingDoc.data();
+
+        const requiredCounts: { [key: string]: number } = {};
+        post.timeSlots.forEach((ts: TimeSlot) => {
+            ts.roles.forEach((r: RoleRequirement) => {
+                const key = `${ts.time}-${r.name}`;
+                requiredCounts[key] = (requiredCounts[key] || 0) + r.count;
+            });
+        });
+
+        const confirmedCounts: { [key: string]: number } = (post.confirmedStaff || []).reduce((acc: any, staff: ConfirmedStaff) => {
+            const key = `${staff.timeSlot}-${staff.role}`;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        const isFullyStaffed = Object.keys(requiredCounts).every(key => (confirmedCounts[key] || 0) >= requiredCounts[key]);
+
+        if (isFullyStaffed) {
+            await updateDoc(jobPostingRef, { status: 'closed' });
+            alert(t('jobPostingAdmin.alerts.postingClosed'));
+        }
+      } catch (error) {
+          console.error("Error checking and closing posting: ", error);
+      }
   };
+
 
   return (
     <div className="container mx-auto p-4">
@@ -545,22 +619,32 @@ const JobPostingAdminPage = () => {
                                       <p className="font-semibold">{applicant.applicantName}</p>
                                       <p className="text-sm text-gray-600">
                                         {t('jobPostingAdmin.applicants.status')}<span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
-                                        {applicant.status === 'confirmed' && `${t('jobPostingAdmin.applicants.as')}${applicant.assignedRole}`}
+                                        {applicant.status === 'confirmed' && ` - ${applicant.assignedTime} / ${applicant.assignedRole}`}
                                       </p>
                                     </div>
                                     {applicant.status === 'applied' && (
                                         <div className="flex items-center space-x-2">
                                             <select 
                                                 className="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-                                                value={selectedRole[applicant.id] || ''}
-                                                onChange={(e) => setSelectedRole(prev => ({ ...prev, [applicant.id]: e.target.value }))}
+                                                value={selectedAssignment[applicant.id] ? `${selectedAssignment[applicant.id]?.timeSlot}__${selectedAssignment[applicant.id]?.role}` : ''}
+                                                onChange={(e) => {
+                                                    const [timeSlot, role] = e.target.value.split('__');
+                                                    setSelectedAssignment(prev => ({ ...prev, [applicant.id]: { timeSlot, role } }));
+                                                }}
                                             >
                                                 <option value="" disabled>{t('jobPostingAdmin.applicants.selectRole')}</option>
-                                                {/* This needs to be updated to select a role within a time slot */}
+                                                {currentPost?.timeSlots?.flatMap((ts: TimeSlot) => 
+                                                    ts.roles.map((r: RoleRequirement) => (
+                                                        <option key={`${ts.time}-${r.name}`} value={`${ts.time}__${r.name}`}>
+                                                            {ts.time} - {t(`jobPostingAdmin.create.${r.name}`, r.name)}
+                                                        </option>
+                                                    ))
+                                                )}
                                             </select>
                                             <button 
                                                 onClick={() => handleConfirmApplicant(applicant)}
                                                 className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                                                disabled={!selectedAssignment[applicant.id]}
                                             >
                                                 {t('jobPostingAdmin.applicants.confirm')}
                                             </button>
