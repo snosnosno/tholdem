@@ -454,6 +454,7 @@
     "cancelApplication": "Cancel Application",
     "viewDetails": "View Details",
     "unknownApplicant": "Unknown Applicant",
+    "confirmed": "Confirmed",
     "applyModal": {
       "title": "Apply for '{{postTitle}}'",
       "selectAssignment": "Select Time & Role",

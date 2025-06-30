@@ -454,6 +454,7 @@
     "cancelApplication": "지원 취소",
     "viewDetails": "자세히 보기",
     "unknownApplicant": "알 수 없는 지원자",
+    "confirmed": "확정",
     "applyModal": {
       "title": "'{{postTitle}}'에 지원",
       "selectAssignment": "시간 및 역할 선택",

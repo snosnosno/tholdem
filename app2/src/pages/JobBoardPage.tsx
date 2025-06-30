@@ -34,7 +34,7 @@ const JobBoardPage = () => {
   const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
   const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })) as JobPosting[] | undefined, [jobPostingsSnap]);
   
-  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
+  const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
@@ -49,8 +49,11 @@ const JobBoardPage = () => {
 
       const q = query(collection(db, 'applications'), where('applicantId', '==', currentUser.uid), where('postId', 'in', postIds));
       const querySnapshot = await getDocs(q);
-      const appliedPostIds = new Set(querySnapshot.docs.map(doc => doc.data().postId));
-      setAppliedJobs(appliedPostIds);
+      const appliedMap = new Map<string, string>();
+      querySnapshot.forEach(doc => {
+        appliedMap.set(doc.data().postId, doc.data().status);
+      });
+      setAppliedJobs(appliedMap);
     };
 
     fetchAppliedJobs();
@@ -102,7 +105,7 @@ const JobBoardPage = () => {
       });
 
       alert(t('jobBoard.alerts.applicationSuccess'));
-      setAppliedJobs(prev => new Set(prev).add(selectedPost.id));
+      setAppliedJobs(prev => new Map(prev).set(selectedPost.id, 'applied'));
       setIsApplyModalOpen(false);
       setSelectedPost(null);
 
@@ -134,9 +137,9 @@ const JobBoardPage = () => {
 
               alert(t('jobBoard.alerts.cancelSuccess'));
               setAppliedJobs(prev => {
-                  const newSet = new Set(prev);
-                  newSet.delete(postId);
-                  return newSet;
+                  const newMap = new Map(prev);
+                  newMap.delete(postId);
+                  return newMap;
               });
           } catch (error) {
               console.error("Error cancelling application: ", error);
@@ -159,7 +162,7 @@ const JobBoardPage = () => {
         {jobPostings?.map((post) => {
             const formattedStartDate = formatDate(post.startDate);
             const formattedEndDate = formatDate(post.endDate);
-            const isAlreadyApplied = appliedJobs.has(post.id);
+            const applicationStatus = appliedJobs.get(post.id);
 
             return (
                  <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
@@ -198,14 +201,23 @@ const JobBoardPage = () => {
                             >
                                 {t('jobBoard.viewDetails')}
                             </button>
-                            {isAlreadyApplied ? (
-                                <button
-                                    onClick={() => handleCancelApplication(post.id)}
-                                    disabled={isProcessing === post.id}
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
-                                >
-                                    {isProcessing === post.id ? t('jobBoard.cancelling', 'Cancelling...') : t('jobBoard.cancelApplication', 'Cancel Application')}
-                                </button>
+                            {applicationStatus ? (
+                                applicationStatus === 'confirmed' ? (
+                                    <button
+                                        disabled
+                                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 cursor-not-allowed"
+                                    >
+                                        {t('jobBoard.confirmed', 'Confirmed')}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleCancelApplication(post.id)}
+                                        disabled={isProcessing === post.id}
+                                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
+                                    >
+                                        {isProcessing === post.id ? t('jobBoard.cancelling', 'Cancelling...') : t('jobBoard.cancelApplication', 'Cancel Application')}
+                                    </button>
+                                )
                             ) : (
                                 <button
                                     onClick={() => handleOpenApplyModal(post)}
