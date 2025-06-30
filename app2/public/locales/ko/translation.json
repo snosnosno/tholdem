@@ -606,9 +606,9 @@
         "confirmed": "확정",
         "rejected": "거절"
       }
-    }
+    },
     "unknownUser": "알 수 없는 사용자"
-  },
+    },
   "profile": {
     "residentId": "주민등록번호",
     "gender": "성별"

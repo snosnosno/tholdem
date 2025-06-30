@@ -606,9 +606,9 @@
         "confirmed": "Confirmed",
         "rejected": "Rejected"
       }
-    }
+    },
     "unknownUser": "Unknown User"
-  },
+    },
   "profile": {
     "residentId": "Resident ID",
     "gender": "Gender"
