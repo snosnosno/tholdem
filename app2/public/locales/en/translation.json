@@ -42,6 +42,13 @@
     "approvalPending": "Your account is pending approval. Please contact an administrator.",
     "googleSignInError": "An error occurred during Google Sign-In. Please try again later."
   },
+  "adminLogin": {
+    "approvalPending": "Your account is pending approval. Please contact an administrator.",
+    "errorMessage": "Failed to log in. Please check your email and password."
+  },
+  "googleSignIn": {
+    "error": "An error occurred during Google Sign-In. Please try again later."
+  },
   "forgotPassword": {
     "title": "Reset Password",
     "instruction": "Enter your account's email address and we will send you a password reset link.",
