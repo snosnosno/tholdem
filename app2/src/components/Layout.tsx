@@ -82,12 +82,13 @@ export const Layout = () => {
                 <NavItem to="/admin/events" label={t('nav.manageEvents')} Icon={FaCalendarAlt} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/payroll" label={t('nav.processPayroll')} Icon={FaFileInvoice} isOpen={isSidebarOpen} />
                 <hr className="my-2 border-t border-gray-200" />
-                <NavItem to="/admin/participants" label={t('nav.participants')} Icon={FaUsers} isOpen={isSidebarOpen} />
+                {/* 참가자, 블라인드, 기록 페이지 숨김 처리 */}
+                {/* <NavItem to="/admin/participants" label={t('nav.participants')} Icon={FaUsers} isOpen={isSidebarOpen} /> */}
                 <NavItem to="/admin/tables" label={t('nav.tables')} Icon={FaTable} isOpen={isSidebarOpen} />
-                <NavItem to="/admin/blinds" label={t('nav.blinds')} Icon={FaClock} isOpen={isSidebarOpen} />
+                {/* <NavItem to="/admin/blinds" label={t('nav.blinds')} Icon={FaClock} isOpen={isSidebarOpen} /> */}
                 <NavItem to="/admin/prizes" label={t('nav.prizes')} Icon={FaTrophy} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/announcements" label={t('nav.announcements')} Icon={FaBullhorn} isOpen={isSidebarOpen} />
-                <NavItem to="/admin/history" label={t('nav.history')} Icon={FaHistory} isOpen={isSidebarOpen} />
+                {/* <NavItem to="/admin/history" label={t('nav.history')} Icon={FaHistory} isOpen={isSidebarOpen} /> */}
               </>
             )}
 
