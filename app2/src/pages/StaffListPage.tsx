@@ -44,6 +44,11 @@ const StaffListPage: React.FC = () => {
   const [filterPostId, setFilterPostId] = useState('');
   const [sortOption, setSortOption] = useState<string>(''); // 새로운 정렬 옵션 state
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
+  
+  // 편집 기능 관련 states
+  const [editingCell, setEditingCell] = useState<{ rowId: string; field: keyof StaffData } | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+  const [tempStaffData, setTempStaffData] = useState<StaffData[]>([]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -119,6 +124,72 @@ const StaffListPage: React.FC = () => {
 
     fetchManagerStaff();
   }, [currentUser, t]);
+  
+  // 편집 기능 핸들러
+  const handleCellClick = (rowId: string, field: keyof StaffData, currentValue: any) => {
+    // 편집 불가능한 필드 제외
+    const readOnlyFields: (keyof StaffData)[] = ['id', 'userId', 'postingId', 'postingTitle'];
+    if (readOnlyFields.includes(field)) return;
+    
+    setEditingCell({ rowId, field });
+    setEditingValue(String(currentValue || ''));
+  };
+  
+  const handleCellSave = async () => {
+    if (!editingCell) return;
+    
+    const { rowId, field } = editingCell;
+    
+    // 임시 데이터 업데이트
+    setStaffData(prevData => 
+      prevData.map(staff => 
+        staff.id === rowId 
+          ? { ...staff, [field]: field === 'age' ? Number(editingValue) || 0 : editingValue }
+          : staff
+      )
+    );
+    
+    // 여기에 Firebase 업데이트 로직 추가 가능
+    // TODO: Firebase users 컶렉션 업데이트
+    
+    setEditingCell(null);
+    setEditingValue('');
+  };
+  
+  const handleCellCancel = () => {
+    setEditingCell(null);
+    setEditingValue('');
+  };
+  
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCellSave();
+    } else if (e.key === 'Escape') {
+      handleCellCancel();
+    }
+  };
+  
+  // 새 행 추가 기능
+  const addNewRow = () => {
+    const newStaff: StaffData = {
+      id: `temp-${Date.now()}`,
+      userId: `temp-user-${Date.now()}`,
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      gender: '',
+      age: 0,
+      experience: '',
+      nationality: '',
+      history: '',
+      notes: '',
+      postingId: jobPostings[0]?.id || '',
+      postingTitle: jobPostings[0]?.title || ''
+    };
+    
+    setStaffData(prevData => [...prevData, newStaff]);
+  };
 
   // 드롭다운용 정렬 처리 함수
   const handleSortChange = (value: string) => {
@@ -192,6 +263,57 @@ const StaffListPage: React.FC = () => {
       {label}
     </th>
   );
+  
+  // 편집 가능한 셀 컴포넌트
+  const EditableCell = ({ 
+    staff, 
+    field, 
+    value, 
+    isReadOnly = false 
+  }: { 
+    staff: StaffData; 
+    field: keyof StaffData; 
+    value: any; 
+    isReadOnly?: boolean;
+  }) => {
+    const isEditing = editingCell?.rowId === staff.id && editingCell?.field === field;
+    
+    if (isReadOnly) {
+      return (
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {value || '-'}
+        </td>
+      );
+    }
+    
+    if (isEditing) {
+      return (
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <input
+            type={field === 'age' ? 'number' : 'text'}
+            value={editingValue}
+            onChange={(e) => setEditingValue(e.target.value)}
+            onKeyDown={handleKeyPress}
+            onBlur={handleCellSave}
+            className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:border-blue-500"
+            autoFocus
+          />
+        </td>
+      );
+    }
+    
+    return (
+      <td 
+        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 cursor-pointer hover:bg-gray-50"
+        onClick={() => handleCellClick(staff.id, field, value)}
+        title="클릭하여 편집"
+      >
+        {field === 'gender' && value ? t(`gender.${value.toLowerCase()}`, value) : 
+         field === 'age' && value ? `${value}세` : 
+         value || '-'}
+      </td>
+    );
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -240,6 +362,12 @@ const StaffListPage: React.FC = () => {
           <option value="nationality-ascending">{t('profilePage.nationality')} (오름차순)</option>
           <option value="nationality-descending">{t('profilePage.nationality')} (내림차순)</option>
         </select>
+        <button
+          onClick={addNewRow}
+          className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          + 새 행 추가
+        </button>
         </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -263,17 +391,17 @@ const StaffListPage: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAndSortedStaff.length > 0 ? filteredAndSortedStaff.map((staff) => (
                 <tr key={staff.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{staff.postingTitle}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.gender ? t(`gender.${staff.gender.toLowerCase()}`, staff.gender) : '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.age ? `${staff.age}세` : '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.experience || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.phone || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.nationality || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.history || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.notes || '-'}</td>
+                  <EditableCell staff={staff} field="postingTitle" value={staff.postingTitle} isReadOnly={true} />
+                  <EditableCell staff={staff} field="role" value={staff.role} />
+                  <EditableCell staff={staff} field="name" value={staff.name} />
+                  <EditableCell staff={staff} field="gender" value={staff.gender} />
+                  <EditableCell staff={staff} field="age" value={staff.age} />
+                  <EditableCell staff={staff} field="experience" value={staff.experience} />
+                  <EditableCell staff={staff} field="phone" value={staff.phone} />
+                  <EditableCell staff={staff} field="email" value={staff.email} />
+                  <EditableCell staff={staff} field="nationality" value={staff.nationality} />
+                  <EditableCell staff={staff} field="history" value={staff.history} />
+                  <EditableCell staff={staff} field="notes" value={staff.notes} />
                 </tr>
               )) : (
                 <tr>
