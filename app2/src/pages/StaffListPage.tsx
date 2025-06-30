@@ -42,6 +42,7 @@ const StaffListPage: React.FC = () => {
   // States for filtering and sorting
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPostId, setFilterPostId] = useState('');
+  const [sortOption, setSortOption] = useState<string>(''); // 새로운 정렬 옵션 state
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>(null);
 
   useEffect(() => {
@@ -119,11 +120,15 @@ const StaffListPage: React.FC = () => {
     fetchManagerStaff();
   }, [currentUser, t]);
 
-  const requestSort = (key: SortKey) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+  // 드롭다운용 정렬 처리 함수
+  const handleSortChange = (value: string) => {
+    setSortOption(value);
+    if (!value) {
+      setSortConfig(null);
+      return;
     }
+    
+    const [key, direction] = value.split('-') as [SortKey, 'ascending' | 'descending'];
     setSortConfig({ key, direction });
   };
 
@@ -181,16 +186,10 @@ const StaffListPage: React.FC = () => {
     return <div className="text-red-500 text-center">{error}</div>;
   }
 
-  const SortableHeader = ({ sortKey, label }: { sortKey: SortKey, label: string }) => (
-    <th 
-      scope="col" 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-      onClick={() => requestSort(sortKey)}
-    >
+  // 일반 헤더 컴포넌트 (정렬 기능 제거)
+  const TableHeader = ({ label }: { label: string }) => (
+    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
       {label}
-      {sortConfig?.key === sortKey && (
-        <span>{sortConfig.direction === 'ascending' ? ' ▲' : ' ▼'}</span>
-      )}
     </th>
   );
 
@@ -216,22 +215,47 @@ const StaffListPage: React.FC = () => {
             <option key={post.id} value={post.id}>{post.title}</option>
           ))}
         </select>
-      </div>
+        <select
+          className="w-full md:w-1/3 p-2 border border-gray-300 rounded-md"
+          value={sortOption}
+          onChange={(e) => handleSortChange(e.target.value)}
+        >
+          <option value="">{t('common.sort', '정렬')} ({t('common.none', '없음')})</option>
+          <option value="postingTitle-ascending">{t('jobPostingAdmin.manage.title')} (오름차순)</option>
+          <option value="postingTitle-descending">{t('jobPostingAdmin.manage.title')} (내림차순)</option>
+          <option value="role-ascending">{t('jobPostingAdmin.create.roleName')} (오름차순)</option>
+          <option value="role-descending">{t('jobPostingAdmin.create.roleName')} (내림차순)</option>
+          <option value="name-ascending">{t('staffNew.labelName')} (오름차순)</option>
+          <option value="name-descending">{t('staffNew.labelName')} (내림차순)</option>
+          <option value="gender-ascending">{t('signUp.genderLabel')} (오름차순)</option>
+          <option value="gender-descending">{t('signUp.genderLabel')} (내림차순)</option>
+          <option value="age-ascending">{t('profilePage.age')} (오름차순)</option>
+          <option value="age-descending">{t('profilePage.age')} (내림차순)</option>
+          <option value="experience-ascending">{t('profilePage.experience')} (오름차순)</option>
+          <option value="experience-descending">{t('profilePage.experience')} (내림차순)</option>
+          <option value="phone-ascending">{t('signUp.phoneLabel')} (오름차순)</option>
+          <option value="phone-descending">{t('signUp.phoneLabel')} (내림차순)</option>
+          <option value="email-ascending">{t('staffNew.labelEmail')} (오름차순)</option>
+          <option value="email-descending">{t('staffNew.labelEmail')} (내림차순)</option>
+          <option value="nationality-ascending">{t('profilePage.nationality')} (오름차순)</option>
+          <option value="nationality-descending">{t('profilePage.nationality')} (내림차순)</option>
+        </select>
+        </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <SortableHeader sortKey="postingTitle" label={t('jobPostingAdmin.manage.title')} />
-                <SortableHeader sortKey="role" label={t('jobPostingAdmin.create.roleName')} />
-                <SortableHeader sortKey="name" label={t('staffNew.labelName')} />
-                <SortableHeader sortKey="gender" label={t('signUp.genderLabel')} />
-                <SortableHeader sortKey="age" label={t('profilePage.age')} />
-                <SortableHeader sortKey="experience" label={t('profilePage.experience')} />
-                <SortableHeader sortKey="phone" label={t('signUp.phoneLabel')} />
-                <SortableHeader sortKey="email" label={t('staffNew.labelEmail')} />
-                <SortableHeader sortKey="nationality" label={t('profilePage.nationality')} />
+                <TableHeader label={t('jobPostingAdmin.manage.title')} />
+                <TableHeader label={t('jobPostingAdmin.create.roleName')} />
+                <TableHeader label={t('staffNew.labelName')} />
+                <TableHeader label={t('signUp.genderLabel')} />
+                <TableHeader label={t('profilePage.age')} />
+                <TableHeader label={t('profilePage.experience')} />
+                <TableHeader label={t('signUp.phoneLabel')} />
+                <TableHeader label={t('staffNew.labelEmail')} />
+                <TableHeader label={t('profilePage.nationality')} />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
               </tr>
