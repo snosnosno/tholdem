@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -8,12 +8,20 @@ import { useTranslation } from 'react-i18next';
 interface Applicant {
     id: string;
     applicantName: string;
+    applicantId: string;
+    status: 'applied' | 'confirmed' | 'rejected';
+    assignedRole?: string;
     appliedAt: any;
 }
 
 interface RoleRequirement {
     name: string;
     count: number;
+}
+
+interface ConfirmedStaff {
+    userId: string;
+    role: string;
 }
 
 const JobPostingAdminPage = () => {
@@ -43,6 +51,7 @@ const JobPostingAdminPage = () => {
   const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<{ [key: string]: string }>({});
 
   const predefinedRoles = ['dealer', 'floor', 'registration', 'serving'];
   const locations = [
@@ -99,6 +108,7 @@ const JobPostingAdminPage = () => {
       await addDoc(collection(db, 'jobPostings'), {
         ...formData,
         createdAt: serverTimestamp(),
+        confirmedStaff: [],
       });
       alert(t('jobPostingAdmin.alerts.createSuccess'));
       setFormData({
@@ -172,6 +182,7 @@ const JobPostingAdminPage = () => {
         try {
             await deleteDoc(doc(db, 'jobPostings', postId));
             alert(t('jobPostingAdmin.alerts.deleteSuccess'));
+            setIsEditModalOpen(false); // Close modal on successful delete
         } catch (error) {
             console.error("Error deleting job posting: ", error);
             alert(t('jobPostingAdmin.alerts.deleteFailed'));
@@ -180,6 +191,7 @@ const JobPostingAdminPage = () => {
   };
 
   const handleViewApplicants = async (postId: string) => {
+    setCurrentPost(jobPostings?.find(p => p.id === postId) || null);
     setLoadingApplicants(true);
     setIsApplicantsModalOpen(true);
     try {
@@ -194,6 +206,86 @@ const JobPostingAdminPage = () => {
         setLoadingApplicants(false);
     }
   };
+    
+  const handleConfirmApplicant = async (applicant: Applicant) => {
+      const roleToAssign = selectedRole[applicant.id];
+      if (!roleToAssign) {
+          alert("Please select a role to assign.");
+          return;
+      }
+      if (!currentPost) return;
+
+      const jobPostingRef = doc(db, "jobPostings", currentPost.id);
+      const applicationRef = doc(db, "applications", applicant.id);
+
+      try {
+          await runTransaction(db, async (transaction) => {
+              const jobPostingDoc = await transaction.get(jobPostingRef);
+              if (!jobPostingDoc.exists()) {
+                  throw "Job posting does not exist!";
+              }
+
+              const postData = jobPostingDoc.data();
+              const confirmedStaff: ConfirmedStaff[] = postData.confirmedStaff || [];
+              
+              const isAlreadyConfirmed = confirmedStaff.some(staff => staff.userId === applicant.applicantId);
+              if (isAlreadyConfirmed) {
+                  // Already confirmed, maybe alert the user or just ignore.
+                  alert("This applicant is already confirmed.");
+                  return;
+              }
+              
+              const newConfirmedStaffMember = { userId: applicant.applicantId, role: roleToAssign };
+
+              transaction.update(jobPostingRef, {
+                  confirmedStaff: arrayUnion(newConfirmedStaffMember)
+              });
+              transaction.update(applicationRef, {
+                  status: 'confirmed',
+                  assignedRole: roleToAssign
+              });
+          });
+          
+          alert("Applicant confirmed successfully.");
+          await checkAndClosePosting(currentPost.id);
+          // Refresh applicants list
+          handleViewApplicants(currentPost.id);
+
+      } catch (error) {
+          console.error("Error confirming applicant: ", error);
+          alert("Failed to confirm applicant.");
+      }
+  };
+
+  const checkAndClosePosting = async (postId: string) => {
+      const jobPostingRef = doc(db, 'jobPostings', postId);
+      try {
+        const jobPostingDoc = await getDocs(query(collection(db, 'jobPostings'), where('__name__', '==', postId)));
+        if(jobPostingDoc.empty){
+          return;
+        }
+        const post = jobPostingDoc.docs[0].data();
+
+        const requiredCounts: { [key: string]: number } = (post.roles as RoleRequirement[]).reduce((acc, role) => {
+            acc[role.name] = role.count;
+            return acc;
+        }, {} as { [key: string]: number });
+
+        const confirmedCounts: { [key: string]: number } = (post.confirmedStaff as ConfirmedStaff[] || []).reduce((acc, staff) => {
+            acc[staff.role] = (acc[staff.role] || 0) + 1;
+            return acc;
+        }, {} as { [key: string]: number });
+
+        const isFullyStaffed = Object.keys(requiredCounts).every(role => (confirmedCounts[role] || 0) >= requiredCounts[role]);
+
+        if (isFullyStaffed) {
+            await updateDoc(jobPostingRef, { status: 'closed' });
+            alert('All roles have been filled. The job posting is now closed.');
+        }
+      } catch (error) {
+          console.error("Error checking and closing posting: ", error);
+      }
+  };
 
 
   return (
@@ -201,6 +293,7 @@ const JobPostingAdminPage = () => {
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-4">{t('jobPostingAdmin.create.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+            {/* Form fields */}
             <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
                 <input type="text" name="title" id="title" value={formData.title} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
@@ -323,19 +416,13 @@ const JobPostingAdminPage = () => {
                                 onClick={() => handleViewApplicants(post.id)}
                                 className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                             >
-                                {t('jobPostingAdmin.manage.viewApplicants')}
+                                {t('jobPostingAdmin.manage.applicants')}
                             </button>
                             <button
                                 onClick={() => handleOpenEditModal(post)}
                                 className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
                             >
                                 {t('jobPostingAdmin.manage.edit')}
-                            </button>
-                             <button
-                                onClick={() => handleDelete(post.id)}
-                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-                            >
-                                {t('jobPostingAdmin.manage.delete')}
                             </button>
                             <button 
                                 onClick={() => handleAutoMatch(post.id)}
@@ -356,7 +443,8 @@ const JobPostingAdminPage = () => {
                 <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
                     <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.edit.title')}</h3>
                     <form onSubmit={handleUpdatePost} className="space-y-4">
-                        <div>
+                        {/* Edit form fields */}
+                         <div>
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                         </div>
@@ -447,6 +535,9 @@ const JobPostingAdminPage = () => {
                         </div>
                         <div className="flex justify-end space-x-2">
                             <button type="button" onClick={() => setIsEditModalOpen(false)} className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">{t('jobPostingAdmin.edit.cancel')}</button>
+                            <button type="button" onClick={() => handleDelete(currentPost.id)} className="py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700">
+                                {t('jobPostingAdmin.manage.delete')}
+                            </button>
                             <button type="submit" className="py-2 px-4 bg-indigo-600 text-white rounded hover:bg-indigo-700">{t('jobPostingAdmin.edit.save')}</button>
                         </div>
                     </form>
@@ -456,15 +547,39 @@ const JobPostingAdminPage = () => {
 
         {isApplicantsModalOpen && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+                <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
                     <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.applicants.title')}</h3>
                     {loadingApplicants ? (
                         <p>{t('jobPostingAdmin.applicants.loading')}</p>
                     ) : (
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {applicants.length > 0 ? applicants.map(applicant => (
-                                <li key={applicant.id} className="p-2 border rounded-md">
-                                    {applicant.applicantName}
+                                <li key={applicant.id} className="p-3 border rounded-md flex justify-between items-center">
+                                    <div>
+                                      <p className="font-semibold">{applicant.applicantName}</p>
+                                      <p className="text-sm text-gray-600">
+                                        Status: <span className={`font-medium ${applicant.status === 'confirmed' ? 'text-green-600' : 'text-blue-600'}`}>{applicant.status}</span>
+                                        {applicant.status === 'confirmed' && ` as ${applicant.assignedRole}`}
+                                      </p>
+                                    </div>
+                                    {applicant.status === 'applied' && (
+                                        <div className="flex items-center space-x-2">
+                                            <select 
+                                                className="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+                                                value={selectedRole[applicant.id] || ''}
+                                                onChange={(e) => setSelectedRole(prev => ({ ...prev, [applicant.id]: e.target.value }))}
+                                            >
+                                                <option value="" disabled>Select role</option>
+                                                {currentPost?.roles.map((r: RoleRequirement) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                                            </select>
+                                            <button 
+                                                onClick={() => handleConfirmApplicant(applicant)}
+                                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                                            >
+                                                Confirm
+                                            </button>
+                                        </div>
+                                    )}
                                 </li>
                             )) : <p>{t('jobPostingAdmin.applicants.none')}</p>}
                         </ul>

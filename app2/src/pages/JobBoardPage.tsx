@@ -42,7 +42,7 @@ const JobBoardPage = () => {
 
     const fetchAppliedJobs = async () => {
       if (!currentUser) return;
-      const q = query(collection(db, 'applications'), where('staffId', '==', currentUser.uid));
+      const q = query(collection(db, 'applications'), where('applicantId', '==', currentUser.uid));
       const querySnapshot = await getDocs(q);
       const appliedPostIds = new Set(querySnapshot.docs.map(doc => doc.data().postId));
       setAppliedJobs(appliedPostIds);
@@ -66,11 +66,11 @@ const JobBoardPage = () => {
       }
       
       await addDoc(collection(db, 'applications'), {
-        staffId: currentUser.uid,
+        applicantId: currentUser.uid,
         applicantName: staffDoc.data().name || 'Unknown Applicant',
         postId: postId,
         postTitle: postTitle,
-        status: 'pending',
+        status: 'applied',
         appliedAt: serverTimestamp(),
       });
       alert(t('jobBoard.alerts.applicationSuccess'));
