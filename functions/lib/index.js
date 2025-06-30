@@ -53,28 +53,26 @@ exports.submitDealerRating = functions.https.onCall(async (data, context) => { }
  * - Managers are created as disabled and await admin approval.
  */
 exports.requestRegistration = functions.https.onCall(async (data) => {
-    const { email, password, name, role, phone } = data; // Add phone
-    if (!email || !password || !name || !role) { // phone is optional for now
+    // Log the incoming data for debugging
+    functions.logger.info("requestRegistration called with data:", data);
+    const { email, password, name, role, phone } = data;
+    if (!email || !password || !name || !role) {
+        functions.logger.error("Validation failed: Missing required fields.", { data });
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
     }
     if (role !== 'dealer' && role !== 'manager') {
+        functions.logger.error("Validation failed: Invalid role.", { role });
         throw new functions.https.HttpsError('invalid-argument', 'Role must be either "dealer" or "manager".');
     }
     try {
+        const isDealer = role === 'dealer';
         const userRecord = await admin.auth().createUser({
             email,
             password,
             displayName: name,
-            disabled: true, // All users are created as disabled initially
+            disabled: !isDealer,
         });
-        let userRole = '';
-        if (role === 'dealer') {
-            await admin.auth().updateUser(userRecord.uid, { disabled: false });
-            userRole = 'dealer';
-        }
-        else { // role === 'manager'
-            userRole = 'pending_manager';
-        }
+        const userRole = isDealer ? 'dealer' : 'pending_manager';
         await admin.auth().setCustomUserClaims(userRecord.uid, { role: userRole });
         await db.collection('users').doc(userRecord.uid).set({
             name,
@@ -87,7 +85,19 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
     }
     catch (error) {
         console.error("Error during registration request:", error);
-        throw new functions.https.HttpsError('internal', 'An unexpected error occurred.', error.message);
+        const errorCode = error.code;
+        switch (errorCode) {
+            case 'auth/email-already-in-use':
+                throw new functions.https.HttpsError('already-exists', 'This email address is already in use.');
+            case 'auth/invalid-email':
+                throw new functions.https.HttpsError('invalid-argument', 'The email address is not valid.', { originalCode: errorCode });
+            case 'auth/weak-password':
+                throw new functions.https.HttpsError('invalid-argument', 'The password is too weak.', { originalCode: errorCode });
+            case 'auth/operation-not-allowed':
+                throw new functions.https.HttpsError('unimplemented', 'Email/password sign-in is not enabled.', { originalCode: errorCode });
+            default:
+                throw new functions.https.HttpsError('internal', 'An unexpected error occurred.', { originalCode: errorCode || 'unknown' });
+        }
     }
 });
 /**

@@ -2,18 +2,25 @@
   "approve": "Approve",
   "reject": "Reject",
   "loading": "Loading...",
-  "adminLogin": {
+  "login": {
     "title": "Login",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
     "emailPlaceholder": "Email Address",
     "passwordPlaceholder": "Password",
     "loginButton": "Sign In",
-    "errorMessage": "Failed to log in. Please check your email and password.",
-    "approvalPending": "Awaiting approval.",
     "forgotPassword": "Forgot your password?",
-    "noAccount": "Don't have an account? Sign Up"
+    "orContinueWith": "Or continue with",
+    "googleSignIn": "Sign in with Google",
+    "noAccount": "Don't have an account? Sign Up",
+    "errorMessage": "Failed to log in. Please check your email and password.",
+    "approvalPending": "Your account is pending approval. Please contact an administrator.",
+    "googleSignInError": "An error occurred during Google Sign-In. Please try again later."
   },
   "forgotPassword": {
     "title": "Reset Password",
+    "instruction": "Enter your account's email address and we will send you a password reset link.",
+    "emailLabel": "Email Address",
     "emailPlaceholder": "Email Address",
     "sendButton": "Send Reset Link",
     "sendingButton": "Sending...",
@@ -23,6 +30,10 @@
   },
   "signUp": {
     "title": "Sign Up",
+    "nameLabel": "Name",
+    "phoneLabel": "Phone Number",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
     "namePlaceholder": "Name",
     "phonePlaceholder": "Phone Number",
     "emailPlaceholder": "Email Address",
@@ -31,12 +42,22 @@
     "roleDealer": "Regular Member",
     "roleManager": "Admin Member",
     "managerApprovalNotice": "Admin Member registration requires operator approval. Please request to join.",
-    "signUpButton": "Request to Sign Up",
-    "signingUpButton": "Submitting...",
-    "successMessage": "Your registration request has been submitted. You can log in after admin approval.",
+    "signUpButton": "Sign Up",
+    "signingUpButton": "Signing up...",
+    "orSignUpWith": "Or sign up with",
+    "googleSignUp": "Sign up with Google",
+    "haveAccount": "Already have an account? Log In",
+    "dealerSuccessMessage": "Sign-up successful. You can now log in.",
+    "managerSuccessMessage": "Your registration request has been submitted. You can log in after admin approval.",
     "errorMessage": "An error occurred during sign-up. Please try again later.",
     "passwordLengthError": "Password must be at least 6 characters long.",
+    "emailInUseError": "This email address is already in use.",
+    "invalidEmailError": "The email address format is not valid.",
+    "weakPasswordError": "The password is too weak. Please use a stronger password.",
     "backToLogin": "Back to Login"
+  },
+  "modal": {
+    "confirm": "Confirm"
   },
   "nav": {
     "dashboard": "Dashboard",

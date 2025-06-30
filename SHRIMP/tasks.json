@@ -1,128 +1,121 @@
 {
   "tasks": [
     {
-      "id": "8fe86a38-0f4c-46b0-88b9-f22dd69c88dc",
-      "name": "[Backend] processRegistration 함수 권한 축소",
-      "description": "`functions/src/index.ts` 파일에 있는 `processRegistration` Cloud Function의 호출 권한을 수정합니다. 기존에 `manager`에게도 허용했던 권한을 다시 `admin` 역할만 가진 사용자만 호출할 수 있도록 제한합니다.",
-      "status": "pending",
+      "id": "f52b3785-d88e-460b-85d1-08a1e8b0719d",
+      "name": "Task 1: Firebase 백엔드 강화 - 신규 사용자 자동 등록 트리거 구현",
+      "description": "Firebase Authentication에 새로운 사용자가 생성될 때마다, 해당 사용자의 정보를 Firestore의 'users' 컬렉션에 자동으로 추가하는 Auth 트리거를 구현합니다. 이 작업은 전체 인증 시스템의 기반이 되므로 가장 먼저 수행되어야 합니다.",
+      "notes": "이 트리거는 이메일 가입, 소셜 로그인 등 모든 종류의 신규 사용자 생성에 대응해야 합니다.",
+      "status": "completed",
       "dependencies": [],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
+      "createdAt": "2025-06-30T10:34:14.712Z",
+      "updatedAt": "2025-06-30T10:36:26.204Z",
       "relatedFiles": [
         {
           "path": "functions/src/index.ts",
           "type": "TO_MODIFY",
-          "description": "Cloud Function의 권한 확인 로직을 수정할 파일입니다."
+          "description": "Auth 트리거 함수를 추가하고 기존 함수를 수정합니다."
         }
       ],
-      "implementationGuide": "1. `functions/src/index.ts` 파일을 엽니다.\\n2. `processRegistration` 함수를 찾습니다.\\n3. 함수 상단의 권한 확인 `if` 문을 `if (context.auth?.token?.role !== 'admin')`으로 수정하여, `admin`이 아닐 경우 `permission-denied` 오류를 발생시키도록 변경합니다.",
-      "verificationCriteria": "수정 후 Firebase에 함수를 배포했을 때, `manager` 계정으로 가입 승인/거절 시도를 하면 콘솔에 `permission-denied` 오류가 기록되어야 합니다. `admin` 계정으로는 정상적으로 처리되어야 합니다."
+      "implementationGuide": "1. `functions/src/index.ts` 파일을 엽니다.\n2. `functions.auth.user().onCreate()`를 사용하여 새로운 함수 `createUserData`를 정의합니다.\n3. 함수 내에서, 트리거로부터 받은 `user` 객체(uid, email, displayName)를 사용하여 Firestore의 `users/{uid}` 경로에 문서를 생성합니다.\n4. 문서에는 `email`, `name`, 그리고 기본값으로 `role: 'dealer'`와 `createdAt` 타임스탬프를 포함시킵니다.\n5. 기존 `requestRegistration` 함수에서 Firestore에 데이터를 쓰던 부분을 제거하여 책임(Auth 계정 생성)을 분리합니다.",
+      "verificationCriteria": "1. Firebase Auth에 새 사용자를 생성하면(어떤 방식이든) Firestore의 `users` 컬렉션에 해당 유저의 문서가 자동으로 생성되는지 확인합니다.\n2. 문서에는 `email`, `name`, `role: 'dealer'` 필드가 포함되어야 합니다.\n3. 기존 이메일/비밀번호 회원가입 기능이 여전히 정상 동작하는지 확인합니다.",
+      "analysisResult": "## 최종 목표: 로그인/회원가입 경험 개편\n\n현대의 웹 표준에 맞는 세련되고 사용자 친화적인 인증 시스템을 구축합니다. 이를 위해 UI/UX를 전면 개편하고, Google 소셜 로그인 기능을 도입하며, 코드의 재사용성과 유지보수성을 극대화합니다.\n\n### 핵심 구현 사항:\n\n1.  **UI 일관성 확보:** `AuthLayout`과 `FormField`라는 두 개의 핵심 공통 컴포넌트를 제작하여 모든 인증 관련 페이지(로그인, 회원가입, 비밀번호 찾기)의 디자인과 동작을 통일합니다.\n2.  **사용자 편의성 증대:** Google 계정을 통해 클릭 한 번으로 로그인/회원가입이 가능하도록 소셜 로그인 기능을 구현합니다. 또한, 비밀번호 가시성 토글, 실시간 입력값 검증 등 UX를 개선합니다.\n3.  **안정적인 백엔드:** Firebase Auth 트리거를 도입하여, 어떤 방식으로 사용자가 가입하든(이메일, 소셜 등) Firestore `users` 데이터베이스에 사용자 정보가 누락 없이 자동으로 기록되도록 보장합니다. 이를 통해 백엔드 로직을 단순화하고 안정성을 높입니다.\n\n### 기술 스택:\n- **프론트엔드:** React, TypeScript, Tailwind CSS\n- **인증/백엔드:** Firebase Authentication, Firestore, Firebase Functions\n- **상태관리:** React Context API",
+      "summary": "`functions/src/index.ts` 파일을 성공적으로 수정했습니다. 신규 사용자 생성을 자동으로 처리하는 `createUserData` Auth 트리거를 도입하고, 기존 `requestRegistration` 함수의 책임을 분리하여 코드의 구조와 안정성을 크게 향상시켰습니다. `onCreate` 트리거는 모든 유형의 신규 사용자(이메일, 소셜 로그인 등)를 일관되게 처리할 수 있는 기반을 마련했으며, `requestRegistration` 함수는 이제 Auth 계정 생성에만 집중하게 되어 로직이 더욱 명확해졌습니다. 모든 요구사항을 충족하였으며, 코드 리뷰 결과 논리적 오류가 없음을 확인했습니다.",
+      "completedAt": "2025-06-30T10:36:26.203Z"
     },
     {
-      "id": "7a19cc05-26da-4d73-8c5f-45bd2bf312a8",
-      "name": "[Frontend] AuthContext 리팩토링 및 호환성 유지",
-      "description": "`app2/src/contexts/AuthContext.tsx` 파일을 수정하여, `isAdmin` boolean 대신 명시적인 `role` 문자열을 상태로 관리합니다. 동시에, 기존 코드의 수정을 최소화하기 위해 `role`을 기반으로 계산되는 `isAdmin` 값을 컨텍스트에 함께 제공하여 하위 호환성을 유지합니다.",
-      "status": "pending",
-      "dependencies": [
+      "id": "2ce12e12-c183-4d9d-bccb-13b3e61cfbf4",
+      "name": "Task 2: 공통 UI 컴포넌트 제작 - AuthLayout & FormField",
+      "description": "모든 인증 관련 페이지에서 일관된 UI/UX를 제공하기 위해 재사용 가능한 `AuthLayout`과 `FormField` 컴포넌트를 제작합니다. 이 컴포넌트들은 이후 페이지 리팩토링 작업의 기반이 됩니다.",
+      "notes": "스타일은 Tailwind CSS를 최대한 활용하여 작성합니다.",
+      "status": "completed",
+      "dependencies": [],
+      "createdAt": "2025-06-30T10:34:14.712Z",
+      "updatedAt": "2025-06-30T10:38:48.217Z",
+      "relatedFiles": [
         {
-          "taskId": "8fe86a38-0f4c-46b0-88b9-f22dd69c88dc"
+          "path": "app2/src/components/AuthLayout.tsx",
+          "type": "CREATE",
+          "description": "인증 페이지용 공통 레이아웃 컴포넌트"
+        },
+        {
+          "path": "app2/src/components/FormField.tsx",
+          "type": "CREATE",
+          "description": "폼 입력을 위한 공통 컴포넌트"
         }
       ],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
+      "implementationGuide": "1. `app2/src/components/AuthLayout.tsx` 파일을 생성합니다. 이 컴포넌트는 로고와 제목, 그리고 카드 형태의 레이아웃을 포함하며, `children`으로 실제 폼을 렌더링합니다.\n2. `app2/src/components/FormField.tsx` 파일을 생성합니다. 이 컴포넌트는 `label`, `input` 태그와 함께 에러 메시지 표시, 비밀번호 가시성 토글 기능을 내장합니다.",
+      "verificationCriteria": "1. `AuthLayout` 컴포넌트가 로고, 제목, 카드 UI를 올바르게 렌더링하는지 확인합니다.\n2. `FormField` 컴포넌트가 props에 따라 라벨, 입력 필드를 올바르게 표시하는지 확인합니다.\n3. `FormField`의 비밀번호 타입에서 가시성 토글 기능이 정상 동작하는지 확인합니다.",
+      "analysisResult": "## 최종 목표: 로그인/회원가입 경험 개편\n\n현대의 웹 표준에 맞는 세련되고 사용자 친화적인 인증 시스템을 구축합니다. 이를 위해 UI/UX를 전면 개편하고, Google 소셜 로그인 기능을 도입하며, 코드의 재사용성과 유지보수성을 극대화합니다.\n\n### 핵심 구현 사항:\n\n1.  **UI 일관성 확보:** `AuthLayout`과 `FormField`라는 두 개의 핵심 공통 컴포넌트를 제작하여 모든 인증 관련 페이지(로그인, 회원가입, 비밀번호 찾기)의 디자인과 동작을 통일합니다.\n2.  **사용자 편의성 증대:** Google 계정을 통해 클릭 한 번으로 로그인/회원가입이 가능하도록 소셜 로그인 기능을 구현합니다. 또한, 비밀번호 가시성 토글, 실시간 입력값 검증 등 UX를 개선합니다.\n3.  **안정적인 백엔드:** Firebase Auth 트리거를 도입하여, 어떤 방식으로 사용자가 가입하든(이메일, 소셜 등) Firestore `users` 데이터베이스에 사용자 정보가 누락 없이 자동으로 기록되도록 보장합니다. 이를 통해 백엔드 로직을 단순화하고 안정성을 높입니다.\n\n### 기술 스택:\n- **프론트엔드:** React, TypeScript, Tailwind CSS\n- **인증/백엔드:** Firebase Authentication, Firestore, Firebase Functions\n- **상태관리:** React Context API",
+      "summary": "재사용 가능한 공통 UI 컴포넌트인 `AuthLayout.tsx`와 `FormField.tsx`를 `app2/src/components/` 경로에 성공적으로 생성했습니다. `AuthLayout`은 인증 관련 페이지들의 전체적인 레이아웃과 디자인 통일성을 제공하며, `FormField`는 입력 필드의 UI와 동작(비밀번호 가시성 토글, 에러 메시지 표시 등)을 캡슐화하여 코드의 재사용성을 높입니다. 두 컴포넌트 모두 Task 가이드라인의 모든 요구사항을 충족하도록 작성되었습니다.",
+      "completedAt": "2025-06-30T10:38:48.211Z"
+    },
+    {
+      "id": "eb57948a-039d-4129-8bea-63319c3675a8",
+      "name": "Task 3: 인증 컨텍스트 확장 - Google 로그인 기능 추가",
+      "description": "사용자가 Google 계정으로 서비스에 로그인할 수 있도록 `AuthContext`에 소셜 로그인 처리 로직을 추가합니다.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "f52b3785-d88e-460b-85d1-08a1e8b0719d"
+        }
+      ],
+      "createdAt": "2025-06-30T10:34:14.712Z",
+      "updatedAt": "2025-06-30T10:47:55.085Z",
       "relatedFiles": [
         {
           "path": "app2/src/contexts/AuthContext.tsx",
           "type": "TO_MODIFY",
-          "description": "인증 컨텍스트를 `role` 기반으로 수정하고 `isAdmin` 호환성을 유지할 파일입니다."
+          "description": "Google 로그인 함수를 추가합니다."
         }
       ],
-      "implementationGuide": "1. `app2/src/contexts/AuthContext.tsx` 파일을 엽니다.\\n2. `useState`를 사용하여 `role` 상태(`string | null`)를 추가합니다.\\n3. `onAuthStateChanged` 콜백 내에서, 사용자의 `idTokenResult.claims.role`을 가져와 `role` 상태를 업데이트하는 로직을 추가합니다.\\n4. Context Provider의 `value` 객체에 새로운 `role` 상태와 함께, `const isAdmin = role === 'admin' || role === 'manager';`와 같이 계산된 `isAdmin` 값을 포함시켜 반환합니다.",
-      "verificationCriteria": "`useAuth()` 훅을 사용하는 다른 컴포넌트에서 `isAdmin`을 호출했을 때 앱이 깨지지 않아야 합니다. `useAuth()`에서 새로 추가된 `role` 값을 정상적으로 가져올 수 있어야 합니다."
+      "implementationGuide": "1. `app2/src/contexts/AuthContext.tsx` 파일을 엽니다.\n2. `firebase/auth`에서 `GoogleAuthProvider`, `signInWithPopup`을 import합니다.\n3. `signInWithGoogle` 이라는 async 함수를 새로 정의하고, `signInWithPopup`을 호출하여 Google 로그인 팝업을 띄우는 로직을 작성합니다.\n4. `AuthContextType` 인터페이스에 `signInWithGoogle: () => Promise<any>;`를 추가하고, `AuthContext.Provider`의 `value` 객체에도 구현된 함수를 포함시킵니다.",
+      "verificationCriteria": "1. `useAuth()`를 통해 `signInWithGoogle` 함수를 호출할 수 있는지 확인합니다.\n2. 함수 호출 시 Google 로그인 팝업이 정상적으로 나타나는지 확인합니다.\n3. 로그인이 성공하면 `currentUser` 상태가 올바르게 업데이트되는지 확인합니다.",
+      "analysisResult": "## 최종 목표: 로그인/회원가입 경험 개편\n\n현대의 웹 표준에 맞는 세련되고 사용자 친화적인 인증 시스템을 구축합니다. 이를 위해 UI/UX를 전면 개편하고, Google 소셜 로그인 기능을 도입하며, 코드의 재사용성과 유지보수성을 극대화합니다.\n\n### 핵심 구현 사항:\n\n1.  **UI 일관성 확보:** `AuthLayout`과 `FormField`라는 두 개의 핵심 공통 컴포넌트를 제작하여 모든 인증 관련 페이지(로그인, 회원가입, 비밀번호 찾기)의 디자인과 동작을 통일합니다.\n2.  **사용자 편의성 증대:** Google 계정을 통해 클릭 한 번으로 로그인/회원가입이 가능하도록 소셜 로그인 기능을 구현합니다. 또한, 비밀번호 가시성 토글, 실시간 입력값 검증 등 UX를 개선합니다.\n3.  **안정적인 백엔드:** Firebase Auth 트리거를 도입하여, 어떤 방식으로 사용자가 가입하든(이메일, 소셜 등) Firestore `users` 데이터베이스에 사용자 정보가 누락 없이 자동으로 기록되도록 보장합니다. 이를 통해 백엔드 로직을 단순화하고 안정성을 높입니다.\n\n### 기술 스택:\n- **프론트엔드:** React, TypeScript, Tailwind CSS\n- **인증/백엔드:** Firebase Authentication, Firestore, Firebase Functions\n- **상태관리:** React Context API",
+      "summary": "`app2/src/contexts/AuthContext.tsx` 파일을 성공적으로 수정하여 Google 소셜 로그인 기능을 추가했습니다. `firebase/auth`로부터 `GoogleAuthProvider`와 `signInWithPopup`을 import하고, 이를 사용하는 `signInWithGoogle` 함수를 구현했습니다. 또한, `AuthContextType` 인터페이스와 `AuthContext.Provider`의 `value`에 새로운 함수를 포함시켜, 앱 전역에서 `useAuth()` 훅을 통해 Google 로그인 기능을 호출할 수 있는 기반을 마련했습니다. 모든 구현은 Task 가이드라인을 완벽하게 준수했습니다.",
+      "completedAt": "2025-06-30T10:47:55.084Z"
     },
     {
-      "id": "1202eca2-d63f-45f1-9d09-1fd7d7c71d6d",
-      "name": "[Frontend] AdminRoute 컴포넌트 삭제",
-      "description": "더 유연한 `RoleBasedRoute`를 도입하기 위해, 기존의 `app2/src/components/AdminRoute.tsx` 파일을 삭제합니다.",
-      "status": "pending",
-      "dependencies": [],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
+      "id": "16983103-98f6-4cae-8835-0930c445475d",
+      "name": "Task 4: 인증 페이지 리팩토링 및 Google 로그인 연동",
+      "description": "앞서 만든 공통 컴포넌트(`AuthLayout`, `FormField`)와 Google 로그인 기능을 사용하여 `Login`, `SignUp`, `ForgotPassword` 페이지를 현대적인 UI로 개편하고 실제 기능과 연동합니다.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "2ce12e12-c183-4d9d-bccb-13b3e61cfbf4"
+        },
+        {
+          "taskId": "eb57948a-039d-4129-8bea-63319c3675a8"
+        }
+      ],
+      "createdAt": "2025-06-30T10:34:14.712Z",
+      "updatedAt": "2025-06-30T10:50:32.495Z",
       "relatedFiles": [
         {
-          "path": "app2/src/components/AdminRoute.tsx",
+          "path": "app2/src/pages/AdminLogin.tsx",
           "type": "TO_MODIFY",
-          "description": "새로운 라우트 가드로 대체하기 위해 삭제할 파일입니다."
-        }
-      ],
-      "implementationGuide": "`app2/src/components/AdminRoute.tsx` 파일을 삭제합니다.",
-      "verificationCriteria": "해당 파일이 프로젝트에서 완전히 삭제되어야 합니다."
-    },
-    {
-      "id": "5d7d7819-3c27-4f20-b6f9-767166ec9182",
-      "name": "[Frontend] RoleBasedRoute 컴포넌트 신규 생성",
-      "description": "역할 기반 접근 제어를 처리하는 재사용 가능한 `RoleBasedRoute.tsx` 컴포넌트를 `app2/src/components/` 디렉토리에 새로 생성합니다. 이 컴포넌트는 `allowedRoles`라는 props를 받아, 현재 사용자의 역할이 허용 목록에 있는지 확인합니다.",
-      "status": "pending",
-      "dependencies": [
+          "description": "파일명 변경 및 리팩토링 대상"
+        },
         {
-          "taskId": "1202eca2-d63f-45f1-9d09-1fd7d7c71d6d"
-        }
-      ],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
-      "relatedFiles": [
+          "path": "app2/src/pages/SignUp.tsx",
+          "type": "TO_MODIFY",
+          "description": "리팩토링 대상"
+        },
         {
-          "path": "app2/src/components/RoleBasedRoute.tsx",
-          "type": "CREATE",
-          "description": "역할 기반 접근 제어를 위한 새로운 라우트 가드 컴포넌트입니다."
-        }
-      ],
-      "implementationGuide": "1. `app2/src/components/RoleBasedRoute.tsx` 파일을 생성합니다.\\n2. `useAuth` 훅에서 `role`과 `loading` 상태를 가져옵니다.\\n3. `props`로 받은 `allowedRoles` 배열에 현재 사용자의 `role`이 포함되어 있으면 `<Outlet />`을, 그렇지 않으면 `/events`로 리디렉션하는 로직을 구현합니다.",
-      "verificationCriteria": "컴포넌트가 정상적으로 생성되어야 합니다. `allowedRoles`에 따라 접근 제어가 올바르게 동작해야 합니다."
-    },
-    {
-      "id": "56cd3ba0-b964-47f4-96f2-c6f50ca9ffd6",
-      "name": "[Frontend] App.tsx 라우팅 구조 재구성",
-      "description": "`app2/src/App.tsx`의 라우팅 구조를 새로 만든 `RoleBasedRoute`를 사용하도록 수정합니다. 가입 승인 페이지는 `admin`만, 나머지 관리자 페이지는 `admin`과 `manager`가 접근할 수 있도록 경로를 분리하고 각각 다른 `allowedRoles`를 적용합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "5d7d7819-3c27-4f20-b6f9-767166ec9182"
-        }
-      ],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
-      "relatedFiles": [
+          "path": "app2/src/pages/ForgotPassword.tsx",
+          "type": "TO_MODIFY",
+          "description": "리팩토링 대상"
+        },
         {
           "path": "app2/src/App.tsx",
           "type": "TO_MODIFY",
-          "description": "새로운 `RoleBasedRoute`를 적용하여 라우팅을 재구성할 파일입니다."
+          "description": "변경된 로그인 페이지 경로를 수정합니다."
         }
       ],
-      "implementationGuide": "1. `app2/src/App.tsx` 파일을 엽니다.\\n2. 기존 `AdminRoute` 임포트를 삭제하고 `RoleBasedRoute`를 임포트합니다.\\n3. `/admin/approvals` 경로를 별도의 `<Route>`로 분리하고, `<RoleBasedRoute allowedRoles={['admin']}>`로 감싸줍니다.\\n4. 나머지 모든 `/admin/*` 경로들은 `<RoleBasedRoute allowedRoles={['admin', 'manager']}>`로 감싸줍니다.",
-      "verificationCriteria": "`manager`로 로그인 시 `/admin/approvals`에 접근할 수 없고 `/events`로 리디렉션되어야 합니다. `admin`으로는 모든 관리자 페이지에 접근 가능해야 합니다."
-    },
-    {
-      "id": "5a78db40-c6ea-4a10-ab67-2fe6e9942063",
-      "name": "[Frontend] Layout.tsx 메뉴 가시성 분리",
-      "description": "`app2/src/components/Layout.tsx`의 사이드바 메뉴를 수정하여, '가입 승인' 메뉴 항목이 `admin` 역할의 사용자에게만 보이도록 설정합니다.",
-      "status": "pending",
-      "dependencies": [
-        {
-          "taskId": "7a19cc05-26da-4d73-8c5f-45bd2bf312a8"
-        }
-      ],
-      "createdAt": "2025-06-28T21:31:53.092Z",
-      "updatedAt": "2025-06-28T21:31:53.092Z",
-      "relatedFiles": [
-        {
-          "path": "app2/src/components/Layout.tsx",
-          "type": "TO_MODIFY",
-          "description": "사이드바 메뉴의 가시성을 `role`에 따라 제어하도록 수정할 파일입니다."
-        }
-      ],
-      "implementationGuide": "1. `app2/src/components/Layout.tsx` 파일을 엽니다.\\n2. `useAuth` 훅에서 `isAdmin`과 함께 `role`을 가져옵니다.\\n3. '가입 승인'을 렌더링하는 `<NavItem>`을 찾습니다.\\n4. 이 `<NavItem>`을 `{role === 'admin' && <NavItem ... />}` 과 같이 조건부 렌더링 구문으로 감싸줍니다.",
-      "verificationCriteria": "`manager`로 로그인 시 사이드바에 '가입 승인' 메뉴가 보이지 않아야 합니다. `admin`으로 로그인 시에는 해당 메뉴가 보여야 합니다."
+      "implementationGuide": "1. `app2/src/pages/AdminLogin.tsx` 파일명을 `Login.tsx`로 변경합니다.\n2. `Login.tsx`와 `SignUp.tsx`, `ForgotPassword.tsx` 파일의 컨텐츠를 `AuthLayout`과 `FormField`를 사용하도록 전면 수정합니다.\n3. `Login.tsx`와 `SignUp.tsx`에 'Google 계정으로 시작하기' 버튼을 추가하고, 클릭 시 `signInWithGoogle` 함수를 호출하도록 구현합니다.\n4. `App.tsx`에서 `AdminLogin`을 import 하던 부분을 `Login`으로 수정합니다.",
+      "verificationCriteria": "1. 로그인, 회원가입, 비밀번호 찾기 페이지가 모두 일관된 새 디자인으로 표시되는지 확인합니다.\n2. 'Google 계정으로 시작하기' 버튼이 동작하고, 이를 통해 로그인/가입이 성공하는지 확인합니다.\n3. 기존의 이메일/비밀번호 기반 로그인 및 회원가입 기능이 새 UI에서도 정상적으로 동작하는지 확인합니다.",
+      "analysisResult": "## 최종 목표: 로그인/회원가입 경험 개편\n\n현대의 웹 표준에 맞는 세련되고 사용자 친화적인 인증 시스템을 구축합니다. 이를 위해 UI/UX를 전면 개편하고, Google 소셜 로그인 기능을 도입하며, 코드의 재사용성과 유지보수성을 극대화합니다.\n\n### 핵심 구현 사항:\n\n1.  **UI 일관성 확보:** `AuthLayout`과 `FormField`라는 두 개의 핵심 공통 컴포넌트를 제작하여 모든 인증 관련 페이지(로그인, 회원가입, 비밀번호 찾기)의 디자인과 동작을 통일합니다.\n2.  **사용자 편의성 증대:** Google 계정을 통해 클릭 한 번으로 로그인/회원가입이 가능하도록 소셜 로그인 기능을 구현합니다. 또한, 비밀번호 가시성 토글, 실시간 입력값 검증 등 UX를 개선합니다.\n3.  **안정적인 백엔드:** Firebase Auth 트리거를 도입하여, 어떤 방식으로 사용자가 가입하든(이메일, 소셜 등) Firestore `users` 데이터베이스에 사용자 정보가 누락 없이 자동으로 기록되도록 보장합니다. 이를 통해 백엔드 로직을 단순화하고 안정성을 높입니다.\n\n### 기술 스택:\n- **프론트엔드:** React, TypeScript, Tailwind CSS\n- **인증/백엔드:** Firebase Authentication, Firestore, Firebase Functions\n- **상태관리:** React Context API",
+      "summary": "`AdminLogin.tsx` 파일명을 `Login.tsx`로 변경하고, 모든 인증 관련 페이지(`Login.tsx`, `SignUp.tsx`, `ForgotPassword.tsx`)를 앞서 제작한 공통 컴포넌트(`AuthLayout`, `FormField`)를 사용하도록 성공적으로 리팩토링했습니다. 이를 통해 페이지들의 UI/UX 통일성을 확보했습니다. 또한 `Login.tsx`와 `SignUp.tsx`에 'Google 계정으로 시작하기' 버튼을 추가하고, `AuthContext`의 `signInWithGoogle` 함수와 연동했습니다. 마지막으로 `App.tsx`의 라우트 설정을 새로운 `Login.tsx` 컴포넌트를 사용하도록 수정하여 전체 리팩토링 작업을 완료했습니다.",
+      "completedAt": "2025-06-30T10:50:32.495Z"
     }
   ]
 }

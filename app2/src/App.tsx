@@ -5,7 +5,7 @@ import { TournamentProvider } from './contexts/TournamentContext';
 import { Layout } from './components/Layout';
 
 // Page Imports
-import AdminLogin from './pages/AdminLogin';
+import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import SignUp from './pages/SignUp';
 import ParticipantLivePage from './pages/ParticipantLivePage';
@@ -55,7 +55,7 @@ const App: React.FC = () => {
       <TournamentProvider>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<AdminLogin />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/live/:tournamentId" element={<ParticipantLivePage />} />

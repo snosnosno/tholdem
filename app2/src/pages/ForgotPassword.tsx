@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import AuthLayout from '../components/AuthLayout';
+import FormField from '../components/FormField';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -29,43 +31,37 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-gray-800">{t('forgotPassword.title')}</h2>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className="sr-only">
-              {t('forgotPassword.emailPlaceholder')}
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="input-field"
-              placeholder={t('forgotPassword.emailPlaceholder')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+    <AuthLayout title={t('forgotPassword.title')}>
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <p className="text-center text-sm text-gray-600">
+          {t('forgotPassword.instruction')}
+        </p>
+        <FormField
+          id="email"
+          label={t('forgotPassword.emailLabel')}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t('forgotPassword.emailPlaceholder')}
+          required
+          autoComplete="email"
+        />
 
-          {message && <p className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-md">{message}</p>}
-          {error && <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">{error}</p>}
+        {message && <p className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-md">{message}</p>}
+        {error && <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">{error}</p>}
 
-          <div>
-            <button type="submit" className="w-full btn btn-primary" disabled={loading}>
-              {loading ? t('forgotPassword.sendingButton') : t('forgotPassword.sendButton')}
-            </button>
-          </div>
-        </form>
-        <div className="text-center">
-          <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-            {t('forgotPassword.backToLogin')}
-          </Link>
+        <div>
+          <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400" disabled={loading}>
+            {loading ? t('forgotPassword.sendingButton') : t('forgotPassword.sendButton')}
+          </button>
         </div>
+      </form>
+      <div className="mt-4 text-center">
+        <Link to="/login" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+          {t('forgotPassword.backToLogin')}
+        </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
