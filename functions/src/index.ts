@@ -31,9 +31,9 @@ export const submitDealerRating = functions.https.onCall(async (data, context) =
  * - Managers are created as disabled and await admin approval.
  */
 export const requestRegistration = functions.https.onCall(async (data) => {
-    const { email, password, name, role } = data;
+    const { email, password, name, role, phone } = data; // Add phone
 
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name || !role) { // phone is optional for now
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
     }
     if (role !== 'dealer' && role !== 'manager') {
@@ -61,6 +61,7 @@ export const requestRegistration = functions.https.onCall(async (data) => {
         await db.collection('users').doc(userRecord.uid).set({
             name,
             email,
+            phone: phone || null, // Store phone, or null if not provided
             role: userRole,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -71,6 +72,7 @@ export const requestRegistration = functions.https.onCall(async (data) => {
         throw new functions.https.HttpsError('internal', 'An unexpected error occurred.', error.message);
     }
 });
+
 
 /**
  * Processes a registration request for a manager, either approving or rejecting it.

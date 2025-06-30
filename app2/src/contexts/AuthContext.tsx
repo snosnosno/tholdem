@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User, signOut as firebaseSignOut } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  User, 
+  signOut as firebaseSignOut, 
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -9,6 +15,8 @@ interface AuthContextType {
   isAdmin: boolean;
   role: string | null;
   signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<any>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,7 +43,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setCurrentUser(user);
       if (user) {
         try {
-          // Force refresh the token to get the latest custom claims
           const idTokenResult = await user.getIdTokenResult(true);
           const userRole = idTokenResult.claims.role as string || null;
           setRole(userRole);
@@ -52,19 +59,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const signIn = (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const sendPasswordReset = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
   const signOut = () => {
     return firebaseSignOut(auth);
   };
   
-  // Derived state for backwards compatibility
   const isAdmin = role === 'admin' || role === 'manager';
 
   const value: AuthContextType = {
     currentUser,
     loading,
-    isAdmin, // Keep for compatibility
-    role,    // Provide the specific role
+    isAdmin,
+    role,
     signOut,
+    signIn,
+    sendPasswordReset,
   };
 
   return (

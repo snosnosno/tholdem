@@ -1,10 +1,42 @@
 {
+  "approve": "Approve",
+  "reject": "Reject",
+  "loading": "Loading...",
   "adminLogin": {
-    "title": "Admin Login",
+    "title": "Login",
     "emailPlaceholder": "Email Address",
     "passwordPlaceholder": "Password",
     "loginButton": "Sign In",
-    "errorMessage": "Failed to log in. Please check your email and password."
+    "errorMessage": "Failed to log in. Please check your email and password.",
+    "approvalPending": "Awaiting approval.",
+    "forgotPassword": "Forgot your password?",
+    "noAccount": "Don't have an account? Sign Up"
+  },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "emailPlaceholder": "Email Address",
+    "sendButton": "Send Reset Link",
+    "sendingButton": "Sending...",
+    "successMessage": "A password reset link has been sent to your email. Please check your inbox.",
+    "errorMessage": "An error occurred. Please check the email address and try again.",
+    "backToLogin": "Back to Login"
+  },
+  "signUp": {
+    "title": "Sign Up",
+    "namePlaceholder": "Name",
+    "phonePlaceholder": "Phone Number",
+    "emailPlaceholder": "Email Address",
+    "passwordPlaceholder": "Password (min. 6 characters)",
+    "roleTitle": "Account Type",
+    "roleDealer": "Regular Member",
+    "roleManager": "Admin Member",
+    "managerApprovalNotice": "Admin Member registration requires operator approval. Please request to join.",
+    "signUpButton": "Request to Sign Up",
+    "signingUpButton": "Submitting...",
+    "successMessage": "Your registration request has been submitted. You can log in after admin approval.",
+    "errorMessage": "An error occurred during sign-up. Please try again later.",
+    "passwordLengthError": "Password must be at least 6 characters long.",
+    "backToLogin": "Back to Login"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -23,15 +55,16 @@
     "prizes": "Prizes",
     "announcements": "Announcements",
     "history": "History",
-    "logout": "Logout"
+    "logout": "Logout",
+    "approvals": "Approvals"
   },
   "layout": {
     "title": "T-Holdem",
-    "subtitle": "Tournament Control",
+    "subtitle": "Tournament Management",
     "loading": "Loading..."
   },
   "dashboard": {
-    "loading": "Loading Dashboard...",
+    "loading": "Loading dashboard...",
     "errorPrefix": "Error",
     "title": "Admin Dashboard",
     "ongoingEvents": "Ongoing Events",
@@ -42,12 +75,21 @@
     "processPayrollLink": "Process Payroll",
     "topRatedDealers": "Top Rated Dealers",
     "ratingsCount": "({{count}} ratings)",
-    "noRatings": "No dealer ratings available yet."
+    "noRatings": "No dealer ratings yet."
+  },
+  "approvalPage": {
+    "title": "Pending Registration Approvals",
+    "fetchError": "Failed to fetch pending approvals.",
+    "processError": "Failed to process {{action}} request. Please try again.",
+    "nameHeader": "Name",
+    "emailHeader": "Email",
+    "actionsHeader": "Actions",
+    "noPending": "There are no users awaiting approval."
   },
   "eventsList": {
     "loading": "Loading events...",
-    "accessDenied": "Access Denied. You are not authorized to view this page.",
-    "title": "Event Management",
+    "accessDenied": "Access Denied. You do not have permission to view this page.",
+    "title": "Manage Events",
     "createNew": "Create New Event",
     "colEventName": "Event Name",
     "colDates": "Dates",
@@ -96,11 +138,11 @@
     "btnAssign": "Assign",
     "btnSubmitRating": "Submit Rating",
     "noDealersAssigned": "No dealers assigned yet.",
-    "modalTitleAssign": "Assign a Dealer",
+    "modalTitleAssign": "Assign Dealer",
     "modalTitleRate": "Rate {{dealerName}}",
     "modalTitleQr": "Event Attendance QR Code",
     "ratingCommentPlaceholder": "Add a comment (optional)",
-    "qrModalDescription": "Dealers can scan this code with their phone to clock in and out.",
+    "qrModalDescription": "Dealers can scan this code with their phones to clock in/out.",
     "qrGenerating": "Generating QR Code...",
     "dateNotAvailable": "N/A",
     "dateInvalid": "Invalid Date",
@@ -121,29 +163,29 @@
   "staffNew": {
     "accessDeniedAction": "You do not have permission to perform this action.",
     "accessDeniedView": "You do not have permission to view this page.",
-    "alertSuccess": "Staff member created successfully!",
+    "alertSuccess": "Staff created successfully!",
     "errorUnknown": "An unknown error occurred.",
-    "title": "Add New Staff Member",
-    "labelName": "Full Name",
+    "title": "Add New Staff",
+    "labelName": "Name",
     "labelEmail": "Email Address",
     "labelRole": "Role",
     "roleDealer": "Dealer",
     "roleAdmin": "Admin",
     "buttonCreating": "Creating...",
-    "buttonCreate": "Create Staff Member"
+    "buttonCreate": "Create Staff"
   },
   "payrollAdmin": {
     "alertSuccess": "Payrolls calculated successfully! Fetching updated data...",
-    "errorFetch": "Failed to fetch payrolls.",
+    "errorFetch": "Failed to fetch payroll information.",
     "errorCalculate": "Failed to calculate payrolls.",
     "title": "Payroll Management",
-    "selectEvent": "Select an Event",
+    "selectEvent": "Select an event",
     "buttonLoading": "Loading...",
     "buttonLoadPayrolls": "Load Payrolls",
     "buttonCalculating": "Calculating...",
-    "buttonCalculateAll": "Calculate All Payrolls for Event",
+    "buttonCalculateAll": "Calculate All Payrolls",
     "tableHeaderName": "Dealer Name",
-    "tableHeaderHours": "Work Hours (approx.)",
+    "tableHeaderHours": "Hours Worked (approx.)",
     "tableHeaderAmount": "Amount",
     "tableHeaderStatus": "Status",
     "unknownDealer": "Unknown Dealer",
@@ -154,7 +196,7 @@
   },
   "dealerEvents": {
     "loading": "Loading available events...",
-    "title": "Available Events for Application",
+    "title": "Available Events to Apply For",
     "applyButton": "Apply Now",
     "noEvents": "No events are currently recruiting.",
     "dateNotAvailable": "N/A",
@@ -189,7 +231,7 @@
   "tables": {
     "loading": "Loading...",
     "error": "Error:",
-    "errorMoveFailed": "Failed to move participant:",
+    "errorMoveFailed": "Move failed:",
     "title": "Table Status",
     "buttonAutoAssign": "Auto Re-assign",
     "buttonAddTable": "Add Table",
@@ -201,7 +243,7 @@
     "dealerNotApplicable": "N/A"
   },
   "tableDetailModal": {
-    "changeBorderColorTitle": "Change border color",
+    "changeBorderColorTitle": "Change Border Color",
     "defaultTableName": "Table {{number}}",
     "infoParticipants": "Participants:",
     "infoEmptySeats": "Empty Seats:",
@@ -211,13 +253,13 @@
     "participantUnknown": "Unknown"
   },
   "playerActionModal": {
-    "showDetails": "Show Details",
+    "showDetails": "Details",
     "moveSeat": "Move Seat",
     "bustOut": "Bust Out"
   },
   "moveSeatModal": {
-    "title": "Move {{name}}'s Seat",
-    "sectionTitle": "Player to Move",
+    "title": "Move {{name}}",
+    "sectionTitle": "Target Player",
     "labelName": "Name:",
     "labelCurrentLocation": "Current Location:",
     "seatSuffix": "Seat",
@@ -230,7 +272,7 @@
     "buttonConfirm": "Confirm Move"
   },
   "blinds": {
-    "title": "Blind Control",
+    "title": "Blinds Control",
     "breakTime": "Break Time",
     "level": "Level {{level}}",
     "ante": "Ante {{ante}}",
@@ -243,14 +285,14 @@
     "buttonNext": "Next"
   },
   "prizes": {
-    "alertSaved": "Prize distribution has been saved.",
+    "alertSaved": "Prize distribution saved.",
     "title": "Prize Calculator",
     "totalPrizePool": "Total Prize Pool",
     "participants": "Participants",
     "itm": "ITM",
-    "adjustManually": "Adjust prizes manually",
+    "adjustManually": "Adjust Prizes Manually",
     "totalDistributed": "Total Distributed:",
-    "rank": "{{rank, select, 1{1st} 2{2nd} 3{3rd} other{#th} }} Place",
+    "rank": "Rank {{rank}}",
     "saveButton": "Save Prize Structure"
   },
   "announcements": {
@@ -260,7 +302,7 @@
   },
   "participantDetailModal": {
     "title": "Participant Details",
-    "editTitle": "Edit Participant",
+    "editTitle": "Edit Participant Info",
     "labelName": "Name",
     "labelPhone": "Phone",
     "labelChips": "Chips",
@@ -276,17 +318,17 @@
   },
   "qrScannerModal": {
     "title": "QR Code Scanner",
-    "scanMessage": "Please scan the QR code for clock-in."
+    "scanMessage": "Please scan the QR code for attendance."
   },
   "attendancePage": {
     "title": "Scan Attendance QR Code",
-    "lastScanned": "Last Scanned: {{scanResult}}",
+    "lastScanned": "Last scan: {{scanResult}}",
     "submitting": "Submitting attendance...",
     "success": "Attendance recorded successfully!",
     "fail": "Failed to record attendance."
   },
   "availableTimes": {
-    "title": "Set Your Weekly Availability",
+    "title": "Set Weekly Availability",
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",
@@ -303,27 +345,27 @@
       "night": "Night (8pm-12am)"
     },
     "alerts": {
-      "notLoggedIn": "You must be logged in to set availability.",
+      "notLoggedIn": "You must be logged in.",
       "updateSuccess": "Availability updated successfully!",
-      "updateFailed": "Failed to update availability."
+      "updateFailed": "Failed to update."
     },
     "status": {
-      "loading": "Loading availability...",
+      "loading": "Loading data...",
       "error": "Error: {{message}}",
-      "loginRequired": "Please log in to manage your availability."
+      "loginRequired": "Please log in to continue."
     },
-    "saveButton": "Save Availability"
+    "saveButton": "Save"
   },
   "dealerRotation": {
-    "loading": "Loading staff and table data...",
+    "loading": "Loading staff and table information...",
     "title": "Dealer Rotation Dashboard",
     "onTables": "On Tables",
     "tableName": "Table {{tableNumber}}",
-    "noDealerAssigned": "No dealer assigned",
+    "noDealerAssigned": "No Dealer Assigned",
     "availableDealers": "Available Dealers",
-    "noDealersAvailable": "No dealers available.",
+    "noDealersAvailable": "No dealers available",
     "onBreak": "On Break",
-    "noDealersOnBreak": "No dealers on break."
+    "noDealersOnBreak": "No dealers on break"
   },
   "historyDetail": {
     "loading": "Loading...",
@@ -333,7 +375,7 @@
     "participants": "Participants",
     "playerCount": "{{count}} players",
     "prizePool": "Total Prize Pool",
-    "currency": "{{amount, currency}}",
+    "currency": "${{amount, currency}}",
     "winner": "Winner",
     "finalRanking": "Final Ranking",
     "rank": "Rank",
@@ -352,7 +394,7 @@
   "jobBoard": {
     "alerts": {
       "loginRequired": "You must be logged in to apply.",
-      "profileNotFound": "Your staff profile was not found.",
+      "profileNotFound": "Could not find staff profile.",
       "applicationSuccess": "Application submitted successfully!",
       "applicationFailed": "Failed to submit application."
     },
@@ -369,7 +411,7 @@
       "selectTournament": "Please select a tournament.",
       "createSuccess": "Job posting created successfully!",
       "createFailed": "Failed to create job posting.",
-      "matchFailed": "Failed to run auto match. Check the logs."
+      "matchFailed": "Failed to run auto-match. Check logs."
     },
     "create": {
       "title": "Create Job Posting",
@@ -381,24 +423,24 @@
       "floor": "Floor",
       "registration": "Registration",
       "staffNeeded": "Number of Staff Needed",
-      "description": "Description / Conditions",
+      "description": "Description / Requirements",
       "submitting": "Submitting...",
       "button": "Create Posting"
     },
     "manage": {
       "title": "Manage Job Postings",
       "loading": "Loading postings...",
-      "roleInfo": "Role: {{role}} | Required: {{required}}",
+      "roleInfo": "Role: {{role}} | Needed: {{required}}",
       "matching": "Matching...",
-      "button": "Auto Match"
+      "button": "Auto-match"
     }
   },
   "profilePage": {
-    "eventIdMissing": "Event ID Missing",
+    "eventIdMissing": "Event ID is missing",
     "unknownEvent": "Unknown Event",
     "loginRequired": "You must be logged in to update your profile.",
     "updateSuccess": "Profile updated successfully!",
-    "updateFailed": "Failed to update profile: {{message}}",
+    "updateFailed": "Profile update failed: {{message}}",
     "loadingProfile": "Loading profile...",
     "error": "Error: {{message}}",
     "viewProfileLogin": "Please log in to view your profile.",
@@ -421,13 +463,13 @@
     "tableHours": "Hours",
     "tablePay": "Pay",
     "tableStatus": "Status",
-    "noPayroll": "No payroll history found.",
+    "noPayroll": "No payroll history available.",
     "statusPaid": "Paid",
     "statusPending": "Pending",
     "notAvailable": "N/A"
   },
   "staffingDashboard": {
-    "accessDenied": "You do not have access to this page.",
+    "accessDenied": "You do not have permission to access this page.",
     "title": "Staffing Dashboard",
     "totalStaff": "Total Staff",
     "activeEvents": "Active Events",
@@ -439,21 +481,21 @@
     "errorEvents": "Error loading events."
   },
   "participantLivePage": {
-    "notFound": "Participant not found. (ID: {{id}})",
+    "notFound": "Participant not found (ID: {{id}})",
     "announcements": "📢 Announcements",
     "table": "Table: {{tableNumber}}",
     "seat": "Seat: {{seatNumber}}",
     "chips": "Chips: {{chipCount}}",
-    "nextLevelIn": "Time to next level",
+    "nextLevelIn": "Next Level In",
     "nextBlind": "Next Blind: {{blind}}",
-    "tournamentEnd": "Tournament End",
+    "tournamentEnd": "Tournament Ended",
     "tournamentInfo": "Tournament Info",
     "currentBlind": "Current Blind",
-    "remainingPlayers": "Remaining Players",
-    "avgStack": "Average Stack",
+    "remainingPlayers": "Players Left",
+    "avgStack": "Avg. Stack",
     "totalChips": "Total Chips",
     "rulesTitle": "Tournament Rules",
-    "rule1": "1. Based on TDA rules.",
+    "rule1": "1. TDA rules are applied as standard.",
     "rule2": "2. Please be respectful to other participants.",
     "dummyAnnouncement1": "Next blind level will start in 5 minutes.",
     "dummyAnnouncement2": "We will have a 10-minute break."
@@ -461,22 +503,22 @@
   "tournamentDashboard": {
     "loading": "Loading...",
     "seeding": {
-      "success": "Test data successfully created! The page will now reload.",
-      "skipped": "Test data already exists. Skipped.",
-      "error": "An error occurred while creating test data.",
-      "unexpectedError": "An unexpected error occurred. Check the console for details."
+      "success": "Test data seeded successfully! Reloading page.",
+      "skipped": "Skipped seeding because test data already exists.",
+      "error": "An error occurred while seeding test data.",
+      "unexpectedError": "An unexpected error occurred. Check the console."
     },
     "title": "Tournament Dashboard",
     "devTools": {
       "title": "Developer Tools",
-      "button": "Generate Test Data (10 Tables, 80 Players)",
-      "buttonSeeding": "Creating Test Data...",
-      "description": "This will populate the database with sample data. Only use this on a fresh database."
+      "button": "Seed Test Data (10 tables, 80 players)",
+      "buttonSeeding": "Seeding test data...",
+      "description": "Populates the database with sample data. Use only on an initial database."
     },
     "stats": {
       "totalParticipants": "Total Participants",
       "currentBlindLevel": "Current Blind Level",
-      "estimatedPrizePool": "Estimated Prize Pool"
+      "estimatedPrizePool": "Est. Prize Pool"
     },
     "status": {
       "title": "Tournament Status",

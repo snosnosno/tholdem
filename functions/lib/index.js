@@ -53,8 +53,8 @@ exports.submitDealerRating = functions.https.onCall(async (data, context) => { }
  * - Managers are created as disabled and await admin approval.
  */
 exports.requestRegistration = functions.https.onCall(async (data) => {
-    const { email, password, name, role } = data;
-    if (!email || !password || !name || !role) {
+    const { email, password, name, role, phone } = data; // Add phone
+    if (!email || !password || !name || !role) { // phone is optional for now
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
     }
     if (role !== 'dealer' && role !== 'manager') {
@@ -79,6 +79,7 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
         await db.collection('users').doc(userRecord.uid).set({
             name,
             email,
+            phone: phone || null,
             role: userRole,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -91,13 +92,13 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
 });
 /**
  * Processes a registration request for a manager, either approving or rejecting it.
- * Only callable by an admin or manager.
+ * Only callable by an admin.
  */
 exports.processRegistration = functions.https.onCall(async (data, context) => {
-    var _a;
-    // Ensure the caller is an admin or a manager
-    if (!context.auth || !['admin', 'manager'].includes(context.auth.token.role)) {
-        throw new functions.https.HttpsError('permission-denied', 'Only admins or managers can process registration requests.');
+    var _a, _b, _c;
+    // Ensure the caller is an admin
+    if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can process registration requests.');
     }
     const { targetUid, action } = data; // action can be 'approve' or 'reject'
     if (!targetUid || !action) {
@@ -106,7 +107,7 @@ exports.processRegistration = functions.https.onCall(async (data, context) => {
     const userRef = db.collection('users').doc(targetUid);
     try {
         const userDoc = await userRef.get();
-        if (!userDoc.exists || ((_a = userDoc.data()) === null || _a === void 0 ? void 0 : _a.role) !== 'pending_manager') {
+        if (!userDoc.exists || ((_c = userDoc.data()) === null || _c === void 0 ? void 0 : _c.role) !== 'pending_manager') {
             throw new functions.https.HttpsError('not-found', 'The specified user is not awaiting approval.');
         }
         if (action === 'approve') {

@@ -43,7 +43,8 @@ const ApprovalPage: React.FC = () => {
             // The onSnapshot listener will automatically update the list
         } catch (err: any) {
             console.error(`Error processing ${action} for ${targetUid}:`, err);
-            alert(t('approvalPage.processError', { action }));
+            // Use a more specific error message from the 'approvalPage' namespace
+            alert(t('approvalPage.processError', { action: t(action) }));
         }
     };
 

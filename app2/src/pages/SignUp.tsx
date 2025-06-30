@@ -9,6 +9,7 @@ const SignUp = () => {
     const navigate = useNavigate();
     
     const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('dealer');
@@ -32,7 +33,7 @@ const SignUp = () => {
         }
 
         try {
-            await requestRegistration({ name, email, password, role });
+            await requestRegistration({ name, email, password, role, phone });
             setMessage(t('signUp.successMessage'));
             setTimeout(() => navigate('/login'), 3000); // Redirect after 3 seconds
         } catch (err: any) {
@@ -48,10 +49,6 @@ const SignUp = () => {
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl">
                 <h2 className="text-3xl font-bold text-center text-gray-800">{t('signUp.title')}</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('signUp.namePlaceholder')} required className="input-field" />
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('signUp.emailPlaceholder')} required className="input-field" />
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('signUp.passwordPlaceholder')} required className="input-field" />
-                    
                     <fieldset className="space-y-2">
                         <legend className="text-sm font-medium text-gray-700">{t('signUp.roleTitle')}</legend>
                         <div className="flex items-center space-x-4">
@@ -64,8 +61,18 @@ const SignUp = () => {
                                 <span className="ml-2">{t('signUp.roleManager')}</span>
                             </label>
                         </div>
+                        {role === 'manager' && (
+                            <p className="text-sm text-yellow-600 bg-yellow-50 p-3 mt-2 rounded-md whitespace-pre-line">
+                                {t('signUp.managerApprovalNotice')}
+                            </p>
+                        )}
                     </fieldset>
 
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('signUp.namePlaceholder')} required className="input-field" />
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('signUp.phonePlaceholder')} required className="input-field" />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('signUp.emailPlaceholder')} required className="input-field" />
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('signUp.passwordPlaceholder')} required className="input-field" />
+                    
                     {message && <p className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-md">{message}</p>}
                     {error && <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">{error}</p>}
 
