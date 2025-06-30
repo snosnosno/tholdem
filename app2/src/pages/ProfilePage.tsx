@@ -221,11 +221,11 @@ const ProfilePage = () => {
                                     <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
                                     <p>{profile.experience || t('profilePage.notProvided')}</p>
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.notes', '기타 사항')}</p>
                                     <p>{profile.notes || t('profilePage.notProvided', '없음')}</p>
                                 </div>
-                                <div>
+                                <div className="md:col-span-2">
                                     <p className="font-semibold text-gray-600">{t('profilePage.history')}</p>
                                     <p className="whitespace-pre-wrap">{profile.history || t('profilePage.notProvided')}</p>
                                 </div>
@@ -289,13 +289,13 @@ const ProfilePage = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="md:col-span-2">
-                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
-                                    <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                                </div>
                                 <div>
+                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
+                                    <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={2} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                </div>
+                                <div className="md:col-span-2">
                                     <label htmlFor="history" className="block text-sm font-medium text-gray-700">{t('profilePage.history')}</label>
-                                    <textarea name="history" id="history" value={formData.history || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder={t('profilePage.historyPlaceholder')}></textarea>
+                                    <textarea name="history" id="history" value={formData.history || ''} onChange={handleChange} rows={4} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder={t('profilePage.historyPlaceholder')}></textarea>
                                 </div>
                                 <div className="md:col-span-2 mt-4 border-t pt-4">
                                     <h3 className="text-lg font-semibold text-gray-700 mb-3">
