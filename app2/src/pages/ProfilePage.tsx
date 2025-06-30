@@ -204,10 +204,6 @@ const ProfilePage = () => {
                                     <p>{profile.email}</p>
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-gray-600">{t('profilePage.phone')}</p>
-                                    <p>{profile.phone || t('profilePage.notProvided')}</p>
-                                </div>
-                                <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.nationality', '국적')}</p>
                                     <p>{profile.nationality || t('profilePage.notProvided')}</p>
                                 </div>
@@ -226,8 +222,15 @@ const ProfilePage = () => {
                                 
                                 {isOwnProfile && (
                                     <div className="md:col-span-2 mt-4 border-t pt-4">
-                                        <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('profilePage.privateInfo', '개인 정보')}</h3>
+                                        <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                                            {t('profilePage.privateInfo', '개인 정보')}
+                                            <span className="text-sm text-gray-500 ml-2 font-normal">{t('profilePage.privateInfoNote', '(정산시 필요, 허가된 사람에게만 보입니다)')}</span>
+                                        </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                                            <div>
+                                                <p className="font-semibold text-gray-600">{t('profilePage.phone')}</p>
+                                                <p>{profile.phone || t('profilePage.notProvided')}</p>
+                                            </div>
                                             <div>
                                                 <p className="font-semibold text-gray-600">{t('profilePage.residentId')}</p>
                                                 <p>{profile.residentId || t('profilePage.notProvided')}</p>
@@ -252,10 +255,6 @@ const ProfilePage = () => {
                                 <div>
                                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
                                     <input type="text" name="name" id="name" value={formData.name || ''} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
-                                </div>
-                                <div>
-                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
-                                    <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div>
                                     <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
@@ -285,8 +284,15 @@ const ProfilePage = () => {
                                     <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
                                 </div>
                                 <div className="md:col-span-2 mt-4 border-t pt-4">
-                                    <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('profilePage.privateInfo', '개인 정보')}</h3>
+                                    <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                                        {t('profilePage.privateInfo', '개인 정보')}
+                                        <span className="text-sm text-gray-500 ml-2 font-normal">{t('profilePage.privateInfoNote', '(정산시 필요, 허가된 사람에게만 보입니다)')}</span>
+                                    </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                         <div>
+                                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
+                                            <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                        </div>
                                         <div>
                                             <label htmlFor="residentId" className="block text-sm font-medium text-gray-700">{t('profilePage.residentId')}</label>
                                             <input type="text" name="residentId" id="residentId" value={formData.residentId || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />

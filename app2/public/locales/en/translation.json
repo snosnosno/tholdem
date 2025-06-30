@@ -646,6 +646,7 @@
     "bankName": "Bank Name",
     "bankAccount": "Account Number",
     "privateInfo": "Private Info",
+    "privateInfoNote": "(Required for settlement, visible only to authorized personnel)",
     "notes": "Notes",
     "selectExperience": "Please select your years of experience",
     "residentId": "Resident ID:",
