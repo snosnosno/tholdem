@@ -25,6 +25,30 @@ interface EditUserModalProps {
 
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) => {
   const { t } = useTranslation();
+  
+  const countries = [
+    { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+    { code: 'US', name: 'United States', flag: '🇺🇸' },
+    { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+    { code: 'CN', name: 'China', flag: '🇨🇳' },
+    { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+    { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+    { code: 'FR', name: 'France', flag: '🇫🇷' },
+    { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+    { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+    { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
+    { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+    { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+    { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+    { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+    { code: 'IN', name: 'India', flag: '🇮🇳' },
+    { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+    { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+    { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+    { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+    { code: 'ES', name: 'Spain', flag: '🇪🇸' }
+  ];
+  
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -131,14 +155,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
           </div>
           <div>
             <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
-            <input
-              type="text"
+            <select
               name="nationality"
               id="nationality"
               value={formData.nationality}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"
+            >
+              <option value="">{t('profilePage.selectNationality', '국적을 선택하세요')}</option>
+              {countries.map(country => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>

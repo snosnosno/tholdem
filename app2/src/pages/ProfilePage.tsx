@@ -63,6 +63,35 @@ const ProfilePage = () => {
         "5년 이상",
         "10년 이상"
     ];
+    
+    const countries = [
+        { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+        { code: 'US', name: 'United States', flag: '🇺🇸' },
+        { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+        { code: 'CN', name: 'China', flag: '🇨🇳' },
+        { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+        { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+        { code: 'FR', name: 'France', flag: '🇫🇷' },
+        { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+        { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+        { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
+        { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+        { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+        { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+        { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+        { code: 'IN', name: 'India', flag: '🇮🇳' },
+        { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+        { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+        { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+        { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+        { code: 'ES', name: 'Spain', flag: '🇪🇸' }
+    ];
+    
+    const getNationalityDisplay = (nationality?: string) => {
+        if (!nationality) return t('profilePage.notProvided');
+        const country = countries.find(c => c.code === nationality);
+        return country ? `${country.flag} ${country.name}` : nationality;
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -183,6 +212,9 @@ const ProfilePage = () => {
                     <div className="flex flex-col md:flex-row items-center md:items-start">
                         <div className="md:ml-6 flex-1">
                             <h1 className="text-3xl font-bold text-gray-800">{profile.name}</h1>
+                            <div className="mt-1">
+                                <span className="text-lg text-gray-600">{getNationalityDisplay(profile.nationality)}</span>
+                            </div>
                             
                             <div className="flex items-center mt-2">
                                 <StarIcon className="h-6 w-6 text-yellow-400 mr-1" />
@@ -209,10 +241,7 @@ const ProfilePage = () => {
                                     <p className="font-semibold text-gray-600">{t('profilePage.phone')}</p>
                                     <p>{profile.phone || t('profilePage.notProvided')}</p>
                                 </div>
-                                <div>
-                                    <p className="font-semibold text-gray-600">{t('profilePage.nationality', '국적')}</p>
-                                    <p>{profile.nationality || t('profilePage.notProvided')}</p>
-                                </div>
+                                
                                 <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.gender')}</p>
                                     <p>{genderDisplay(profile.gender)}</p>
@@ -262,13 +291,26 @@ const ProfilePage = () => {
                                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
                                     <input type="text" name="name" id="name" value={formData.name || ''} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
                                 </div>
+                                <div>
+                                    <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
+                                    <select
+                                        name="nationality"
+                                        id="nationality"
+                                        value={formData.nationality || ''}
+                                        onChange={handleChange}
+                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    >
+                                        <option value="">{t('profilePage.selectNationality', '국적을 선택하세요')}</option>
+                                        {countries.map(country => (
+                                            <option key={country.code} value={country.code}>
+                                                {country.flag} {country.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                                  <div>
                                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
                                     <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                </div>
-                                <div>
-                                    <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
-                                    <input type="text" name="nationality" id="nationality" value={formData.nationality || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                 </div>
                                 <div>
                                     <label htmlFor="gender" className="block text-sm font-medium text-gray-700">{t('profilePage.gender')}</label>
