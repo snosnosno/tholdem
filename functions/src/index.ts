@@ -29,12 +29,12 @@ export const submitDealerRating = functions.https.onCall(async (data, context) =
  * Handles a new user registration request.
  * - Dealers are created and enabled immediately.
  * - Managers are created as disabled and await admin approval.
- * - Passes extra data (phone, gender, residentId) via displayName for the trigger.
+ * - Passes extra data (phone, gender) via displayName for the trigger.
  */
 export const requestRegistration = functions.https.onCall(async (data) => {
     functions.logger.info("requestRegistration called with data:", data);
 
-    const { email, password, name, role, phone, gender, residentId } = data;
+    const { email, password, name, role, phone, gender } = data;
 
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
@@ -52,7 +52,6 @@ export const requestRegistration = functions.https.onCall(async (data) => {
         const extraData = JSON.stringify({
             ...(phone && { phone }),
             ...(gender && { gender }),
-            ...(residentId && { residentId }),
         });
 
         // Build the displayName with embedded markers for the trigger to parse.
@@ -269,7 +268,7 @@ export const getDashboardStats = functions.https.onRequest((request, response) =
       ] = await Promise.all([
         ongoingEventsQuery.get(),
         totalDealersQuery.get(),
-        topDealersQuery.get(),
+        topDealersSnapshot.get(),
       ]);
 
       const topRatedDealers = topDealersSnapshot.docs.map((doc) => ({

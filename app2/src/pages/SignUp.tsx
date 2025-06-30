@@ -15,7 +15,6 @@ const SignUp: React.FC = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('dealer'); // 'dealer' or 'manager'
   const [gender, setGender] = useState(''); // 'male' or 'female'
-  const [residentId, setResidentId] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -49,7 +48,6 @@ const SignUp: React.FC = () => {
         phone,
         role,
         gender,
-        residentId,
       });
 
       const successMessage = role === 'dealer' 
@@ -120,7 +118,6 @@ const SignUp: React.FC = () => {
 
           <FormField id="name" label={t('signUp.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('signUp.namePlaceholder')} required />
           <FormField id="phone" label={t('signUp.phoneLabel')} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('signUp.phonePlaceholder')} />
-          <FormField id="residentId" label={t('signUp.residentIdLabel', '주민등록번호')} value={residentId} onChange={(e) => setResidentId(e.target.value)} placeholder={t('signUp.residentIdPlaceholder', '주민등록번호 13자리를 입력하세요')} />
           
           <div>
             <label className="block text-sm font-medium text-gray-700">{t('signUp.genderLabel', '성별')}</label>

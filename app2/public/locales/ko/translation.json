@@ -80,8 +80,7 @@
     "invalidEmailError": "유효하지 않은 이메일 주소 형식입니다.",
     "weakPasswordError": "비밀번호가 너무 취약합니다. 더 강력한 비밀번호를 사용해주세요.",
     "backToLogin": "로그인으로 돌아가기",
-    "residentIdLabel": "주민등록번호",
-    "residentIdPlaceholder": "주민등록번호 13자리를 입력하세요",
+    
     "genderLabel": "성별",
     "genderMale": "남성",
     "genderFemale": "여성"

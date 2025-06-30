@@ -147,6 +147,7 @@ const ProfilePage = () => {
         try {
             const dataToSave = { ...formData };
             delete dataToSave.name; // 이름 필드 저장 제외
+            delete dataToSave.gender; // 성별 필드 저장 제외
 
             await setDoc(profileRef, dataToSave, { merge: true });
             
@@ -288,7 +289,7 @@ const ProfilePage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label htmlFor="residentId" className="block text-sm font-medium text-gray-700">{t('profilePage.residentId')}</label>
-                                            <input type="text" name="residentId" id="residentId" value={formData.residentId || ''} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
+                                            <input type="text" name="residentId" id="residentId" value={formData.residentId || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                                         </div>
                                         <div>
                                             <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>

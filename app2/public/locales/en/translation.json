@@ -80,8 +80,7 @@
     "invalidEmailError": "The email address format is not valid.",
     "weakPasswordError": "The password is too weak. Please use a stronger password.",
     "backToLogin": "Back to Login",
-    "residentIdLabel": "Resident ID",
-    "residentIdPlaceholder": "Enter your 13-digit resident ID",
+    
     "genderLabel": "Gender",
     "genderMale": "Male",
     "genderFemale": "Female"
