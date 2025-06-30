@@ -35,6 +35,9 @@ const JobPostingAdminPage = () => {
     requiredCount: 1,
     description: '',
     status: 'open',
+    location: '',
+    date: '',
+    time: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -71,6 +74,9 @@ const JobPostingAdminPage = () => {
         requiredCount: 1,
         description: '',
         status: 'open',
+        location: '',
+        date: '',
+        time: ''
       });
     } catch (error) {
       console.error("Error creating job posting: ", error);
@@ -96,7 +102,11 @@ const JobPostingAdminPage = () => {
   };
 
   const handleOpenEditModal = (post: any) => {
-    setCurrentPost(post);
+    setCurrentPost({
+        ...post,
+        date: post.date || '',
+        time: post.time || ''
+    });
     setIsEditModalOpen(true);
   };
 
@@ -106,13 +116,11 @@ const JobPostingAdminPage = () => {
     
     const postRef = doc(db, 'jobPostings', currentPost.id);
     try {
+      // Create a new object for updating, excluding the 'id'
+      const { id, ...postData } = currentPost;
       await updateDoc(postRef, {
-        title: currentPost.title,
-        role: currentPost.role,
-        type: currentPost.type,
-        requiredCount: Number(currentPost.requiredCount),
-        description: currentPost.description,
-        status: currentPost.status,
+        ...postData,
+        requiredCount: Number(postData.requiredCount),
       });
       alert(t('jobPostingAdmin.alerts.updateSuccess'));
       setIsEditModalOpen(false);
@@ -170,6 +178,20 @@ const JobPostingAdminPage = () => {
                     ))}
                 </select>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.location', '지역')}</label>
+                    <input type="text" name="location" id="location" value={formData.location} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.date', '날짜')}</label>
+                    <input type="date" name="date" id="date" value={formData.date} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.time', '시간')}</label>
+                    <input type="time" name="time" id="time" value={formData.time} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                </div>
+            </div>
             <div>
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type', '고용 형태')}</label>
                 <select name="type" id="type" value={formData.type} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -210,7 +232,14 @@ const JobPostingAdminPage = () => {
                             <h2 className="text-xl font-bold">{post.title}</h2>
                             <p className="text-sm text-gray-600">{t('jobPostingAdmin.manage.roleInfo', { role: post.role, required: post.requiredCount })}</p>
                             <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {(post.location || post.date || post.time) && (
+                                <p className="text-sm text-gray-500">
+                                    {post.location && <span>{t('jobPostingAdmin.manage.location', '지역')}: {post.location}</span>}
+                                    {post.date && <span className="ml-2">{t('jobPostingAdmin.manage.date', '날짜')}: {post.date}</span>}
+                                    {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time', '시간')}: {post.time}</span>}
+                                </p>
+                            )}
+                            <span className={`mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {post.status}
                             </span>
                         </div>
@@ -255,6 +284,20 @@ const JobPostingAdminPage = () => {
                         <div>
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" name="title" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label htmlFor="edit-location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.location', '지역')}</label>
+                                <input type="text" name="location" id="edit-location" value={currentPost.location} onChange={(e) => setCurrentPost({...currentPost, location: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
+                            <div>
+                                <label htmlFor="edit-date" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.date', '날짜')}</label>
+                                <input type="date" name="date" id="edit-date" value={currentPost.date} onChange={(e) => setCurrentPost({...currentPost, date: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
+                            <div>
+                                <label htmlFor="edit-time" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.time', '시간')}</label>
+                                <input type="time" name="time" id="edit-time" value={currentPost.time} onChange={(e) => setCurrentPost({...currentPost, time: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
                         </div>
                         <div>
                             <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.type', '고용 형태')}</label>

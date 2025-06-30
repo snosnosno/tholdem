@@ -456,7 +456,10 @@
       "staffNeeded": "Number of Staff Needed",
       "description": "Description / Requirements",
       "submitting": "Submitting...",
-      "button": "Create Posting"
+      "button": "Create Posting",
+      "location": "Location",
+      "date": "Date",
+      "time": "Time"
     },
     "manage": {
       "title": "Manage Job Postings",
@@ -469,7 +472,10 @@
       "button": "Auto Match",
       "edit": "Edit",
       "delete": "Delete",
-      "viewApplicants": "View Applicants"
+      "viewApplicants": "View Applicants",
+      "location": "Location",
+      "date": "Date",
+      "time": "Time"
     },
     "edit": {
         "title": "Edit Job Posting",
@@ -487,7 +493,10 @@
         "statusOpen": "Open",
         "statusClosed": "Closed",
         "cancel": "Cancel",
-        "save": "Save"
+        "save": "Save",
+        "location": "Location",
+        "date": "Date",
+        "time": "Time"
     },
     "applicants": {
       "title": "Applicant List",
