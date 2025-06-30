@@ -432,7 +432,9 @@
       "selectTournament": "Please select a tournament.",
       "createSuccess": "Job posting created successfully!",
       "createFailed": "Failed to create job posting.",
-      "matchFailed": "Failed to run auto-match. Check logs."
+      "matchFailed": "Failed to run auto-match. Check logs.",
+      "updateSuccess": "Job posting updated successfully.",
+      "updateFailed": "Failed to update job posting."
     },
     "create": {
       "title": "Create Job Posting",
@@ -453,7 +455,23 @@
       "loading": "Loading postings...",
       "roleInfo": "Role: {{role}} | Needed: {{required}}",
       "matching": "Matching...",
-      "button": "Auto-match"
+      "button": "Auto-match",
+      "edit": "Edit"
+    },
+    "edit": {
+        "title": "Edit Job Posting",
+        "postingTitle": "Posting Title",
+        "role": "Role",
+        "dealer": "Dealer",
+        "floor": "Floor",
+        "registration": "Registration",
+        "staffNeeded": "Staff Needed",
+        "description": "Description",
+        "status": "Status",
+        "statusOpen": "Open",
+        "statusClosed": "Closed",
+        "cancel": "Cancel",
+        "save": "Save"
     }
   },
   "profilePage": {
