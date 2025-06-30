@@ -50,7 +50,7 @@ const ProfilePage = () => {
                 if (docSnap.exists()) {
                     const data = docSnap.data() as ProfileData;
                     setProfile(data);
-                    setFormData(data);
+                    // Editing form data is now set when the edit button is clicked
                 } else {
                     console.log("No profile document found for current user.");
                 }
@@ -97,7 +97,15 @@ const ProfilePage = () => {
         fetchPayrolls();
     }, [currentUser, t]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleEditClick = () => {
+        if (!isEditing) {
+            // Pre-fill form with current profile data when starting to edit
+            setFormData(profile || {});
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -144,7 +152,7 @@ const ProfilePage = () => {
                                 <span className="text-sm text-gray-500 ml-2">({profile.ratingCount || 0} {t('profilePage.ratings')})</span>
                             </div>
                         </div>
-                        <button onClick={() => setIsEditing(!isEditing)} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button onClick={handleEditClick} className="mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {isEditing ? t('profilePage.cancel') : t('profilePage.editProfile')}
                         </button>
                     </div>
@@ -156,7 +164,7 @@ const ProfilePage = () => {
                                 <p><strong>{t('profilePage.email')}</strong> {profile.email}</p>
                                 <p><strong>{t('profilePage.phone')}</strong> {profile.phone || t('profilePage.notProvided')}</p>
                                 <p><strong>{t('profilePage.experience')}</strong> {profile.experience || t('profilePage.notProvided')}</p>
-                                <p><strong>{t('profilePage.notes', '기타 사항')}</strong> {profile.notes || t('profilePage.notProvided')}</p>
+                                <p><strong>{t('profilePage.notes', '기타 사항')}</strong> {profile.notes || t('profilePage.notProvided', '없음')}</p>
                             </div>
                         </div>
                     ) : (
