@@ -10,6 +10,7 @@ interface Staff {
   email: string;
   role: string;
   experience?: string;
+  history?: string;
   notes?: string;
   nationality?: string;
   bankName?: string;
@@ -28,6 +29,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
     name: '',
     role: '',
     experience: '',
+    history: '',
     notes: '',
     nationality: '',
     bankName: '',
@@ -52,6 +54,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
         name: user.name || '',
         role: user.role || '',
         experience: user.experience || '',
+        history: user.history || '',
         notes: user.notes || '',
         nationality: user.nationality || '',
         bankName: user.bankName || '',
@@ -159,8 +162,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          <div className="md:col-span-2">
-            <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '이력')}</label>
+          <div>
+            <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
             <select
                 name="experience"
                 id="experience"
@@ -173,6 +176,18 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
                     <option key={level} value={level}>{level}</option>
                 ))}
             </select>
+          </div>
+          <div>
+            <label htmlFor="history" className="block text-sm font-medium text-gray-700">{t('profilePage.history')}</label>
+            <textarea
+              name="history"
+              id="history"
+              value={formData.history}
+              onChange={handleChange}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              placeholder={t('profilePage.historyPlaceholder')}
+            />
           </div>
           <div className="md:col-span-2">
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>

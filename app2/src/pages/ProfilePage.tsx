@@ -14,6 +14,7 @@ interface ProfileData {
   email: string;
   role: string;
   experience: string;
+  history?: string;
   notes?: string;
   rating?: number;
   ratingCount?: number;
@@ -216,9 +217,13 @@ const ProfilePage = () => {
                                     <p className="font-semibold text-gray-600">{t('profilePage.gender')}</p>
                                     <p>{genderDisplay(profile.gender)}</p>
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
-                                    <p className="whitespace-pre-wrap">{profile.experience || t('profilePage.notProvided')}</p>
+                                    <p>{profile.experience || t('profilePage.notProvided')}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.history')}</p>
+                                    <p className="whitespace-pre-wrap">{profile.history || t('profilePage.notProvided')}</p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <p className="font-semibold text-gray-600">{t('profilePage.notes', '기타 사항')}</p>
@@ -269,7 +274,7 @@ const ProfilePage = () => {
                                     <label htmlFor="gender" className="block text-sm font-medium text-gray-700">{t('profilePage.gender')}</label>
                                     <input type="text" name="gender" id="gender" value={genderDisplay(formData.gender)} readOnly className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-100" />
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
                                     <select
                                         name="experience"
@@ -283,6 +288,10 @@ const ProfilePage = () => {
                                             <option key={level} value={level}>{level}</option>
                                         ))}
                                     </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="history" className="block text-sm font-medium text-gray-700">{t('profilePage.history')}</label>
+                                    <textarea name="history" id="history" value={formData.history || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder={t('profilePage.historyPlaceholder')}></textarea>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
