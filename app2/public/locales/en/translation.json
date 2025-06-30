@@ -433,8 +433,9 @@
       "createSuccess": "Job posting created successfully!",
       "createFailed": "Failed to create job posting.",
       "matchFailed": "Failed to run auto-match. Check logs.",
-      "updateSuccess": "Job posting updated successfully.",
-      "updateFailed": "Failed to update job posting."
+      "updateSuccess": "Job posting updated successfully!",
+      "updateFailed": "Failed to update job posting.",
+      "fetchApplicantsFailed": "Failed to fetch applicants."
     },
     "create": {
       "title": "Create Job Posting",
@@ -456,7 +457,8 @@
       "roleInfo": "Role: {{role}} | Needed: {{required}}",
       "matching": "Matching...",
       "button": "Auto-match",
-      "edit": "Edit"
+      "edit": "Edit",
+      "viewApplicants": "View Applicants"
     },
     "edit": {
         "title": "Edit Job Posting",
@@ -472,6 +474,12 @@
         "statusClosed": "Closed",
         "cancel": "Cancel",
         "save": "Save"
+    },
+    "applicants": {
+      "title": "Applicants",
+      "loading": "Loading applicants...",
+      "none": "No applicants yet.",
+      "close": "Close"
     }
   },
   "profilePage": {

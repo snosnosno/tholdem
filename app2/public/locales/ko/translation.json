@@ -434,7 +434,8 @@
       "createFailed": "구인 공고 생성에 실패했습니다.",
       "matchFailed": "자동 매칭 실행에 실패했습니다. 로그를 확인하세요.",
       "updateSuccess": "구인공고가 성공적으로 업데이트되었습니다.",
-      "updateFailed": "구인공고 업데이트에 실패했습니다."
+      "updateFailed": "구인공고 업데이트에 실패했습니다.",
+      "fetchApplicantsFailed": "지원자 정보를 가져오는데 실패했습니다."
     },
     "create": {
       "title": "구인 공고 생성",
@@ -456,7 +457,8 @@
       "roleInfo": "역할: {{role}} | 필요: {{required}}",
       "matching": "매칭 중...",
       "button": "자동 매칭",
-      "edit": "수정"
+      "edit": "수정",
+      "viewApplicants": "지원자 보기"
     },
     "edit": {
         "title": "구인공고 수정",
@@ -472,6 +474,12 @@
         "statusClosed": "마감",
         "cancel": "취소",
         "save": "저장"
+    },
+    "applicants": {
+      "title": "지원자 목록",
+      "loading": "지원자 정보를 불러오는 중...",
+      "none": "아직 지원자가 없습니다.",
+      "close": "닫기"
     }
   },
   "profilePage": {

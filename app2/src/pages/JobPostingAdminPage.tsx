@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { collection, addDoc, serverTimestamp, query, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -8,6 +8,12 @@ import { useTranslation } from 'react-i18next';
 interface Tournament {
     id: string;
     name: string;
+}
+
+interface Applicant {
+    id: string;
+    applicantName: string;
+    appliedAt: any;
 }
 
 const JobPostingAdminPage = () => {
@@ -33,6 +39,9 @@ const JobPostingAdminPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState<any>(null);
   const [isMatching, setIsMatching] = useState<string | null>(null);
+  const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [loadingApplicants, setLoadingApplicants] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -111,12 +120,60 @@ const JobPostingAdminPage = () => {
     }
   };
 
+  const handleViewApplicants = async (postId: string) => {
+    setLoadingApplicants(true);
+    setIsApplicantsModalOpen(true);
+    try {
+        const q = query(collection(db, 'applications'), where('postId', '==', postId));
+        const querySnapshot = await getDocs(q);
+        const fetchedApplicants = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Applicant));
+        setApplicants(fetchedApplicants);
+    } catch (error) {
+        console.error("Error fetching applicants: ", error);
+        alert(t('jobPostingAdmin.alerts.fetchApplicantsFailed'));
+    } finally {
+        setLoadingApplicants(false);
+    }
+  };
+
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-4">{t('jobPostingAdmin.create.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-            {/* Form fields for creating a new post */}
+            <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.postingTitle')}</label>
+                <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
+            <div>
+                <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.tournament')}</label>
+                <select name="tournamentId" id="tournamentId" value={formData.tournamentId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="" disabled>{t('jobPostingAdmin.create.selectTournament')}</option>
+                    {tournaments?.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                </select>
+            </div>
+            <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.role')}</label>
+                <select name="role" id="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="dealer">{t('jobPostingAdmin.create.dealer')}</option>
+                    <option value="floor">{t('jobPostingAdmin.create.floor')}</option>
+                    <option value="registration">{t('jobPostingAdmin.create.registration')}</option>
+                </select>
+            </div>
+            <div>
+                <label htmlFor="requiredCount" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.staffNeeded')}</label>
+                <input type="number" name="requiredCount" id="requiredCount" min="1" value={formData.requiredCount} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
+            <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.description')}</label>
+                <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            </div>
+            <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400">
+                {isSubmitting ? t('jobPostingAdmin.create.submitting') : t('jobPostingAdmin.create.button')}
+            </button>
         </form>
       </div>
       
@@ -134,7 +191,13 @@ const JobPostingAdminPage = () => {
                                 {post.status}
                             </span>
                         </div>
-                        <div>
+                        <div className='flex'>
+                            <button
+                                onClick={() => handleViewApplicants(post.id)}
+                                className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                            >
+                                {t('jobPostingAdmin.manage.viewApplicants')}
+                            </button>
                             <button
                                 onClick={() => handleOpenEditModal(post)}
                                 className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
@@ -192,6 +255,28 @@ const JobPostingAdminPage = () => {
                             <button type="submit" className="py-2 px-4 bg-indigo-600 text-white rounded hover:bg-indigo-700">{t('jobPostingAdmin.edit.save')}</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        )}
+
+        {isApplicantsModalOpen && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobPostingAdmin.applicants.title')}</h3>
+                    {loadingApplicants ? (
+                        <p>{t('jobPostingAdmin.applicants.loading')}</p>
+                    ) : (
+                        <ul className="space-y-2">
+                            {applicants.length > 0 ? applicants.map(applicant => (
+                                <li key={applicant.id} className="p-2 border rounded-md">
+                                    {applicant.applicantName}
+                                </li>
+                            )) : <p>{t('jobPostingAdmin.applicants.none')}</p>}
+                        </ul>
+                    )}
+                    <div className="flex justify-end mt-4">
+                        <button onClick={() => setIsApplicantsModalOpen(false)} className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">{t('jobPostingAdmin.applicants.close')}</button>
+                    </div>
                 </div>
             </div>
         )}
