@@ -629,7 +629,12 @@
     "noPayroll": "급여 내역이 없습니다.",
     "statusPaid": "지급 완료",
     "statusPending": "지급 대기중",
-    "notAvailable": "정보 없음"
+    "notAvailable": "정보 없음",
+    "nationality": "국적",
+    "bankName": "은행명",
+    "bankAccount": "계좌번호",
+    "privateInfo": "개인 정보",
+    "notes": "기타 사항"
   },
   "participantLivePage": {
     "notFound": "참가자를 찾을 수 없습니다. (ID: {{id}})",

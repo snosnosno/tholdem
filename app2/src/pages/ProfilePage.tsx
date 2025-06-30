@@ -17,6 +17,9 @@ interface ProfileData {
   notes?: string;
   rating?: number;
   ratingCount?: number;
+  nationality?: string;
+  bankName?: string;
+  bankAccount?: string;
 }
 
 interface Payroll {
@@ -175,35 +178,84 @@ const ProfilePage = () => {
                     {!isEditing || !isOwnProfile ? (
                         <div className="mt-6 border-t pt-6">
                             <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.profileDetails')}</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <p><strong>{t('profilePage.email')}</strong> {profile.email}</p>
-                                <p><strong>{t('profilePage.phone')}</strong> {profile.phone || t('profilePage.notProvided')}</p>
-                                <p><strong>{t('profilePage.experience')}</strong> {profile.experience || t('profilePage.notProvided')}</p>
-                                <p><strong>{t('profilePage.notes', '기타 사항')}</strong> {profile.notes || t('profilePage.notProvided', '없음')}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                                <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.email')}</p>
+                                    <p>{profile.email}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.phone')}</p>
+                                    <p>{profile.phone || t('profilePage.notProvided')}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-600">{t('profilePage.nationality', '국적')}</p>
+                                    <p>{profile.nationality || t('profilePage.notProvided')}</p>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <p className="font-semibold text-gray-600">{t('profilePage.experience')}</p>
+                                    <p className="whitespace-pre-wrap">{profile.experience || t('profilePage.notProvided')}</p>
+                                </div>
+                                
+                                {isOwnProfile && (
+                                    <div className="md:col-span-2 mt-4 border-t pt-4">
+                                        <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('profilePage.privateInfo', '개인 정보')}</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                                            <div>
+                                                <p className="font-semibold text-gray-600">{t('profilePage.bankName', '은행명')}</p>
+                                                <p>{profile.bankName || t('profilePage.notProvided')}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-600">{t('profilePage.bankAccount', '계좌번호')}</p>
+                                                <p>{profile.bankAccount || t('profilePage.notProvided')}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="md:col-span-2">
+                                    <p className="font-semibold text-gray-600">{t('profilePage.notes', '기타 사항')}</p>
+                                    <p>{profile.notes || t('profilePage.notProvided', '없음')}</p>
+                                </div>
                             </div>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="mt-6 border-t pt-6 space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-700">{t('profilePage.editDetails')}</h2>
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
-                                <input type="text" name="name" id="name" value={formData.name || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        <form onSubmit={handleSubmit} className="mt-6 border-t pt-6">
+                            <h2 className="text-xl font-semibold text-gray-700 mb-4">{t('profilePage.editDetails')}</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('profilePage.name')}</label>
+                                    <input type="text" name="name" id="name" value={formData.name || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                </div>
+                                <div>
+                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
+                                    <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                </div>
+                                <div>
+                                    <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
+                                    <input type="text" name="nationality" id="nationality" value={formData.nationality || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                </div>
+                                <div>
+                                    <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>
+                                    <input type="text" name="bankName" id="bankName" value={formData.bankName || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700">{t('profilePage.bankAccount', '계좌번호')}</label>
+                                    <input type="text" name="bankAccount" id="bankAccount" value={formData.bankAccount || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
+                                    <textarea name="experience" id="experience" value={formData.experience || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
+                                    <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                </div>
                             </div>
-                            <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('profilePage.phone')}</label>
-                                <input type="text" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                            <div className="mt-6 flex justify-end">
+                                <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {t('profilePage.saveChanges')}
+                                </button>
                             </div>
-                            <div>
-                                <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience')}</label>
-                                <textarea name="experience" id="experience" value={formData.experience || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                            </div>
-                            <div>
-                                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
-                                <textarea name="notes" id="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                            </div>
-                            <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                                {t('profilePage.saveChanges')}
-                            </button>
                         </form>
                     )}
                 </div>

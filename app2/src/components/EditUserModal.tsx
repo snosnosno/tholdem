@@ -9,6 +9,11 @@ interface Staff {
   name: string;
   email: string;
   role: string;
+  experience?: string;
+  notes?: string;
+  nationality?: string;
+  bankName?: string;
+  bankAccount?: string;
 }
 
 interface EditUserModalProps {
@@ -19,19 +24,35 @@ interface EditUserModalProps {
 
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({ name: '', role: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    role: '',
+    experience: '',
+    notes: '',
+    nationality: '',
+    bankName: '',
+    bankAccount: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      setFormData({ name: user.name, role: user.role });
+      setFormData({
+        name: user.name || '',
+        role: user.role || '',
+        experience: user.experience || '',
+        notes: user.notes || '',
+        nationality: user.nationality || '',
+        bankName: user.bankName || '',
+        bankAccount: user.bankAccount || '',
+      });
     }
   }, [user]);
 
   if (!user) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -55,47 +76,105 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user }) 
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('editUserModal.title')}>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelName')}</label>
-          <input
-            type="text"
-            name="name"
-            id="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelName')}</label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelEmail')}</label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              value={user.email}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100"
+              disabled
+            />
+          </div>
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelRole')}</label>
+            <select
+              name="role"
+              id="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"
+            >
+              <option value="dealer">{t('roles.dealer')}</option>
+              <option value="manager">{t('roles.manager')}</option>
+              <option value="admin">{t('roles.admin')}</option>
+              <option value="pending_manager">{t('roles.pending_manager')}</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">{t('profilePage.nationality', '국적')}</label>
+            <input
+              type="text"
+              name="nationality"
+              id="nationality"
+              value={formData.nationality}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">{t('profilePage.bankName', '은행명')}</label>
+            <input
+              type="text"
+              name="bankName"
+              id="bankName"
+              value={formData.bankName}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700">{t('profilePage.bankAccount', '계좌번호')}</label>
+            <input
+              type="text"
+              name="bankAccount"
+              id="bankAccount"
+              value={formData.bankAccount}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label htmlFor="experience" className="block text-sm font-medium text-gray-700">{t('profilePage.experience', '경력')}</label>
+            <textarea
+              name="experience"
+              id="experience"
+              value={formData.experience}
+              onChange={handleChange}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('profilePage.notes', '기타 사항')}</label>
+            <textarea
+              name="notes"
+              id="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelEmail')}</label>
-          <input
-            type="email"
-            name="email"
-            id="email"
-            value={user.email}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100"
-            disabled
-          />
-        </div>
-        <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('editUserModal.labelRole')}</label>
-          <select
-            name="role"
-            id="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"
-          >
-            <option value="dealer">{t('roles.dealer')}</option>
-            <option value="manager">{t('roles.manager')}</option>
-            <option value="admin">{t('roles.admin')}</option>
-            <option value="pending_manager">{t('roles.pending_manager')}</option>
-          </select>
-        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4 pt-4">
           <button
             type="button"
             onClick={onClose}

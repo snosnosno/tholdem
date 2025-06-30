@@ -629,7 +629,12 @@
     "noPayroll": "No payroll history available.",
     "statusPaid": "Paid",
     "statusPending": "Pending",
-    "notAvailable": "N/A"
+    "notAvailable": "N/A",
+    "nationality": "Nationality",
+    "bankName": "Bank Name",
+    "bankAccount": "Account Number",
+    "privateInfo": "Private Info",
+    "notes": "Notes"
   },
   "participantLivePage": {
     "notFound": "Participant not found (ID: {{id}})",
