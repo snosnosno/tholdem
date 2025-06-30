@@ -76,7 +76,7 @@ export const Layout = () => {
             {/* Admin and Manager common menus */}
             {isAdmin && (
               <>
-                <NavItem to="/admin/staffing-dashboard" label={t('nav.staffingDashboard')} Icon={FaClipboardCheck} isOpen={isSidebarOpen} />
+                
                 <NavItem to="/admin/staff" label={t('nav.staffManagement')} Icon={FaUserShield} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/job-postings" label={t('nav.managePostings')} Icon={FaFileInvoice} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/events" label={t('nav.manageEvents')} Icon={FaCalendarAlt} isOpen={isSidebarOpen} />

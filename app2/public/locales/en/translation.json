@@ -86,7 +86,6 @@
     "myProfile": "My Profile",
     "myAvailability": "My Availability",
     "attendance": "Attendance",
-    "staffingDashboard": "Staffing Dashboard",
     "staffManagement": "Staff Management",
     "managePostings": "Manage Postings",
     "manageEvents": "Manage Events",
@@ -631,18 +630,6 @@
     "statusPaid": "Paid",
     "statusPending": "Pending",
     "notAvailable": "N/A"
-  },
-  "staffingDashboard": {
-    "accessDenied": "You do not have permission to access this page.",
-    "title": "Staffing Dashboard",
-    "totalStaff": "Total Staff",
-    "activeEvents": "Active Events",
-    "quickActions": "Quick Actions",
-    "addNewStaff": "Add New Staff",
-    "createNewEvent": "Create New Event",
-    "recentEvents": "Recent Events",
-    "loadingEvents": "Loading events...",
-    "errorEvents": "Error loading events."
   },
   "participantLivePage": {
     "notFound": "Participant not found (ID: {{id}})",

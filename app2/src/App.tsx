@@ -36,7 +36,7 @@ import JobPostingAdminPage from './pages/JobPostingAdminPage';
 import StaffListPage from './pages/StaffListPage';
 import StaffNewPage from './pages/StaffNewPage';
 import PayrollAdminPage from './pages/admin/PayrollAdminPage';
-import StaffingDashboardPage from './pages/StaffingDashboardPage';
+
 import ApprovalPage from './pages/admin/Approval';
 import DealerRotationPage from './pages/DealerRotationPage';
 import UserManagementPage from './pages/admin/UserManagementPage'; // Import the new page
@@ -79,7 +79,7 @@ const App: React.FC = () => {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="staff" element={<StaffListPage />} />
                 <Route path="staff/new" element={<StaffNewPage />} />
-                <Route path="staffing-dashboard" element={<StaffingDashboardPage />} />
+                
                 <Route path="events" element={<AdminEventsListPage />} />
                 <Route path="events/new" element={<AdminEventNewPage />} />
                 <Route path="events/:eventId" element={<AdminEventDetailPage />} />
