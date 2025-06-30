@@ -234,6 +234,7 @@ const StaffListPage: React.FC = () => {
                 <SortableHeader sortKey="nationality" label={t('profilePage.nationality')} />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
+              </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAndSortedStaff.length > 0 ? filteredAndSortedStaff.map((staff) => (
@@ -249,9 +250,10 @@ const StaffListPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.nationality || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.history || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">{staff.notes || '-'}</td>
+                </tr>
               )) : (
                 <tr>
-                                    <td colSpan={11} className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={11} className="px-6 py-4 text-center text-sm text-gray-500">
                     {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
