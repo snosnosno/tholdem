@@ -60,6 +60,16 @@ const JobPostingAdminPage = () => {
     '광주', '전남', '전북', '대구', '경북', '부산', '울산', '경남', '제주', '해외', '기타'
   ];
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const dayOfWeek = t(`days.${date.getDay()}`);
+    return `${year}-${month}-${day}(${dayOfWeek})`;
+  };
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -288,7 +298,6 @@ const JobPostingAdminPage = () => {
       }
   };
 
-
   return (
     <div className="container mx-auto p-4">
       <div className="mb-8">
@@ -407,52 +416,62 @@ const JobPostingAdminPage = () => {
         <h1 className="text-2xl font-bold mb-4">{t('jobPostingAdmin.manage.title')}</h1>
         <div className="space-y-4">
             {loading && <p>{t('jobPostingAdmin.manage.loading')}</p>}
-            {jobPostings?.map((post: any) => (
-                <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h2 className="text-xl font-bold">{post.title}</h2>
-                            <div className="text-sm text-gray-600">
-                                {post.roles && post.roles.map((r: RoleRequirement, i: number) => (
-                                    <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
-                                ))}
+            {jobPostings?.map((post: any) => {
+                const formattedStartDate = formatDate(post.startDate);
+                const formattedEndDate = formatDate(post.endDate);
+
+                return (
+                    <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
+                        <div className="flex justify-between items-start">
+                            <div className="flex-grow">
+                                <div className="flex items-center mb-2">
+                                    <h2 className="text-xl font-bold mr-4">{post.title}</h2>
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        {post.status}
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-600 mb-1">
+                                    {post.roles && post.roles.map((r: RoleRequirement, i: number) => (
+                                        <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-500 mb-1">
+                                    {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
+                                </p>
+                                <p className="text-sm text-gray-500 mb-1">
+                                    {t('jobPostingAdmin.manage.date')}: {post.endDate && post.endDate !== post.startDate ? `${formattedStartDate} ~ ${formattedEndDate}` : formattedStartDate}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    {t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}
+                                </p>
                             </div>
-                            <p className="text-sm text-gray-500">{t('jobPostingAdmin.manage.type')}: {post.type === '지원' ? t('jobPostingAdmin.manage.typeApplication') : t('jobPostingAdmin.manage.typeFixed')}</p>
-                            
-                            <p className="text-sm text-gray-500">
-                                {post.location && <span>{t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}</span>}
-                                {post.startDate && <span className="ml-2">{t('jobPostingAdmin.manage.date')}: {post.endDate ? `${post.startDate} ~ ${post.endDate}` : post.startDate}</span>}
-                                {post.time && <span className="ml-2">{t('jobPostingAdmin.manage.time')}: {post.time}</span>}
-                            </p>
-                            
-                            <span className={`mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {post.status}
-                            </span>
-                        </div>
-                        <div className='flex items-center flex-wrap justify-end'>
-                            <button
-                                onClick={() => handleViewApplicants(post.id)}
-                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                            >
-                                {t('jobPostingAdmin.manage.applicants')}
-                            </button>
-                            <button
-                                onClick={() => handleOpenEditModal(post)}
-                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
-                            >
-                                {t('jobPostingAdmin.manage.edit')}
-                            </button>
-                            <button 
-                                onClick={() => handleAutoMatch(post.id)}
-                                disabled={post.status !== 'open' || isMatching === post.id}
-                                className="m-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                            >
-                                {isMatching === post.id ? t('jobPostingAdmin.manage.matching') : t('jobPostingAdmin.manage.button')}
-                            </button>
+                            <div className='flex flex-col items-end'>
+                                <div className="flex mb-2">
+                                    <button
+                                        onClick={() => handleViewApplicants(post.id)}
+                                        className="mr-2 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                                    >
+                                        {t('jobPostingAdmin.manage.applicants')}
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenEditModal(post)}
+                                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
+                                    >
+                                        {t('jobPostingAdmin.manage.edit')}
+                                    </button>
+                                </div>
+                                <button 
+                                    onClick={() => handleAutoMatch(post.id)}
+                                    disabled={post.status !== 'open' || isMatching === post.id}
+                                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                                >
+                                    {isMatching === post.id ? t('jobPostingAdmin.manage.matching') : t('jobPostingAdmin.manage.button')}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                )
+            })}
         </div>
       </div>
   
@@ -610,6 +629,6 @@ const JobPostingAdminPage = () => {
         )}
     </div>
   );
-  };
+};
 
 export default JobPostingAdminPage;
