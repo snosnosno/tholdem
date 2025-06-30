@@ -238,7 +238,7 @@
     "buttonCreate": "스태프 생성"
   },
   "staffListPage": {
-    "title": "내 확정된 스태프",
+    "title": "확정 스태프",
     "fetchError": "스태프 정보를 가져오는 데 실패했습니다.",
     "noPostings": "생성한 구인 공고가 없습니다.",
     "noConfirmedStaff": "이 공고에 확정된 스태프가 아직 없습니다.",
