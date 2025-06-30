@@ -77,7 +77,8 @@
     "announcements": "Announcements",
     "history": "History",
     "logout": "Logout",
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "userManagement": "User Management"
   },
   "layout": {
     "title": "T-Holdem",
@@ -427,60 +428,25 @@
     "applied": "Applied",
     "applyNow": "Apply Now"
   },
-  "jobPostingAdmin": {
-    "alerts": {
-      "selectTournament": "Please select a tournament.",
-      "createSuccess": "Job posting created successfully!",
-      "createFailed": "Failed to create job posting.",
-      "matchFailed": "Failed to run auto-match. Check logs.",
-      "updateSuccess": "Job posting updated successfully!",
-      "updateFailed": "Failed to update job posting.",
-      "fetchApplicantsFailed": "Failed to fetch applicants."
-    },
-    "create": {
-      "title": "Create Job Posting",
-      "postingTitle": "Posting Title",
-      "tournament": "Tournament",
-      "selectTournament": "Select a tournament",
-      "role": "Role",
-      "dealer": "Dealer",
-      "floor": "Floor",
-      "registration": "Registration",
-      "staffNeeded": "Number of Staff Needed",
-      "description": "Description / Requirements",
-      "submitting": "Submitting...",
-      "button": "Create Posting"
-    },
-    "manage": {
-      "title": "Manage Job Postings",
-      "loading": "Loading postings...",
-      "roleInfo": "Role: {{role}} | Needed: {{required}}",
-      "matching": "Matching...",
-      "button": "Auto-match",
-      "edit": "Edit",
-      "viewApplicants": "View Applicants"
-    },
-    "edit": {
-        "title": "Edit Job Posting",
-        "postingTitle": "Posting Title",
-        "role": "Role",
-        "dealer": "Dealer",
-        "floor": "Floor",
-        "registration": "Registration",
-        "staffNeeded": "Staff Needed",
-        "description": "Description",
-        "status": "Status",
-        "statusOpen": "Open",
-        "statusClosed": "Closed",
-        "cancel": "Cancel",
-        "save": "Save"
-    },
-    "applicants": {
-      "title": "Applicants",
-      "loading": "Loading applicants...",
-      "none": "No applicants yet.",
-      "close": "Close"
-    }
+  "jobPostingAdminPage": {
+    "title": "Manage Job Postings",
+    "createPosting": "Create New Posting",
+    "formTitle": "Job Title",
+    "formDescription": "Description",
+    "formRoles": "Roles Required (comma-separated)",
+    "formDate": "Event Date",
+    "submit": "Submit",
+    "viewApplicants": "View Applicants",
+    "applicants": "Applicants",
+    "close": "Close",
+    "noApplicants": "No applicants for this position yet."
+  },
+  "staffListPage": {
+    "title": "My Confirmed Staff",
+    "fetchError": "Failed to fetch staff data.",
+    "noPostings": "You have not created any job postings.",
+    "noConfirmedStaff": "No staff have been confirmed for this posting yet.",
+    "unknownUser": "Unknown User"
   },
   "profilePage": {
     "eventIdMissing": "Event ID is missing",

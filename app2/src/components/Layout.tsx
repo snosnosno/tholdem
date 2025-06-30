@@ -93,7 +93,10 @@ export const Layout = () => {
 
             {/* Admin only menu */}
             {role === 'admin' && (
+              <>
+                <NavItem to="/admin/user-management" label={t('nav.userManagement')} Icon={FaUsers} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/approvals" label={t('nav.approvals')} Icon={FaUserCheck} isOpen={isSidebarOpen} />
+              </>
             )}
         </nav>
         

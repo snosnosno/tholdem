@@ -1,81 +1,135 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 
-interface Staff {
+// Define data structures
+interface User {
   id: string;
-  name: string;
-  email: string;
-  role: string;
-  // Add other relevant staff properties here
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface Application {
+  id: string;
+  applicantId: string;
+  applicantDetails?: User;
+}
+
+interface JobPosting {
+  id:string;
+  title: string;
+  confirmedStaff: Application[];
 }
 
 const StaffListPage: React.FC = () => {
   const { t } = useTranslation();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { currentUser } = useAuth();
+  const [postings, setPostings] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only fetch if user is an admin
-    if (!isAdmin) {
+    if (!currentUser) return;
+
+    const fetchManagerStaff = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // 1. Fetch job postings for the current manager
+        const postingsQuery = query(
+          collection(db, 'jobPostings'),
+          where('managerId', '==', currentUser.uid)
+        );
+        const postingsSnapshot = await getDocs(postingsQuery);
+        const postingsData: Omit<JobPosting, 'confirmedStaff'>[] = postingsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          title: doc.data().title,
+        }));
+
+        // 2. For each posting, fetch confirmed applications and user details
+        const postingsWithStaff = await Promise.all(
+          postingsData.map(async (posting) => {
+            const applicationsQuery = query(
+              collection(db, 'applications'),
+              where('postId', '==', posting.id),
+              where('status', '==', 'confirmed')
+            );
+            const applicationsSnapshot = await getDocs(applicationsQuery);
+            
+            const confirmedStaff = await Promise.all(
+              applicationsSnapshot.docs.map(async (appDoc) => {
+                const applicantId = appDoc.data().applicantId;
+                const userDocRef = doc(db, 'users', applicantId);
+                const userDoc = await getDoc(userDocRef);
+
+                return {
+                  id: appDoc.id,
+                  applicantId: applicantId,
+                  applicantDetails: userDoc.exists() 
+                    ? { id: userDoc.id, ...userDoc.data() } as User 
+                    : undefined,
+                };
+              })
+            );
+
+            return { ...posting, confirmedStaff };
+          })
+        );
+        
+        setPostings(postingsWithStaff);
+      } catch (e) {
+        console.error("Error fetching staff data: ", e);
+        setError(t('staffListPage.fetchError'));
+      } finally {
         setLoading(false);
-        return;
+      }
     };
 
-    const q = query(collection(db, 'users'), where('role', '==', 'dealer'));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const list: Staff[] = [];
-      querySnapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as Staff);
-      });
-      setStaffList(list);
-      setLoading(false);
-    }, (error) => {
-        console.error("Error fetching staff list: ", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [isAdmin]);
+    fetchManagerStaff();
+  }, [currentUser, t]);
 
   if (loading) {
-    return <div className="p-6">{t('staffList.loading')}</div>;
+    return <div className="flex justify-center items-center h-full"><div className="text-xl font-semibold">{t('loading')}</div></div>;
   }
 
-  if (!isAdmin) {
-      return <div className="p-6 text-red-500">{t('staffList.accessDenied')}</div>
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">{t('staffList.title')}</h1>
-                <Link to="/admin/staff/new" className="btn btn-primary">
-                    {t('staffList.addNew')}
-                </Link>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">{t('staffListPage.title')}</h1>
+
+      {postings.length === 0 ? (
+        <p>{t('staffListPage.noPostings')}</p>
+      ) : (
+        <div className="space-y-8">
+          {postings.map((posting) => (
+            <div key={posting.id} className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-semibold mb-4">{posting.title}</h2>
+              {posting.confirmedStaff.length > 0 ? (
                 <ul className="divide-y divide-gray-200">
-                    {staffList.length > 0 ? staffList.map(staff => (
-                        <li key={staff.id} className="p-4 flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold text-gray-900">{staff.name}</p>
-                                <p className="text-sm text-gray-500">{staff.email}</p>
-                            </div>
-                            <span className="text-sm capitalize text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{staff.role}</span>
-                        </li>
-                    )) : (
-                        <p className="text-center text-gray-500 py-4">{t('staffList.noStaffFound')}</p>
-                    )}
+                  {posting.confirmedStaff.map((staff) => (
+                    <li key={staff.id} className="py-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-lg">{staff.applicantDetails?.name || t('staffListPage.unknownUser')}</p>
+                        <p className="text-sm text-gray-600">{staff.applicantDetails?.email}</p>
+                        <p className="text-sm text-gray-600">{staff.applicantDetails?.phone}</p>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
+              ) : (
+                <p>{t('staffListPage.noConfirmedStaff')}</p>
+              )}
             </div>
+          ))}
         </div>
+      )}
     </div>
   );
 };

@@ -39,6 +39,7 @@ import PayrollAdminPage from './pages/admin/PayrollAdminPage';
 import StaffingDashboardPage from './pages/StaffingDashboardPage';
 import ApprovalPage from './pages/admin/Approval';
 import DealerRotationPage from './pages/DealerRotationPage';
+import UserManagementPage from './pages/admin/UserManagementPage'; // Import the new page
 
 // Dealer Pages
 import DealerEventsListPage from './pages/dealer/DealerEventsListPage';
@@ -96,6 +97,7 @@ const App: React.FC = () => {
               {/* Admin Only Route */}
               <Route path="admin" element={<RoleBasedRoute allowedRoles={['admin']} />}>
                   <Route path="approvals" element={<ApprovalPage />} />
+                  <Route path="user-management" element={<UserManagementPage />} />
               </Route>
             </Route>
           </Route>
