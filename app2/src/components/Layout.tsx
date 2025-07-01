@@ -81,6 +81,7 @@ export const Layout = () => {
                 <NavItem to="/admin/staff" label={t('nav.staffManagement')} Icon={FaUserShield} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/job-postings" label={t('nav.managePostings')} Icon={FaFileInvoice} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/events" label={t('nav.manageEvents')} Icon={FaCalendarAlt} isOpen={isSidebarOpen} />
+                <NavItem to="/admin/shift-schedule" label={t('nav.shiftSchedule')} Icon={FaClock} isOpen={isSidebarOpen} />
                 <NavItem to="/admin/payroll" label={t('nav.processPayroll')} Icon={FaFileInvoice} isOpen={isSidebarOpen} />
                 <hr className="my-2 border-t border-gray-200" />
                 {/* 참가자, 블라인드, 기록 페이지 숨김 처리 */}

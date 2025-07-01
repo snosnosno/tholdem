@@ -27,6 +27,7 @@ import PayrollPage from './pages/PayrollPage';
 import JobBoardPage from './pages/JobBoardPage';
 import AttendancePage from './pages/AttendancePage';
 import AvailableTimesPage from './pages/AvailableTimesPage';
+import ShiftSchedulePage from './pages/ShiftSchedulePage';
 
 // Admin Pages
 import DashboardPage from './pages/admin/DashboardPage';
@@ -88,6 +89,7 @@ const App: React.FC = () => {
                 <Route path="events/:eventId" element={<AdminEventDetailPage />} />
                 <Route path="job-postings" element={<JobPostingAdminPage />} />
                 <Route path="dealer-rotation" element={<DealerRotationPage />} />
+                <Route path="shift-schedule" element={<ShiftSchedulePage />} />
                 <Route path="payroll" element={<PayrollAdminPage />} />
                 <Route path="participants" element={<ParticipantsPage />} />
                 <Route path="tables" element={<TablesPage />} />
