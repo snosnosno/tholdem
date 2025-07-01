@@ -3,7 +3,7 @@ description: Shrimp-AI 작업 규칙 및 지침
 globs: 
 alwaysApply: true
 ---
-# 🦐 Shrimp-AI 작업 규칙 v2.0
+# 🦐 Shrimp-AI 작업 규칙 v3.0
 
 이 문서는 AI 에이전트 'Shrimp-AI'가 이 프로젝트에서 작업을 수행할 때 반드시 준수해야 할 핵심 규칙을 정의합니다. 모든 규칙은 작업의 안정성과 예측 가능성을 높이는 것을 목표로 합니다.
 
@@ -15,31 +15,78 @@ alwaysApply: true
 - 상대 경로 사용 금지
 
 ### 1.2 작업 전 경로 확인 절차
-1. `filesystem_list_directory`로 파일/폴더 존재 확인
-2. `get_file_lines`로 타겟 라인 주변 확인 (context: 3-5줄)
+1. `mcp_filesystem_list_directory`로 파일/폴더 존재 확인
+2. `mcp_edit-file-lines_get_file_lines`로 타겟 라인 주변 확인 (context: 3-5줄)
 3. 추측 기반 작업 절대 금지
 
 ## ✏️ 2. 파일 수정 규칙
 
-### 2.1 수정 방식 우선순위
-1. **기본**: 파일 전체 교체 (`mcp_filesystem_write_file`)
-2. **예외**: 부분 수정 (`mcp_edit-file-lines_edit_file_lines`)
-   - **한 줄**: 단순 값 변경, 변수명 수정
-   - **간단한 블록**: 5줄 이하 함수 내부, 단일 조건문
-   - **그 외**: 반드시 전체 파일 교체
+### 2.1 상황별 최적 도구 선택
+1. **정확한 소규모 수정** (1-3줄)
+   - `search_replace`: 고유한 컨텍스트가 있는 경우
+   - `mcp_filesystem_edit_file`: 정확한 라인 기반 수정
 
-### 2.2 필수 검증 절차
-```
-✅ 1단계: get_file_lines로 타겟 라인 확인
-✅ 2단계: dryRun: true로 미리보기
-✅ 3단계: diff 검토 후 approve_edit
+2. **중간 규모 수정** (함수/컴포넌트 일부)
+   - `edit_file`: Claude가 컨텍스트 이해 가능한 경우
+   - `mcp_filesystem_edit_file`: git-style diff 검토 필요시
+
+3. **대규모 수정** (새 컴포넌트/대폭 변경)
+   - `mcp_filesystem_write_file`: 안전성 최우선
+
+4. **위험한 수정** (복잡한 로직/중요 파일)
+   - `mcp_filesystem_write_file`: 항상 전체 교체
+
+### 2.2 도구별 검증 절차
+#### A. search_replace
+✅ 1단계: `grep_search`로 대상 텍스트 확인
+✅ 2단계: 충분한 컨텍스트 포함 여부 검토
+✅ 3단계: 실행 후 결과 확인
+
+#### B. mcp_filesystem_edit_file  
+✅ 1단계: `dryRun: true`로 diff 미리보기
+✅ 2단계: git-style diff 검토
+✅ 3단계: 실행 후 파일 상태 확인
+
+#### C. edit_file
+✅ 1단계: 수정 대상 범위 명확히 정의
+✅ 2단계: `// ... existing code ...` 패턴 적절히 활용
+✅ 3단계: 실행 후 구문 오류 검사
+
+#### D. mcp_filesystem_write_file
+✅ 1단계: 전체 파일 내용 준비 및 검토
+✅ 2단계: 기존 파일 백업 (필요시)
+✅ 3단계: 실행 후 컴파일/린트 검사
+
+#### E. mcp_edit-file-lines_edit_file_lines (레거시 - 제한적 사용)
+✅ 1단계: `mcp_edit-file-lines_get_file_lines`로 타겟 라인 확인
+✅ 2단계: `dryRun: true`로 미리보기
+✅ 3단계: diff 검토 후 `approve_edit`
 ✅ 4단계: 결과 확인
-```
 
-### 2.3 안전 규칙
+### 2.3 안전성 단계별 접근
+#### 🟢 안전 레벨 (바로 실행 가능)
+- `search_replace`: 3줄 이하 단순 수정
+- `mcp_filesystem_edit_file`: 단일 함수 내부 수정
+
+#### 🟡 주의 레벨 (검증 필수)
+- `edit_file`: 컴포넌트 일부 수정
+- `mcp_edit-file-lines_edit_file_lines`: 복잡한 블록 수정
+
+#### 🔴 위험 레벨 (전체 교체 권장)
+- 100줄 이상 파일의 구조적 변경
+- 여러 함수/컴포넌트 동시 수정
+- 중요한 설정 파일 (package.json, tsconfig.json 등)
+
+**추가 안전 규칙:**
 - **dryRun 의심스러우면**: 즉시 전체 교체 방식 전환
 - **단일 책임**: 한 번에 하나의 논리적 수정만
 - **3회 제한**: 같은 파일 linter 오류 수정 최대 3회
+
+### 2.4 병렬 작업 최적화
+- **읽기 작업**: 항상 병렬 실행 (`mcp_filesystem_read_multiple_files`)
+- **검색 작업**: 동시 실행 (`grep_search` + `codebase_search`)
+- **검증 작업**: `mcp_edit-file-lines_get_file_lines` + `mcp_filesystem_get_file_info` 병렬
+- **순차 필수**: 파일 수정 → 검증 → 커밋
 
 ## 🔄 3. Git 워크플로우 (간소화)
 
@@ -108,7 +155,7 @@ init_project_rules: 프로젝트 표준 설정
 ### 5.2 오류 처리 및 복구
 ```
 dryRun 실패 → 전체 교체 방식 전환
-get_file_lines 오류 → filesystem_read_file 대체
+get_file_lines 오류 → mcp_filesystem_read_file 대체
 TaskExecutor 중단 → 상태 복구 후 재시도
 연속 실행 오류 → 수동 모드 전환
 ```
@@ -121,10 +168,21 @@ TaskExecutor 중단 → 상태 복구 후 재시도
 
 ## 🔧 6. 도구 사용 우선순위
 
-### 6.1 파일 작업
-1. **읽기**: `mcp_filesystem_read_file`
-2. **생성/수정**: `mcp_edit-file-lines_edit_file_lines` (부분) / `mcp_filesystem_write_file` (전체)
-3. **폴더 관리**: `mcp_filesystem_*`
+### 6.1 파일 작업 도구 우선순위
+1. **읽기**: 
+   - `mcp_filesystem_read_file` (단일 파일)
+   - `mcp_filesystem_read_multiple_files` (여러 파일 병렬)
+
+2. **검색**: 
+   - `grep_search` + `codebase_search` (병렬 실행)
+   - `mcp_edit-file-lines_search_file` (정확한 위치 찾기)
+
+3. **수정**: 상황별 최적 도구
+   - 소규모: `search_replace` → `mcp_filesystem_edit_file`
+   - 중간: `edit_file` → `mcp_filesystem_edit_file`  
+   - 대규모: `mcp_filesystem_write_file`
+
+4. **폴더 관리**: `mcp_filesystem_*`
 
 ### 6.2 데이터베이스 접속
 ```bash
@@ -145,7 +203,7 @@ mysql -u root -e "쿼리" [데이터베이스명]
 
 ### ❌ 절대 금지
 - 상대 경로 사용
-- dryRun 없는 파일 수정
+- dryRun 없는 파일 수정 (mcp_edit-file-lines 사용시)
 - 임의 Shrimp 작업 삭제
 - 추측 기반 작업
 - 동시 여러 부분 수정
@@ -154,7 +212,7 @@ mysql -u root -e "쿼리" [데이터베이스명]
 ### ✅ 반드시 수행
 - 절대 경로 사용
 - 사전 확인 절차
-- dryRun 검증
+- 상황별 최적 도구 선택
 - 단계별 승인 요청
 - Git 자동 커밋 (master 브랜치)
 - 작업 전 파일 위치/내용 재확인
@@ -181,7 +239,24 @@ mysql -u root -e "쿼리" [데이터베이스명]
 "연속 실행" 요청 → 확인 → 순차 실행 → 중간 보고 → 완료
 ```
 
+### 8.5 효율적인 편집 워크플로우
+#### 패턴 A: 빠른 수정 (5분 이내)
+```
+검색(병렬) → 소규모 수정 도구 → 즉시 확인
+```
+
+#### 패턴 B: 안전한 수정 (10-15분)
+```
+읽기(병렬) → 중간 도구 + 검증 → 커밋
+```
+
+#### 패턴 C: 대규모 수정 (30분+)
+```
+분석(병렬) → 전체 교체 → 단계별 검증 → 커밋
+```
+
 ---
-**버전**: v2.0  
-**최종 수정**: 2024년  
-**적용 범위**: T-HOLDEM 프로젝트 전체
+**버전**: v3.0  
+**최종 수정**: 2025년 1월  
+**적용 범위**: T-HOLDEM 프로젝트 전체  
+**주요 개선사항**: 도구별 최적화, 병렬 작업 지원, 안전성 단계별 접근
