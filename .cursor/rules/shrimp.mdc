@@ -221,6 +221,7 @@ mysql -u root -e "쿼리" [데이터베이스명]
 - Git 자동 커밋 (master 브랜치)
 - 작업 전 파일 위치/내용 재확인
 - edit_file_lines 사용 시 항상 dryRun: true 설정
+- 파일 읽기/생성/수정은 edit-file-lines 사용, 폴더 생성/파일 조회/파일 이동은 filesystem 사용
 
 ## 📝 8. 작업 진행 패턴
 
