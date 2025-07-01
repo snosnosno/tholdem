@@ -91,11 +91,7 @@ const TimeIntervalSelector: React.FC<TimeIntervalSelectorProps> = ({
               {selectedIntervalInfo.icon} {selectedIntervalInfo.label}
             </span>
           </div>
-          {timeStats && (
-            <div className="text-sm text-gray-500">
-              ({timeStats.totalSlots}개 슬롯, {timeStats.formattedDuration})
-            </div>
-          )}
+          
         </div>
         <div className="flex items-center">
           {isExpanded ? 
@@ -133,17 +129,9 @@ const TimeIntervalSelector: React.FC<TimeIntervalSelectorProps> = ({
                         </span>
                       )}
                     </div>
-                    {stats && (
-                      <div className="text-sm text-gray-500">
-                        {stats.totalSlots}슬롯
-                      </div>
-                    )}
+                    
                   </div>
-                  {stats && (
-                    <div className="text-xs text-gray-400 mt-1">
-                      총 {stats.formattedDuration}, {stats.totalSlots}개 시간 구간
-                    </div>
-                  )}
+                  
                 </button>
               );
             })}
