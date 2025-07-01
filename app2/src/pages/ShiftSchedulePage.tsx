@@ -1,1 +1,593 @@
-import React, { useState, useMemo, useEffect } from 'react';\nimport { useCollection } from 'react-firebase-hooks/firestore';\nimport { FaCalendarAlt, FaClock, FaUsers, FaTable, FaPlus, FaCog, FaTrash, FaExclamationTriangle, FaCheckCircle, FaInfoCircle, FaHistory } from 'react-icons/fa';\nimport { collection, query, doc, deleteField, updateDoc, serverTimestamp } from 'firebase/firestore';\nimport { db } from '../firebase';\nimport { useTranslation } from 'react-i18next';\nimport { useShiftSchedule, ShiftDealer } from '../hooks/useShiftSchedule';\nimport useTables from '../hooks/useTables';\nimport TimeIntervalSelector from '../components/TimeIntervalSelector';\nimport ShiftGridComponent from '../components/ShiftGridComponent';\n\nconst ShiftSchedulePage: React.FC = () => {\n  const { t } = useTranslation();\n  \n  // 현재 선택된 날짜 상태\n  const [selectedDate, setSelectedDate] = useState<string>(() => {\n    const today = new Date();\n    return today.toISOString().split('T')[0]; // YYYY-MM-DD 형식\n  });\n  \n  // 임시 이벤트 ID (추후 이벤트 선택 기능으로 확장)\n  const [selectedEventId] = useState<string>('default-event');\n  \n  // 기존 스태프 데이터 가져오기 (DealerRotationPage 패턴)\n  const staffQuery = useMemo(() => query(collection(db, 'staff')), []);\n  \n  const [staffSnap, staffLoading] = useCollection(staffQuery);\n  const { tables, loading: tablesLoading } = useTables();\n  \n  // 교대 스케줄 데이터\n  const { \n    schedule, \n    loading: scheduleLoading, \n    error: scheduleError,\n    timeSlots,\n    dealers,\n    validationResult,\n    createSchedule,\n    updateDealerAssignment,\n    addDealer,\n    updateScheduleSettings,\n    generateWorkLogs,\n    checkWorkLogsExist\n  } = useShiftSchedule(selectedEventId, selectedDate);\n  \n  // 스태프 데이터 처리\n  const allStaff = useMemo(() => \n    staffSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ShiftDealer[] | undefined, \n    [staffSnap]\n  );\n  \n  const availableDealers = useMemo(() =>\n    (allStaff?.filter(s => s.role === 'Dealer') as ShiftDealer[] || []), \n    [allStaff]\n  );\n  \n  // 스케줄에 이미 추가된 딜러들을 제외한 사용 가능한 딜러들\n  const dealersNotInSchedule = useMemo(() => {\n    if (!schedule) return availableDealers;\n    const scheduledDealerIds = Object.keys(schedule.scheduleData);\n    return availableDealers.filter(dealer => !scheduledDealerIds.includes(dealer.id));\n  }, [availableDealers, schedule]);\n  \n  const loading = staffLoading || tablesLoading || scheduleLoading;\n  \n  // 근무기록 상태\n  const [isGeneratingWorkLogs, setIsGeneratingWorkLogs] = useState(false);\n  const [workLogsGenerated, setWorkLogsGenerated] = useState(false);\n  \n  // 근무기록 생성 여부 확인\n  useEffect(() => {\n    const checkLogs = async () => {\n      if (selectedEventId && selectedDate) {\n        const exists = await checkWorkLogsExist();\n        setWorkLogsGenerated(exists);\n      }\n    };\n    checkLogs();\n  }, [selectedEventId, selectedDate, checkWorkLogsExist]);\n  \n  // 날짜 변경 핸들러\n  const handleDateChange = (newDate: string) => {\n    setSelectedDate(newDate);\n  };\n  \n  // 딜러 추가 핸들러\n  const handleAddDealer = async (dealerId: string, dealerName: string) => {\n    if (!schedule) return;\n    \n    try {\n      await addDealer(dealerId, dealerName, schedule.startTime);\n    } catch (error) {\n      console.error('Error adding dealer:', error);\n    }\n  };\n  \n  // 딜러 제거 핸들러 (스케줄에서 모든 할당 제거)\n  const handleRemoveDealer = async (dealerId: string) => {\n    if (!schedule) return;\n    \n    try {\n      const scheduleId = `${selectedEventId}_${selectedDate}`;\n      const scheduleRef = doc(db, 'shiftSchedules', scheduleId);\n      await updateDoc(scheduleRef, {\n        [`scheduleData.${dealerId}`]: deleteField(),\n        updatedAt: serverTimestamp()\n      });\n    } catch (error) {\n      console.error('Error removing dealer:', error);\n    }\n  };\n  \n  // 근무기록 생성 핸들러\n  const handleGenerateWorkLogs = async () => {\n    if (!schedule || !selectedEventId || !selectedDate) {\n      alert('스케줄 정보가 없습니다.');\n      return;\n    }\n\n    if (workLogsGenerated) {\n      const confirmed = window.confirm('이미 근무기록이 생성되었습니다. 다시 생성하시겠습니까?');\n      if (!confirmed) return;\n    }\n\n    setIsGeneratingWorkLogs(true);\n    try {\n      const logs = await generateWorkLogs();\n      setWorkLogsGenerated(true);\n      alert(`${logs.length}개의 근무기록이 성공적으로 생성되었습니다.`);\n    } catch (error) {\n      console.error('Error generating work logs:', error);\n      alert('근무기록 생성에 실패했습니다.');\n    } finally {\n      setIsGeneratingWorkLogs(false);\n    }\n  };\n  \n  // 사용자 확인 모달 (딜러 제거용)\n  const confirmRemoveDealer = (dealerId: string, dealerName: string) => {\n    if (window.confirm(`정말로 ${dealerName} 딜러를 스케줄에서 제거하시겠습니까?`)) {\n      handleRemoveDealer(dealerId);\n    }\n  };\n  \n  // 새 스케줄 생성 핸들러\n  const handleCreateSchedule = async () => {\n    try {\n      await createSchedule(selectedEventId, selectedDate);\n    } catch (error) {\n      console.error('Error creating schedule:', error);\n    }\n  };\n  \n  // 시간 간격 변경 핸들러\n  const handleIntervalChange = async (newInterval: number) => {\n    if (!schedule) return;\n    \n    try {\n      await updateScheduleSettings(newInterval);\n    } catch (error) {\n      console.error('Error updating interval:', error);\n    }\n  };\n  \n  // 날짜 포맷팅\n  const formatDate = (dateString: string) => {\n    const date = new Date(dateString);\n    const options: Intl.DateTimeFormatOptions = { \n      weekday: 'short', \n      month: 'short', \n      day: 'numeric' \n    };\n    return date.toLocaleDateString('ko-KR', options);\n  };\n  \n  // 검증 결과 컴포넌트\n  const ValidationSummary = () => {\n    if (!validationResult) return null;\n\n    const errorCount = validationResult.violations.filter(v => v.severity === 'error').length;\n    const warningCount = validationResult.violations.filter(v => v.severity === 'warning').length;\n    const infoCount = validationResult.violations.filter(v => v.severity === 'info').length;\n\n    return (\n      <div className=\"bg-white p-4 rounded-lg shadow-md mb-4\">\n        <h3 className=\"text-lg font-semibold mb-3 flex items-center\">\n          <FaCheckCircle className=\"mr-2 text-blue-600\" />\n          스케줄 검증 결과\n        </h3>\n        \n        <div className=\"flex items-center gap-4 mb-3\">\n          {errorCount > 0 && (\n            <div className=\"flex items-center text-red-600\">\n              <FaExclamationTriangle className=\"mr-1\" />\n              <span className=\"font-semibold\">{errorCount}개 오류</span>\n            </div>\n          )}\n          {warningCount > 0 && (\n            <div className=\"flex items-center text-yellow-600\">\n              <FaExclamationTriangle className=\"mr-1\" />\n              <span className=\"font-semibold\">{warningCount}개 경고</span>\n            </div>\n          )}\n          {infoCount > 0 && (\n            <div className=\"flex items-center text-blue-600\">\n              <FaInfoCircle className=\"mr-1\" />\n              <span className=\"font-semibold\">{infoCount}개 정보</span>\n            </div>\n          )}\n          {validationResult.violations.length === 0 && (\n            <div className=\"flex items-center text-green-600\">\n              <FaCheckCircle className=\"mr-1\" />\n              <span className=\"font-semibold\">검증 통과</span>\n            </div>\n          )}\n        </div>\n\n        {validationResult.violations.length > 0 && (\n          <div className=\"space-y-2 max-h-32 overflow-y-auto\">\n            {validationResult.violations.map((violation, index) => (\n              <div key={index} className={`text-sm p-2 rounded ${\n                violation.severity === 'error' ? 'bg-red-50 text-red-700' :\n                violation.severity === 'warning' ? 'bg-yellow-50 text-yellow-700' :\n                'bg-blue-50 text-blue-700'\n              }`}>\n                <span className=\"font-medium\">{violation.type}:</span> {violation.message}\n              </div>\n            ))}\n          </div>\n        )}\n      </div>\n    );\n  };\n\n  if (loading) {\n    return (\n      <div className=\"p-6 bg-gray-50 min-h-screen\">\n        <div className=\"flex items-center justify-center h-64\">\n          <div className=\"text-center\">\n            <div className=\"animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4\"></div>\n            <p className=\"text-gray-600\">{t('shiftSchedule.loading')}</p>\n          </div>\n        </div>\n      </div>\n    );\n  }\n\n  return (\n    <div className=\"p-6 bg-gray-50 min-h-screen\">\n      {/* 헤더 섹션 */}\n      <div className=\"mb-6\">\n        <h1 className=\"text-3xl font-bold text-gray-800 mb-2\">\n          {t('shiftSchedule.title')}\n        </h1>\n        <p className=\"text-gray-600\">{t('shiftSchedule.subtitle')}</p>\n      </div>\n\n      {/* 날짜 선택 및 컨트롤 바 */}\n      <div className=\"bg-white p-4 rounded-lg shadow-md mb-6\">\n        <div className=\"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4\">\n          {/* 날짜 선택 */}\n          <div className=\"flex items-center gap-4\">\n            <div className=\"flex items-center gap-2\">\n              <FaCalendarAlt className=\"text-blue-600\" />\n              <label className=\"font-semibold text-gray-700\">\n                {t('shiftSchedule.selectDate')}:\n              </label>\n            </div>\n            <input\n              type=\"date\"\n              value={selectedDate}\n              onChange={(e) => handleDateChange(e.target.value)}\n              className=\"px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500\"\n            />\n            <span className=\"text-gray-500\">({formatDate(selectedDate)})</span>\n          </div>\n          \n          {/* 시간 간격 선택 */}\n          {schedule && (\n            <div className=\"flex items-center gap-4\">\n              <div className=\"flex items-center gap-2\">\n                <FaClock className=\"text-purple-600\" />\n                <label className=\"font-semibold text-gray-700\">\n                  {t('shiftSchedule.timeInterval')}:\n                </label>\n              </div>\n              <div className=\"w-64\">\n                <TimeIntervalSelector\n                  selectedInterval={schedule.timeInterval}\n                  onIntervalChange={handleIntervalChange}\n                  startTime={schedule.startTime}\n                  endTime={schedule.endTime}\n                  size=\"sm\"\n                />\n              </div>\n            </div>\n          )}\n          \n          {/* 컨트롤 버튼들 */}\n          <div className=\"flex items-center gap-2\">\n            {schedule && dealers.length > 0 && (\n              <button \n                onClick={handleGenerateWorkLogs}\n                disabled={isGeneratingWorkLogs}\n                className={`btn btn-sm flex items-center gap-2 ${\n                  workLogsGenerated ? 'btn-outline' : 'btn-secondary'\n                } ${isGeneratingWorkLogs ? 'loading' : ''}`}\n              >\n                <FaHistory className=\"w-4 h-4\" />\n                {isGeneratingWorkLogs ? '생성 중...' : \n                 workLogsGenerated ? '근무기록 재생성' : '근무기록 생성'}\n              </button>\n            )}\n            <button className=\"btn btn-outline btn-sm flex items-center gap-2\">\n              <FaCog className=\"w-4 h-4\" />\n              {t('shiftSchedule.settings')}\n            </button>\n            {!schedule && (\n              <button \n                onClick={handleCreateSchedule}\n                className=\"btn btn-primary btn-sm flex items-center gap-2\"\n              >\n                <FaPlus className=\"w-4 h-4\" />\n                {t('shiftSchedule.createSchedule')}\n              </button>\n            )}\n          </div>\n        </div>\n        \n        {/* 근무기록 상태 표시 */}\n        {schedule && (\n          <div className=\"mt-3 p-2 rounded-md\">\n            {workLogsGenerated ? (\n              <div className=\"flex items-center gap-2 text-green-600\">\n                <FaCheckCircle className=\"w-4 h-4\" />\n                <span className=\"text-sm font-medium\">이 날짜의 근무기록이 이미 생성되었습니다</span>\n              </div>\n            ) : (\n              <div className=\"flex items-center gap-2 text-orange-600\">\n                <FaHistory className=\"w-4 h-4\" />\n                <span className=\"text-sm font-medium\">스케줄 완료 후 근무기록을 생성하세요</span>\n              </div>\n            )}\n          </div>\n        )}\n      </div>\n\n      {/* 검증 결과 */}\n      {schedule && <ValidationSummary />}\n\n      {/* 메인 콘텐츠 영역 */}\n      <div className=\"grid grid-cols-1 xl:grid-cols-4 gap-6\">\n        \n        {/* 스케줄 그리드 영역 (3/4) */}\n        <div className=\"xl:col-span-3\">\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-xl font-semibold mb-4 text-blue-600 flex items-center\">\n              <FaTable className=\"mr-2\"/> \n              {t('shiftSchedule.scheduleGrid')}\n              {schedule && (\n                <span className=\"ml-2 text-sm font-normal text-gray-500\">\n                  ({schedule.timeInterval}분 간격)\n                </span>\n              )}\n            </h2>\n            \n            {schedule ? (\n              <div className=\"space-y-4\">\n                {/* 시간 슬롯 정보 */}\n                <div className=\"flex items-center gap-4 text-sm text-gray-600\">\n                  <div className=\"flex items-center gap-1\">\n                    <FaClock className=\"w-4 h-4\" />\n                    <span>{schedule.startTime} - {schedule.endTime}</span>\n                  </div>\n                  <div className=\"flex items-center gap-1\">\n                    <FaUsers className=\"w-4 h-4\" />\n                    <span>{dealers.length}명 배정됨</span>\n                  </div>\n                </div>\n                \n                {/* 엑셀형 교대 스케줄 그리드 */}\n                <ShiftGridComponent\n                  dealers={dealers}\n                  tables={tables}\n                  timeSlots={timeSlots}\n                  onCellChange={updateDealerAssignment}\n                  readonly={false}\n                  height={500}\n                />\n              </div>\n            ) : (\n              <div className=\"text-center py-12\">\n                <FaCalendarAlt className=\"w-16 h-16 text-gray-300 mx-auto mb-4\" />\n                <h3 className=\"text-lg font-semibold text-gray-600 mb-2\">\n                  {t('shiftSchedule.noSchedule')}\n                </h3>\n                <p className=\"text-gray-500 mb-4\">\n                  {formatDate(selectedDate)} 일정이 아직 생성되지 않았습니다.\n                </p>\n                <button \n                  onClick={handleCreateSchedule}\n                  className=\"btn btn-primary flex items-center gap-2 mx-auto\"\n                >\n                  <FaPlus className=\"w-4 h-4\" />\n                  {t('shiftSchedule.createSchedule')}\n                </button>\n              </div>\n            )}\n          </div>\n        </div>\n\n        {/* 사이드바 - 딜러 목록 및 정보 (1/4) */}\n        <div className=\"space-y-6\">\n          {/* 현재 스케줄의 딜러들 */}\n          {schedule && dealers.length > 0 && (\n            <div className=\"bg-white p-6 rounded-lg shadow-md\">\n              <h2 className=\"text-xl font-semibold mb-4 text-blue-600 flex items-center\">\n                <FaUsers className=\"mr-2\"/> \n                배정된 딜러 ({dealers.length})\n              </h2>\n              <div className=\"space-y-3 max-h-64 overflow-y-auto\">\n                {dealers.map(dealer => (\n                  <div key={dealer.id} className=\"flex items-center bg-blue-50 p-3 rounded-lg shadow-sm\">\n                    <div className=\"w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center mr-3\">\n                      <span className=\"text-sm font-semibold text-blue-700\">\n                        {dealer.dealerName.charAt(0)}\n                      </span>\n                    </div>\n                    <div className=\"flex-1\">\n                      <p className=\"font-semibold text-gray-800\">{dealer.dealerName}</p>\n                      <p className=\"text-sm text-gray-500\">출근시간: {dealer.startTime}</p>\n                    </div>\n                    <button \n                      onClick={() => confirmRemoveDealer(dealer.id, dealer.dealerName)}\n                      className=\"btn btn-sm btn-outline btn-error\"\n                      title=\"스케줄에서 제거\"\n                    >\n                      <FaTrash className=\"w-3 h-3\" />\n                    </button>\n                  </div>\n                ))}\n              </div>\n            </div>\n          )}\n\n          {/* 사용 가능한 딜러 */}\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-xl font-semibold mb-4 text-green-600 flex items-center\">\n              <FaUsers className=\"mr-2\"/> \n              {t('shiftSchedule.availableDealers')} ({dealersNotInSchedule.length})\n            </h2>\n            <div className=\"space-y-3 max-h-64 overflow-y-auto\">\n              {dealersNotInSchedule.map(dealer => (\n                <div key={dealer.id} className=\"flex items-center bg-gray-50 p-3 rounded-lg shadow-sm\">\n                  <div className=\"w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3\">\n                    <span className=\"text-sm font-semibold text-gray-600\">\n                      {dealer.name.charAt(0)}\n                    </span>\n                  </div>\n                  <div className=\"flex-1\">\n                    <p className=\"font-semibold text-gray-800\">{dealer.name}</p>\n                    <p className=\"text-sm text-gray-500\">{dealer.role}</p>\n                  </div>\n                  {schedule && (\n                    <button \n                      onClick={() => handleAddDealer(dealer.id, dealer.name)}\n                      className=\"btn btn-sm btn-outline btn-success\"\n                    >\n                      <FaPlus className=\"w-3 h-3 mr-1\" />\n                      {t('shiftSchedule.addToSchedule')}\n                    </button>\n                  )}\n                </div>\n              ))}\n              {dealersNotInSchedule.length === 0 && (\n                <p className=\"text-sm text-gray-500 text-center py-4\">\n                  {schedule ? '모든 딜러가 스케줄에 추가되었습니다' : t('shiftSchedule.noDealersAvailable')}\n                </p>\n              )}\n            </div>\n          </div>\n\n          {/* 테이블 정보 */}\n          <div className=\"bg-white p-6 rounded-lg shadow-md\">\n            <h2 className=\"text-xl font-semibold mb-4 text-purple-600 flex items-center\">\n              <FaTable className=\"mr-2\"/> \n              {t('shiftSchedule.availableTables')} ({tables?.length || 0})\n            </h2>\n            <div className=\"space-y-2 max-h-48 overflow-y-auto\">\n              {tables?.map(table => (\n                <div key={table.id} className=\"flex items-center justify-between p-2 bg-gray-50 rounded\">\n                  <span className=\"font-medium text-gray-700\">\n                    Table {table.tableNumber}\n                  </span>\n                  <span className=\"text-sm text-gray-500\">\n                    {table.status || 'open'}\n                  </span>\n                </div>\n              ))}\n              {(!tables || tables.length === 0) && (\n                <p className=\"text-sm text-gray-500 text-center py-4\">\n                  {t('shiftSchedule.noTablesAvailable')}\n                </p>\n              )}\n            </div>\n          </div>\n        </div>\n      </div>\n\n      {/* 에러 표시 */}\n      {scheduleError && (\n        <div className=\"mt-4 p-4 bg-red-50 border border-red-200 rounded-lg\">\n          <p className=\"text-red-700\">\n            {t('shiftSchedule.error')}: {scheduleError.message}\n          </p>\n        </div>\n      )}\n    </div>\n  );\n};\n\nexport default ShiftSchedulePage;"
+import React, { useState, useMemo, useEffect } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { FaCalendarAlt, FaClock, FaUsers, FaTable, FaPlus, FaCog, FaTrash, FaExclamationTriangle, FaCheckCircle, FaInfoCircle, FaHistory } from 'react-icons/fa';
+import { collection, query, doc, deleteField, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useTranslation } from 'react-i18next';
+import { useShiftSchedule, ShiftDealer } from '../hooks/useShiftSchedule';
+import useTables from '../hooks/useTables';
+import TimeIntervalSelector from '../components/TimeIntervalSelector';
+import ShiftGridComponent from '../components/ShiftGridComponent';
+
+const ShiftSchedulePage: React.FC = () => {
+  const { t } = useTranslation();
+  
+  // 현재 선택된 날짜 상태
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+  });
+  
+  // 임시 이벤트 ID (추후 이벤트 선택 기능으로 확장)
+  const [selectedEventId] = useState<string>('default-event');
+  
+  // 기존 스태프 데이터 가져오기 (DealerRotationPage 패턴)
+  const staffQuery = useMemo(() => query(collection(db, 'staff')), []);
+  
+  const [staffSnap, staffLoading] = useCollection(staffQuery);
+  const { tables, loading: tablesLoading } = useTables();
+  
+  // 교대 스케줄 데이터
+  const { 
+    schedule, 
+    loading: scheduleLoading, 
+    error: scheduleError,
+    timeSlots,
+    dealers,
+    validationResult,
+    createSchedule,
+    updateDealerAssignment,
+    addDealer,
+    updateScheduleSettings,
+    generateWorkLogs,
+    checkWorkLogsExist
+  } = useShiftSchedule(selectedEventId, selectedDate);
+  
+  // 스태프 데이터 처리
+  const allStaff = useMemo(() => 
+    staffSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ShiftDealer[] | undefined, 
+    [staffSnap]
+  );
+  
+  const availableDealers = useMemo(() =>
+    (allStaff?.filter(s => s.role === 'Dealer') as ShiftDealer[] || []), 
+    [allStaff]
+  );
+  
+  // 스케줄에 이미 추가된 딜러들을 제외한 사용 가능한 딜러들
+  const dealersNotInSchedule = useMemo(() => {
+    if (!schedule) return availableDealers;
+    const scheduledDealerIds = Object.keys(schedule.scheduleData);
+    return availableDealers.filter(dealer => !scheduledDealerIds.includes(dealer.id));
+  }, [availableDealers, schedule]);
+  
+  const loading = staffLoading || tablesLoading || scheduleLoading;
+  
+  // 근무기록 상태
+  const [isGeneratingWorkLogs, setIsGeneratingWorkLogs] = useState(false);
+  const [workLogsGenerated, setWorkLogsGenerated] = useState(false);
+  
+  // 설정 모달 상태
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  // 근무기록 생성 여부 확인
+  useEffect(() => {
+    const checkLogs = async () => {
+      if (selectedEventId && selectedDate) {
+        const exists = await checkWorkLogsExist();
+        setWorkLogsGenerated(exists);
+      }
+    };
+    checkLogs();
+  }, [selectedEventId, selectedDate, checkWorkLogsExist]);
+  
+  // 날짜 변경 핸들러
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate);
+  };
+  
+  // 딜러 추가 핸들러
+  const handleAddDealer = async (dealerId: string, dealerName: string) => {
+    if (!schedule) return;
+    
+    try {
+      await addDealer(dealerId, dealerName, schedule.startTime);
+    } catch (error) {
+      console.error('Error adding dealer:', error);
+    }
+  };
+  
+  // 딜러 제거 핸들러 (스케줄에서 모든 할당 제거)
+  const handleRemoveDealer = async (dealerId: string) => {
+    if (!schedule) return;
+    
+    try {
+      const scheduleId = `${selectedEventId}_${selectedDate}`;
+      const scheduleRef = doc(db, 'shiftSchedules', scheduleId);
+      await updateDoc(scheduleRef, {
+        [`scheduleData.${dealerId}`]: deleteField(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error removing dealer:', error);
+    }
+  };
+  
+  // 근무기록 생성 핸들러
+  const handleGenerateWorkLogs = async () => {
+    if (!schedule || !selectedEventId || !selectedDate) {
+      alert('스케줄 정보가 없습니다.');
+      return;
+    }
+
+    if (workLogsGenerated) {
+      const confirmed = window.confirm('이미 근무기록이 생성되었습니다. 다시 생성하시겠습니까?');
+      if (!confirmed) return;
+    }
+
+    setIsGeneratingWorkLogs(true);
+    try {
+      const logs = await generateWorkLogs();
+      setWorkLogsGenerated(true);
+      alert(`${logs.length}개의 근무기록이 성공적으로 생성되었습니다.`);
+    } catch (error) {
+      console.error('Error generating work logs:', error);
+      alert('근무기록 생성에 실패했습니다.');
+    } finally {
+      setIsGeneratingWorkLogs(false);
+    }
+  };
+  
+  // 사용자 확인 모달 (딜러 제거용)
+  const confirmRemoveDealer = (dealerId: string, dealerName: string) => {
+    if (window.confirm(`정말로 ${dealerName} 딜러를 스케줄에서 제거하시겠습니까?`)) {
+      handleRemoveDealer(dealerId);
+    }
+  };
+  
+  // 새 스케줄 생성 핸들러
+  const handleCreateSchedule = async () => {
+    try {
+      await createSchedule(selectedEventId, selectedDate);
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+    }
+  };
+  
+  // 시간 간격 변경 핸들러
+  const handleIntervalChange = async (newInterval: number) => {
+    if (!schedule) return;
+    
+    try {
+      await updateScheduleSettings(newInterval);
+    } catch (error) {
+      console.error('Error updating interval:', error);
+    }
+  };
+  
+  // 날짜 포맷팅
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('ko-KR', options);
+  };
+  
+  // 검증 결과 컴포넌트
+  const ValidationSummary = () => {
+    if (!validationResult) return null;
+
+    const errorCount = validationResult.violations.filter(v => v.severity === 'error').length;
+    const warningCount = validationResult.violations.filter(v => v.severity === 'warning').length;
+    const infoCount = validationResult.violations.filter(v => v.severity === 'info').length;
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+        <h3 className="text-lg font-semibold mb-3 flex items-center">
+          <FaCheckCircle className="mr-2 text-blue-600" />
+          스케줄 검증 결과
+        </h3>
+        
+        <div className="flex items-center gap-4 mb-3">
+          {errorCount > 0 && (
+            <div className="flex items-center text-red-600">
+              <FaExclamationTriangle className="mr-1" />
+              <span className="font-semibold">{errorCount}개 오류</span>
+            </div>
+          )}
+          {warningCount > 0 && (
+            <div className="flex items-center text-yellow-600">
+              <FaExclamationTriangle className="mr-1" />
+              <span className="font-semibold">{warningCount}개 경고</span>
+            </div>
+          )}
+          {infoCount > 0 && (
+            <div className="flex items-center text-blue-600">
+              <FaInfoCircle className="mr-1" />
+              <span className="font-semibold">{infoCount}개 정보</span>
+            </div>
+          )}
+          {validationResult.violations.length === 0 && (
+            <div className="flex items-center text-green-600">
+              <FaCheckCircle className="mr-1" />
+              <span className="font-semibold">검증 통과</span>
+            </div>
+          )}
+        </div>
+
+        {validationResult.violations.length > 0 && (
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {validationResult.violations.map((violation, index) => (
+              <div key={index} className={`text-sm p-2 rounded ${
+                violation.severity === 'error' ? 'bg-red-50 text-red-700' :
+                violation.severity === 'warning' ? 'bg-yellow-50 text-yellow-700' :
+                'bg-blue-50 text-blue-700'
+              }`}>
+                <span className="font-medium">{violation.type}:</span> {violation.message}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">{t('shiftSchedule.loading')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* 헤더 섹션 */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          {t('shiftSchedule.title')}
+        </h1>
+        <p className="text-gray-600">{t('shiftSchedule.subtitle')}</p>
+      </div>
+
+      {/* 날짜 선택 및 컨트롤 바 */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* 날짜 선택 */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <FaCalendarAlt className="text-blue-600" />
+              <label className="font-semibold text-gray-700">
+                {t('shiftSchedule.selectDate')}:
+              </label>
+            </div>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-gray-500">({formatDate(selectedDate)})</span>
+          </div>
+          
+          {/* 시간 간격 선택 */}
+          {schedule && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <FaClock className="text-purple-600" />
+                <label className="font-semibold text-gray-700">
+                  {t('shiftSchedule.timeInterval')}:
+                </label>
+              </div>
+              <div className="w-64">
+                <TimeIntervalSelector
+                  selectedInterval={schedule.timeInterval}
+                  onIntervalChange={handleIntervalChange}
+                  startTime={schedule.startTime}
+                  endTime={schedule.endTime}
+                  size="sm"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* 컨트롤 버튼들 */}
+          <div className="flex items-center gap-2">
+            {schedule && dealers.length > 0 && (
+              <button 
+                onClick={handleGenerateWorkLogs}
+                disabled={isGeneratingWorkLogs}
+                className={`btn btn-sm flex items-center gap-2 ${
+                  workLogsGenerated ? 'btn-outline' : 'btn-secondary'
+                } ${isGeneratingWorkLogs ? 'loading' : ''}`}
+              >
+                <FaHistory className="w-4 h-4" />
+                {isGeneratingWorkLogs ? '생성 중...' : 
+                 workLogsGenerated ? '근무기록 재생성' : '근무기록 생성'}
+              </button>
+            )}
+            <button 
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="btn btn-outline btn-sm flex items-center gap-2"
+            >
+              <FaCog className="w-4 h-4" />
+              {t('shiftSchedule.settings')}
+            </button>
+            {!schedule && (
+              <button 
+                onClick={handleCreateSchedule}
+                className="btn btn-primary btn-sm flex items-center gap-2"
+              >
+                <FaPlus className="w-4 h-4" />
+                {t('shiftSchedule.createSchedule')}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* 근무기록 상태 표시 */}
+        {schedule && (
+          <div className="mt-3 p-2 rounded-md">
+            {workLogsGenerated ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <FaCheckCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">이 날짜의 근무기록이 이미 생성되었습니다</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-orange-600">
+                <FaHistory className="w-4 h-4" />
+                <span className="text-sm font-medium">스케줄 완료 후 근무기록을 생성하세요</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 검증 결과 */}
+      {schedule && <ValidationSummary />}
+
+      {/* 메인 콘텐츠 영역 */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        
+        {/* 스케줄 그리드 영역 (3/4) */}
+        <div className="xl:col-span-3">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
+              <FaTable className="mr-2"/> 
+              {t('shiftSchedule.scheduleGrid')}
+              {schedule && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({schedule.timeInterval}분 간격)
+                </span>
+              )}
+            </h2>
+            
+            {schedule ? (
+              <div className="space-y-4">
+                {/* 시간 슬롯 정보 */}
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <FaClock className="w-4 h-4" />
+                    <span>{schedule.startTime} - {schedule.endTime}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <FaUsers className="w-4 h-4" />
+                    <span>{dealers.length}명 배정됨</span>
+                  </div>
+                </div>
+                
+                {/* 엑셀형 교대 스케줄 그리드 */}
+                <ShiftGridComponent
+                  dealers={dealers}
+                  tables={tables}
+                  timeSlots={timeSlots}
+                  onCellChange={updateDealerAssignment}
+                  readonly={false}
+                  height={500}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FaCalendarAlt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  {t('shiftSchedule.noSchedule')}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {formatDate(selectedDate)} 일정이 아직 생성되지 않았습니다.
+                </p>
+                <button 
+                  onClick={handleCreateSchedule}
+                  className="btn btn-primary flex items-center gap-2 mx-auto"
+                >
+                  <FaPlus className="w-4 h-4" />
+                  {t('shiftSchedule.createSchedule')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 사이드바 - 딜러 목록 및 정보 (1/4) */}
+        <div className="space-y-6">
+          {/* 현재 스케줄의 딜러들 */}
+          {schedule && dealers.length > 0 && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
+                <FaUsers className="mr-2"/> 
+                배정된 딜러 ({dealers.length})
+              </h2>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {dealers.map(dealer => (
+                  <div key={dealer.id} className="flex items-center bg-blue-50 p-3 rounded-lg shadow-sm">
+                    <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-sm font-semibold text-blue-700">
+                        {dealer.dealerName.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800">{dealer.dealerName}</p>
+                      <p className="text-sm text-gray-500">출근시간: {dealer.startTime}</p>
+                    </div>
+                    <button 
+                      onClick={() => confirmRemoveDealer(dealer.id, dealer.dealerName)}
+                      className="btn btn-sm btn-outline btn-error"
+                      title="스케줄에서 제거"
+                    >
+                      <FaTrash className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 사용 가능한 딜러 */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-green-600 flex items-center">
+              <FaUsers className="mr-2"/> 
+              {t('shiftSchedule.availableDealers')} ({dealersNotInSchedule.length})
+            </h2>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {dealersNotInSchedule.map(dealer => (
+                <div key={dealer.id} className="flex items-center bg-gray-50 p-3 rounded-lg shadow-sm">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-sm font-semibold text-gray-600">
+                      {dealer.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800">{dealer.name}</p>
+                    <p className="text-sm text-gray-500">{dealer.role}</p>
+                  </div>
+                  {schedule && (
+                    <button 
+                      onClick={() => handleAddDealer(dealer.id, dealer.name)}
+                      className="btn btn-sm btn-outline btn-success"
+                    >
+                      <FaPlus className="w-3 h-3 mr-1" />
+                      {t('shiftSchedule.addToSchedule')}
+                    </button>
+                  )}
+                </div>
+              ))}
+              {dealersNotInSchedule.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  {schedule ? '모든 딜러가 스케줄에 추가되었습니다' : t('shiftSchedule.noDealersAvailable')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* 테이블 정보 */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold mb-4 text-purple-600 flex items-center">
+              <FaTable className="mr-2"/> 
+              {t('shiftSchedule.availableTables')} ({tables?.length || 0})
+            </h2>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {tables?.map(table => (
+                <div key={table.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="font-medium text-gray-700">
+                    Table {table.tableNumber}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {table.status || 'open'}
+                  </span>
+                </div>
+              ))}
+              {(!tables || tables.length === 0) && (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  {t('shiftSchedule.noTablesAvailable')}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 에러 표시 */}
+      {scheduleError && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">
+            {t('shiftSchedule.error')}: {scheduleError.message}
+          </p>
+        </div>
+      )}
+    </div>
+    
+    {/* 설정 모달 */}
+    {isSettingsModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">{t('shiftSchedule.settings')}</h3>
+            <button 
+              onClick={() => setIsSettingsModalOpen(false)}
+              className="btn btn-sm btn-circle"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                기본 근무 시간 설정
+              </label>
+              <div className="text-sm text-gray-600">
+                새로운 스케줄 생성 시 사용되는 기본 시간 설정입니다.
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                자동 저장 설정
+              </label>
+              <label className="cursor-pointer label">
+                <span className="label-text text-sm">변경 사항 자동 저장</span>
+                <input type="checkbox" className="checkbox checkbox-sm" defaultChecked />
+              </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                알림 설정
+              </label>
+              <label className="cursor-pointer label">
+                <span className="label-text text-sm">예약 충돌 알림</span>
+                <input type="checkbox" className="checkbox checkbox-sm" defaultChecked />
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={() => setIsSettingsModalOpen(false)}
+              className="btn btn-outline flex-1"
+            >
+              취소
+            </button>
+            <button 
+              onClick={() => {
+                // TODO: 설정 저장 로직 추가
+                setIsSettingsModalOpen(false);
+              }}
+              className="btn btn-primary flex-1"
+            >
+              저장
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  );
+};
+
+export default ShiftSchedulePage;
