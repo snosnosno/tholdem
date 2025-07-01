@@ -139,7 +139,7 @@ const ShiftSchedulePage: React.FC = () => {
   
   // 사용자 확인 모달 (딜러 제거용)
   const confirmRemoveDealer = (dealerId: string, dealerName: string) => {
-    if (window.confirm(`정말로 ${dealerName} 딜러를 스케줄에서 제거하시겠습니까?`)) {
+    if (window.confirm(t('shiftSchedule.confirmRemoveDealer', { dealerName }))) {
       handleRemoveDealer(dealerId);
     }
   };
@@ -187,32 +187,32 @@ const ShiftSchedulePage: React.FC = () => {
       <div className="bg-white p-4 rounded-lg shadow-md mb-4">
         <h3 className="text-lg font-semibold mb-3 flex items-center">
           <FaCheckCircle className="mr-2 text-blue-600" />
-          스케줄 검증 결과
+          {t('shiftSchedule.validationResults')}
         </h3>
         
         <div className="flex items-center gap-4 mb-3">
           {errorCount > 0 && (
             <div className="flex items-center text-red-600">
               <FaExclamationTriangle className="mr-1" />
-              <span className="font-semibold">{errorCount}개 오류</span>
+              <span className="font-semibold">{errorCount}{t('shiftSchedule.errors')}</span>
             </div>
           )}
           {warningCount > 0 && (
             <div className="flex items-center text-yellow-600">
               <FaExclamationTriangle className="mr-1" />
-              <span className="font-semibold">{warningCount}개 경고</span>
+              <span className="font-semibold">{warningCount}{t('shiftSchedule.warnings')}</span>
             </div>
           )}
           {infoCount > 0 && (
             <div className="flex items-center text-blue-600">
               <FaInfoCircle className="mr-1" />
-              <span className="font-semibold">{infoCount}개 정보</span>
+              <span className="font-semibold">{infoCount}{t('shiftSchedule.infos')}</span>
             </div>
           )}
           {validationResult.violations.length === 0 && (
             <div className="flex items-center text-green-600">
               <FaCheckCircle className="mr-1" />
-              <span className="font-semibold">검증 통과</span>
+              <span className="font-semibold">{t('shiftSchedule.validationPassed')}</span>
             </div>
           )}
         </div>
@@ -310,8 +310,8 @@ const ShiftSchedulePage: React.FC = () => {
                 } ${isGeneratingWorkLogs ? 'loading' : ''}`}
               >
                 <FaHistory className="w-4 h-4" />
-                {isGeneratingWorkLogs ? '생성 중...' : 
-                 workLogsGenerated ? '근무기록 재생성' : '근무기록 생성'}
+                {isGeneratingWorkLogs ? t('shiftSchedule.generating') : 
+                 workLogsGenerated ? t('shiftSchedule.regenerateWorkLogs') : t('shiftSchedule.generateWorkLogs')}
               </button>
             )}
             <button 
@@ -339,12 +339,12 @@ const ShiftSchedulePage: React.FC = () => {
             {workLogsGenerated ? (
               <div className="flex items-center gap-2 text-green-600">
                 <FaCheckCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">이 날짜의 근무기록이 이미 생성되었습니다</span>
+                <span className="text-sm font-medium">{t('shiftSchedule.workLogsGenerated')}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-orange-600">
                 <FaHistory className="w-4 h-4" />
-                <span className="text-sm font-medium">스케줄 완료 후 근무기록을 생성하세요</span>
+                <span className="text-sm font-medium">{t('shiftSchedule.workLogsNotGenerated')}</span>
               </div>
             )}
           </div>
@@ -365,7 +365,7 @@ const ShiftSchedulePage: React.FC = () => {
               {t('shiftSchedule.scheduleGrid')}
               {schedule && (
                 <span className="ml-2 text-sm font-normal text-gray-500">
-                  ({schedule.timeInterval}분 간격)
+                  ({schedule.timeInterval}{t('shiftSchedule.minuteInterval')})
                 </span>
               )}
             </h2>
@@ -380,7 +380,7 @@ const ShiftSchedulePage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <FaUsers className="w-4 h-4" />
-                    <span>{dealers.length}명 배정됨</span>
+                    <span>{dealers.length}{t('shiftSchedule.assignedDealer')}</span>
                   </div>
                 </div>
                 
@@ -401,7 +401,7 @@ const ShiftSchedulePage: React.FC = () => {
                   {t('shiftSchedule.noSchedule')}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {formatDate(selectedDate)} 일정이 아직 생성되지 않았습니다.
+                  {formatDate(selectedDate)} {t('shiftSchedule.noScheduleMessage')}
                 </p>
                 <button 
                   onClick={handleCreateSchedule}
@@ -422,7 +422,7 @@ const ShiftSchedulePage: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
                 <FaUsers className="mr-2"/> 
-                배정된 딜러 ({dealers.length})
+                {t('shiftSchedule.assignedDealers')} ({dealers.length})
               </h2>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {dealers.map(dealer => (
@@ -434,12 +434,12 @@ const ShiftSchedulePage: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-gray-800">{dealer.dealerName}</p>
-                      <p className="text-sm text-gray-500">출근시간: {dealer.startTime}</p>
+                      <p className="text-sm text-gray-500">{t('shiftSchedule.startTime')}: {dealer.startTime}</p>
                     </div>
                     <button 
                       onClick={() => confirmRemoveDealer(dealer.id, dealer.dealerName)}
                       className="btn btn-sm btn-outline btn-error"
-                      title="스케줄에서 제거"
+                      title={t('shiftSchedule.removeFromSchedule')}
                     >
                       <FaTrash className="w-3 h-3" />
                     </button>
@@ -480,7 +480,7 @@ const ShiftSchedulePage: React.FC = () => {
               ))}
               {dealersNotInSchedule.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  {schedule ? '모든 딜러가 스케줄에 추가되었습니다' : t('shiftSchedule.noDealersAvailable')}
+                  {schedule ? t('shiftSchedule.allDealersAssigned') : t('shiftSchedule.noDealersAvailable')}
                 </p>
               )}
             </div>
@@ -540,29 +540,29 @@ const ShiftSchedulePage: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                기본 근무 시간 설정
+                {t('shiftSchedule.defaultWorkTimeSettings')}
               </label>
               <div className="text-sm text-gray-600">
                 새로운 스케줄 생성 시 사용되는 기본 시간 설정입니다.
               </div>
-            </div>
-            
-            <div>
+              </div>
+              
+              <div>
               <label className="block text-sm font-medium mb-2">
-                자동 저장 설정
+                {t('shiftSchedule.autoSaveSettings')}
               </label>
               <label className="cursor-pointer label">
-                <span className="label-text text-sm">변경 사항 자동 저장</span>
+                <span className="label-text text-sm">{t('shiftSchedule.autoSaveChanges')}</span>
                 <input type="checkbox" className="checkbox checkbox-sm" defaultChecked />
               </label>
-            </div>
-            
-            <div>
+              </div>
+              
+              <div>
               <label className="block text-sm font-medium mb-2">
-                알림 설정
+                {t('shiftSchedule.notificationSettings')}
               </label>
               <label className="cursor-pointer label">
-                <span className="label-text text-sm">예약 충돌 알림</span>
+                <span className="label-text text-sm">{t('shiftSchedule.conflictNotifications')}</span>
                 <input type="checkbox" className="checkbox checkbox-sm" defaultChecked />
               </label>
             </div>
@@ -573,7 +573,7 @@ const ShiftSchedulePage: React.FC = () => {
               onClick={() => setIsSettingsModalOpen(false)}
               className="btn btn-outline flex-1"
             >
-              취소
+              {t('shiftSchedule.cancel')}
             </button>
             <button 
               onClick={() => {
@@ -582,7 +582,7 @@ const ShiftSchedulePage: React.FC = () => {
               }}
               className="btn btn-primary flex-1"
             >
-              저장
+              {t('shiftSchedule.save')}
             </button>
           </div>
         </div>
