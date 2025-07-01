@@ -248,6 +248,7 @@ const ShiftSchedulePage: React.FC = () => {
   }
 
   return (
+    <>
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* 헤더 섹션 */}
       <div className="mb-6">
@@ -587,6 +588,7 @@ const ShiftSchedulePage: React.FC = () => {
         </div>
       </div>
     )}
+    </>
   );
 };
 
