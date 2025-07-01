@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.getDashboardStats = exports.onUserRoleChange = exports.createUserData = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
+exports.logActionHttp = exports.logAction = exports.deleteUser = exports.updateUser = exports.getDashboardStats = exports.onUserRoleChange = exports.createUserData = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const cors_1 = __importDefault(require("cors"));
@@ -51,11 +51,11 @@ exports.submitDealerRating = functions.https.onCall(async (data, context) => { }
  * Handles a new user registration request.
  * - Dealers are created and enabled immediately.
  * - Managers are created as disabled and await admin approval.
+ * - Passes extra data (phone, gender) via displayName for the trigger.
  */
 exports.requestRegistration = functions.https.onCall(async (data) => {
-    // Log the incoming data for debugging
     functions.logger.info("requestRegistration called with data:", data);
-    const { email, password, name, role } = data;
+    const { email, password, name, role, phone, gender } = data;
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
@@ -66,19 +66,20 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
     }
     try {
         const isManager = role === 'manager';
-        // For managers, append a flag to the display name.
-        // The `createUserData` trigger will use this to set the role to 'pending_manager'.
-        const displayNameForAuth = isManager ? `${name} [PENDING_MANAGER]` : name;
-        // For pending managers, they should be created as disabled.
-        // The `createUserData` trigger will ensure this state.
+        // Combine extra profile data into a parsable JSON string.
+        const extraData = JSON.stringify(Object.assign(Object.assign({}, (phone && { phone })), (gender && { gender })));
+        // Build the displayName with embedded markers for the trigger to parse.
+        // Format: "Real Name [{...extraData}] [PENDING_MANAGER]"
+        let displayNameForAuth = `${name} [${extraData}]`;
+        if (isManager) {
+            displayNameForAuth += ' [PENDING_MANAGER]';
+        }
         await admin.auth().createUser({
             email,
             password,
             displayName: displayNameForAuth,
             disabled: isManager,
         });
-        // The `createUserData` trigger is now the single source of truth for creating the
-        // Firestore document and setting custom claims. No further action is needed here.
         return { success: true, message: `Registration for ${name} as ${role} is processing.` };
     }
     catch (error) {
@@ -104,7 +105,6 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
  */
 exports.processRegistration = functions.https.onCall(async (data, context) => {
     var _a, _b, _c;
-    // Ensure the caller is an admin
     if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
         throw new functions.https.HttpsError('permission-denied', 'Only admins can process registration requests.');
     }
@@ -143,7 +143,6 @@ exports.processRegistration = functions.https.onCall(async (data, context) => {
  */
 exports.createUserAccount = functions.https.onCall(async (data, context) => {
     var _a, _b;
-    // Ensure the caller is an admin
     if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
         throw new functions.https.HttpsError('permission-denied', 'Only admins can create new user accounts.');
     }
@@ -152,18 +151,12 @@ exports.createUserAccount = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with "email", "name", and "role" arguments.');
     }
     try {
-        // Create the user in Firebase Authentication
-        const userRecord = await admin.auth().createUser({
-            email: email,
-            displayName: name,
-        });
-        // Set the custom role claim on the user's token
-        await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
-        // Create the user document in Firestore
+        const userRecord = await admin.auth().createUser({ email, displayName: name });
+        await admin.auth().setCustomUserClaims(userRecord.uid, { role });
         await db.collection('users').doc(userRecord.uid).set({
-            name: name,
-            email: email,
-            role: role,
+            name,
+            email,
+            role,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         return { result: `Successfully created ${role}: ${name} (${email})` };
@@ -176,39 +169,48 @@ exports.createUserAccount = functions.https.onCall(async (data, context) => {
 /**
  * Firestore trigger that automatically creates a user document in Firestore
  * when a new user is created in Firebase Authentication.
- * This handles all user creation sources (email/password, social, etc.).
+ * This handles all user creation sources and parses extra data from the displayName.
  */
 exports.createUserData = functions.auth.user().onCreate(async (user) => {
     const { uid, email, displayName, phoneNumber } = user;
     const userRef = db.collection("users").doc(uid);
-    functions.logger.info(`New user created: ${email} (UID: ${uid}). Creating Firestore document.`);
-    let initialRole = 'dealer'; // Default role for all new users, including social sign-ins
-    // Special handling for manager registrations initiated via requestRegistration
-    if (displayName === null || displayName === void 0 ? void 0 : displayName.endsWith('[PENDING_MANAGER]')) {
-        initialRole = 'pending_manager';
+    functions.logger.info(`New user: ${email} (UID: ${uid}). Parsing displayName: "${displayName}"`);
+    let initialRole = 'dealer';
+    let finalDisplayName = "Unnamed User";
+    let extraData = { phone: phoneNumber || null };
+    if (displayName) {
+        const extraDataMatch = displayName.match(/\[(\{.*\})\]/);
+        const pendingManagerMatch = displayName.includes('[PENDING_MANAGER]');
+        finalDisplayName = displayName
+            .replace(/\[PENDING_MANAGER\]/g, '')
+            .replace(/\[(\{.*\})\]/g, '')
+            .trim();
+        if (finalDisplayName === "")
+            finalDisplayName = "Unnamed User";
+        if (pendingManagerMatch)
+            initialRole = 'pending_manager';
+        if (extraDataMatch && extraDataMatch[1]) {
+            try {
+                const parsedData = JSON.parse(extraDataMatch[1]);
+                extraData = Object.assign(Object.assign({}, extraData), parsedData);
+            }
+            catch (e) {
+                functions.logger.error(`Failed to parse extra data from displayName for UID ${uid}`, { displayName, e });
+            }
+        }
     }
     try {
-        await userRef.set({
-            name: (displayName === null || displayName === void 0 ? void 0 : displayName.replace(' [PENDING_MANAGER]', '')) || "Unnamed User",
-            email: email,
-            role: initialRole,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            phone: phoneNumber || null,
-        });
-        // Set the initial custom claim. The onCreate trigger is the single source of truth.
+        await userRef.set(Object.assign({ name: finalDisplayName, email: email, role: initialRole, createdAt: admin.firestore.FieldValue.serverTimestamp() }, extraData));
         await admin.auth().setCustomUserClaims(uid, { role: initialRole });
-        // If it's a pending manager, they need to be disabled.
-        // The requestRegistration function creates them as disabled already.
         if (initialRole === 'pending_manager') {
             await admin.auth().updateUser(uid, { disabled: true });
         }
-        functions.logger.info(`Successfully created Firestore document and set claims for UID: ${uid}`);
-        return null;
+        functions.logger.info(`Successfully created Firestore document/claims for UID: ${uid}`);
     }
     catch (error) {
         functions.logger.error(`Failed to create Firestore document for UID: ${uid}`, error);
-        return null;
     }
+    return null;
 });
 /**
  * Firestore trigger that automatically sets a custom user claim whenever a user's role is
@@ -219,7 +221,6 @@ exports.onUserRoleChange = functions.firestore.document('users/{uid}').onWrite(a
     const { uid } = context.params;
     const newRole = change.after.exists ? (_a = change.after.data()) === null || _a === void 0 ? void 0 : _a.role : null;
     const oldRole = change.before.exists ? (_b = change.before.data()) === null || _b === void 0 ? void 0 : _b.role : null;
-    // Only update claims if the role has actually changed to prevent unnecessary writes.
     if (newRole === oldRole) {
         console.log(`User ${uid}: Role unchanged (${newRole}). No action taken.`);
         return null;
@@ -238,7 +239,6 @@ exports.onUserRoleChange = functions.firestore.document('users/{uid}').onWrite(a
 exports.getDashboardStats = functions.https.onRequest((request, response) => {
     corsHandler(request, response, async () => {
         try {
-            // For security, you should validate the ID token here in a real app.
             const now = new Date();
             const ongoingEventsQuery = db.collection("events").where("endDate", ">=", now);
             const totalDealersQuery = db.collection("users").where("role", "==", "dealer");
@@ -272,7 +272,6 @@ exports.getDashboardStats = functions.https.onRequest((request, response) => {
  */
 exports.updateUser = functions.https.onCall(async (data, context) => {
     var _a, _b;
-    // Ensure the caller is an admin
     if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
         functions.logger.error("updateUser denied", { auth: context.auth });
         throw new functions.https.HttpsError('permission-denied', 'Only admins can update users.');
@@ -284,7 +283,6 @@ exports.updateUser = functions.https.onCall(async (data, context) => {
     try {
         const userRef = db.collection('users').doc(uid);
         await userRef.update({ name, role });
-        // The onUserRoleChange trigger will handle claim updates.
         return { success: true, message: `User ${uid} updated successfully.` };
     }
     catch (error) {
@@ -298,7 +296,6 @@ exports.updateUser = functions.https.onCall(async (data, context) => {
  */
 exports.deleteUser = functions.https.onCall(async (data, context) => {
     var _a, _b;
-    // Ensure the caller is an admin
     if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
         functions.logger.error("deleteUser denied", { auth: context.auth });
         throw new functions.https.HttpsError('permission-denied', 'Only admins can delete users.');
@@ -308,10 +305,8 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Missing required field: "uid".');
     }
     try {
-        // Delete from Auth
         await admin.auth().deleteUser(uid);
         functions.logger.info(`Successfully deleted user ${uid} from Auth.`);
-        // Delete from Firestore
         const userRef = db.collection('users').doc(uid);
         await userRef.delete();
         functions.logger.info(`Successfully deleted user ${uid} from Firestore.`);
@@ -321,5 +316,88 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
         functions.logger.error(`Error deleting user ${uid}:`, error);
         throw new functions.https.HttpsError('internal', 'Failed to delete user.', error.message);
     }
+});
+/**
+ * Logs user actions for audit trail and analytics purposes.
+ * This is a "fire-and-forget" function - it should not block the client.
+ */
+exports.logAction = functions.https.onCall(async (data, context) => {
+    var _a, _b, _c, _d, _e, _f, _g;
+    try {
+        const { action, details = {} } = data;
+        if (!action) {
+            throw new functions.https.HttpsError('invalid-argument', 'Action is required.');
+        }
+        // Get user information from context
+        const userId = ((_a = context.auth) === null || _a === void 0 ? void 0 : _a.uid) || 'anonymous';
+        const userEmail = ((_c = (_b = context.auth) === null || _b === void 0 ? void 0 : _b.token) === null || _c === void 0 ? void 0 : _c.email) || 'unknown';
+        const userRole = ((_e = (_d = context.auth) === null || _d === void 0 ? void 0 : _d.token) === null || _e === void 0 ? void 0 : _e.role) || 'unknown';
+        // Create log entry
+        const logEntry = {
+            action,
+            details,
+            userId,
+            userEmail,
+            userRole,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            ip: ((_f = context.rawRequest) === null || _f === void 0 ? void 0 : _f.ip) || 'unknown',
+            userAgent: ((_g = context.rawRequest) === null || _g === void 0 ? void 0 : _g.get('user-agent')) || 'unknown'
+        };
+        // Store in actionLogs collection
+        await db.collection('actionLogs').add(logEntry);
+        // Also log to Firebase Functions logger for debugging
+        functions.logger.info(`Action logged: ${action}`, {
+            userId,
+            userEmail,
+            userRole,
+            details,
+        });
+        return { success: true, message: 'Action logged successfully' };
+    }
+    catch (error) {
+        functions.logger.error('Error logging action:', error);
+        // Don't throw errors for logging - this should be fire-and-forget
+        // Just return a success to prevent blocking the client
+        return { success: false, error: error.message };
+    }
+});
+/**
+ * Alternative HTTP endpoint version of logAction for cases where onCall doesn't work
+ * This handles CORS properly for direct HTTP requests
+ */
+exports.logActionHttp = functions.https.onRequest((request, response) => {
+    corsHandler(request, response, async () => {
+        try {
+            if (request.method !== 'POST') {
+                response.status(405).send({ error: 'Method not allowed' });
+                return;
+            }
+            const { action, details = {} } = request.body;
+            if (!action) {
+                response.status(400).send({ error: 'Action is required' });
+                return;
+            }
+            // Create log entry (without auth context since this is HTTP)
+            const logEntry = {
+                action,
+                details,
+                userId: 'http_request',
+                userEmail: 'unknown',
+                userRole: 'unknown',
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                ip: request.ip || 'unknown',
+                userAgent: request.get('user-agent') || 'unknown'
+            };
+            // Store in actionLogs collection
+            await db.collection('actionLogs').add(logEntry);
+            // Log to Firebase Functions logger
+            functions.logger.info(`HTTP Action logged: ${action}`, { details });
+            response.status(200).send({ success: true, message: 'Action logged successfully' });
+        }
+        catch (error) {
+            functions.logger.error('Error logging HTTP action:', error);
+            response.status(200).send({ success: false, error: error.message });
+        }
+    });
 });
 //# sourceMappingURL=index.js.map

@@ -268,10 +268,10 @@ export const getDashboardStats = functions.https.onRequest((request, response) =
       ] = await Promise.all([
         ongoingEventsQuery.get(),
         totalDealersQuery.get(),
-        topDealersSnapshot.get(),
+        topDealersQuery.get(),
       ]);
 
-      const topRatedDealers = topDealersSnapshot.docs.map((doc) => ({
+      const topRatedDealers = topDealersSnapshot.docs.map((doc: any) => ({
           id: doc.id,
           ...doc.data()
       }));
@@ -346,4 +346,101 @@ export const deleteUser = functions.https.onCall(async (data, context) => {
         functions.logger.error(`Error deleting user ${uid}:`, error);
         throw new functions.https.HttpsError('internal', 'Failed to delete user.', error.message);
     }
+});
+
+/**
+ * Logs user actions for audit trail and analytics purposes.
+ * This is a "fire-and-forget" function - it should not block the client.
+ */
+export const logAction = functions.https.onCall(async (data, context) => {
+    try {
+        const { action, details = {} } = data;
+        
+        if (!action) {
+            throw new functions.https.HttpsError('invalid-argument', 'Action is required.');
+        }
+
+        // Get user information from context
+        const userId = context.auth?.uid || 'anonymous';
+        const userEmail = context.auth?.token?.email || 'unknown';
+        const userRole = context.auth?.token?.role || 'unknown';
+
+        // Create log entry
+        const logEntry = {
+            action,
+            details,
+            userId,
+            userEmail,
+            userRole,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            ip: context.rawRequest?.ip || 'unknown',
+            userAgent: context.rawRequest?.get('user-agent') || 'unknown'
+        };
+
+        // Store in actionLogs collection
+        await db.collection('actionLogs').add(logEntry);
+
+        // Also log to Firebase Functions logger for debugging
+        functions.logger.info(`Action logged: ${action}`, {
+            userId,
+            userEmail,
+            userRole,
+            details,
+        });
+
+        return { success: true, message: 'Action logged successfully' };
+        
+    } catch (error: any) {
+        functions.logger.error('Error logging action:', error);
+        
+        // Don't throw errors for logging - this should be fire-and-forget
+        // Just return a success to prevent blocking the client
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * Alternative HTTP endpoint version of logAction for cases where onCall doesn't work
+ * This handles CORS properly for direct HTTP requests
+ */
+export const logActionHttp = functions.https.onRequest((request, response) => {
+    corsHandler(request, response, async () => {
+        try {
+            if (request.method !== 'POST') {
+                response.status(405).send({ error: 'Method not allowed' });
+                return;
+            }
+
+            const { action, details = {} } = request.body;
+            
+            if (!action) {
+                response.status(400).send({ error: 'Action is required' });
+                return;
+            }
+
+            // Create log entry (without auth context since this is HTTP)
+            const logEntry = {
+                action,
+                details,
+                userId: 'http_request',
+                userEmail: 'unknown',
+                userRole: 'unknown',
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                ip: request.ip || 'unknown',
+                userAgent: request.get('user-agent') || 'unknown'
+            };
+
+            // Store in actionLogs collection
+            await db.collection('actionLogs').add(logEntry);
+
+            // Log to Firebase Functions logger
+            functions.logger.info(`HTTP Action logged: ${action}`, { details });
+
+            response.status(200).send({ success: true, message: 'Action logged successfully' });
+            
+        } catch (error: any) {
+            functions.logger.error('Error logging HTTP action:', error);
+            response.status(200).send({ success: false, error: error.message });
+        }
+    });
 });
