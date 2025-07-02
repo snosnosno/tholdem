@@ -5,13 +5,28 @@ import { collection, query, where, getDocs, doc, documentId, addDoc, updateDoc, 
 import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
+// 업무 역할 정의
+type JobRole = 
+  | 'Dealer'              // 딜러
+  | 'Floor'               // 플로어
+  | 'Server'              // 서빙
+  | 'Tournament Director' // 토너먼트 디렉터
+  | 'Chip Master'         // 칩 마스터
+  | 'Registration'        // 레지
+  | 'Security'            // 보안요원
+  | 'Cashier';            // 캐셔
+
+// 계정 권한은 기존 유지
+type UserRole = 'dealer' | 'manager' | 'admin' | 'pending_manager';
+
 interface StaffData {
   id: string; 
   userId: string;
   name?: string;
   email?: string;
   phone?: string;
-  role?: string;
+  role?: JobRole;         // 업무 역할 (딜러, 플로어 등)
+  userRole?: UserRole;    // 계정 권한 (dealer, manager, admin 등)
   gender?: string;
   age?: number;
   experience?: string;
@@ -27,7 +42,7 @@ interface UserData {
   name?: string;
   email?: string;
   phone?: string;
-  role?: string;
+  userRole?: UserRole;    // 계정 권한 (dealer, manager, admin 등)
   gender?: string;
   age?: number;
   experience?: string;
@@ -74,7 +89,7 @@ const StaffListPage: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    role: 'Dealer',
+    role: 'Dealer' as JobRole,  // 업무 역할
     gender: '',
     age: 0,
     experience: '',
@@ -132,7 +147,8 @@ const StaffListPage: React.FC = () => {
               name: userDetails?.name || t('staffListPage.unknownUser'),
               email: userDetails?.email,
               phone: userDetails?.phone,
-              role: staff.role,
+              role: (staff.role as JobRole) || 'Dealer',  // 업무 역할
+              userRole: (userDetails?.role as UserRole) || 'dealer', // 계정 권한
               gender: userDetails?.gender,
               age: userDetails?.age,
               experience: userDetails?.experience,
@@ -325,7 +341,8 @@ const StaffListPage: React.FC = () => {
         name: selectedUser.name || '',
         email: selectedUser.email || '',
         phone: selectedUser.phone || '',
-        role: selectedUser.role || 'Dealer',
+        role: 'Dealer' as JobRole,      // 기본 업무 역할
+        userRole: selectedUser.userRole, // 계정 권한
         gender: selectedUser.gender || '',
         age: selectedUser.age || 0,
         experience: selectedUser.experience || '',
@@ -382,6 +399,7 @@ const StaffListPage: React.FC = () => {
         email: tempStaffInfo.email,
         phone: tempStaffInfo.phone,
         role: tempStaffInfo.role,
+        userRole: 'dealer' as UserRole, // 임시 스태프 기본 권한
         gender: tempStaffInfo.gender,
         age: tempStaffInfo.age,
         experience: tempStaffInfo.experience,
@@ -546,18 +564,36 @@ const StaffListPage: React.FC = () => {
     if (isEditing) {
       return (
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          <input
-            type={field === 'age' ? 'number' : 'text'}
-            value={editingValue}
-            onChange={(e) => setEditingValue(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onBlur={handleCellSave}
-            className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:border-blue-500"
-            autoFocus
-          />
+          {field === 'role' ? (
+            <select
+              value={editingValue}
+              onChange={(e) => setEditingValue(e.target.value)}
+              onBlur={handleCellSave}
+              className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:border-blue-500"
+              autoFocus
+            >
+              <option value="Dealer">딜러</option>
+              <option value="Floor">플로어</option>
+              <option value="Server">서빙</option>
+              <option value="Tournament Director">토너먼트 디렉터</option>
+              <option value="Chip Master">칩 마스터</option>
+              <option value="Registration">레지</option>
+              <option value="Security">보안요원</option>
+              <option value="Cashier">캐셔</option>
+            </select>
+          ) : (
+            <input
+              type={field === 'age' ? 'number' : 'text'}
+              value={editingValue}
+              onChange={(e) => setEditingValue(e.target.value)}
+              onKeyDown={handleKeyPress}
+              onBlur={handleCellSave}
+              className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:border-blue-500"
+              autoFocus
+            />
+          )}
         </td>
       );
-    }
     
     return (
       <td 
@@ -733,7 +769,7 @@ const StaffListPage: React.FC = () => {
                       >
                         <div className="font-medium">{user.name || '이름 없음'}</div>
                         <div className="text-sm text-gray-600">{user.email}</div>
-                        <div className="text-sm text-gray-600">{user.role || 'Dealer'}</div>
+                        <div className="text-sm text-gray-600">계정 권한: {user.userRole || 'dealer'}</div>
                       </div>
                     ))}
                   </div>
@@ -784,12 +820,16 @@ const StaffListPage: React.FC = () => {
                 <select
                   className="w-full p-2 border border-gray-300 rounded-md"
                   value={tempStaffInfo.role}
-                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, role: e.target.value }))}
-                >
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, role: e.target.value as JobRole }))}
+                  >
                   <option value="Dealer">딜러</option>
                   <option value="Floor">플로어</option>
-                  <option value="Manager">매니저</option>
-                </select>
+                  <option value="Server">서빙</option>
+                  <option value="Tournament Director">토너먼트 디렉터</option>
+                  <option value="Chip Master">칩 마스터</option>
+                  <option value="Registration">레지</option>
+                  <option value="Security">보안요원</option>
+                  <option value="Cashier">캐셔</option>
                 <input
                   type="text"
                   placeholder="성별"
