@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,7 +48,9 @@ const JobBoardPage = () => {
   } = useInfiniteJobPostings(dynamicFilters);
   
   // Flatten the infinite query data
-  const jobPostings = infiniteData?.pages.flatMap((page: any) => page.jobs) || [];
+  const jobPostings = useMemo(() => {
+    return infiniteData?.pages.flatMap((page: any) => page.jobs) || [];
+  }, [infiniteData]);
   
   // Infinite scroll hook
   const { loadMoreRef } = useInfiniteScroll({
@@ -187,7 +189,7 @@ const JobBoardPage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
+            <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
         <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
         <JobPostingSkeleton count={5} />
       </div>
@@ -196,7 +198,7 @@ const JobBoardPage = () => {
 
   return (
     <JobBoardErrorBoundary>
-      <div className="container mx-auto p-4">
+            <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
       <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
       
       {/* Error Handling */}
@@ -316,8 +318,8 @@ const JobBoardPage = () => {
             const applicationStatus = appliedJobs.get(post.id);
 
             return (
-                 <div key={post.id} className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-start">
+                                  <div key={post.id} className="bg-white p-3 sm:p-6 rounded-lg shadow-md">
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-2 sm:space-y-0">
                         <div className="flex-grow">
                             <div className="flex items-center mb-2">
                                 <h2 className="text-xl font-bold mr-4">{post.title}</h2>
@@ -416,8 +418,8 @@ const JobBoardPage = () => {
                         </select>
                     </div>
                     <div className="flex justify-end mt-4 space-x-2">
-                        <button onClick={() => setIsApplyModalOpen(false)} className="py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">{t('jobBoard.applyModal.cancel')}</button>
-                        <button onClick={handleApply} disabled={!selectedAssignment || isProcessing === selectedPost.id} className="py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400">
+                                                <button onClick={() => setIsApplyModalOpen(false)} className="py-3 px-6 sm:py-2 sm:px-4 bg-gray-500 text-white rounded hover:bg-gray-700 min-h-[48px] text-sm sm:text-base">{t('jobBoard.applyModal.cancel')}</button>
+                                                <button onClick={handleApply} disabled={!selectedAssignment || isProcessing === selectedPost.id} className="py-3 px-6 sm:py-2 sm:px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 min-h-[48px] text-sm sm:text-base">
                            {isProcessing ? t('jobBoard.applying') : t('jobBoard.applyModal.confirm')}
                         </button>
                     </div>

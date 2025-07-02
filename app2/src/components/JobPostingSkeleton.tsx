@@ -8,9 +8,9 @@ const JobPostingSkeleton: React.FC<JobPostingSkeletonProps> = ({ count = 3 }) =>
   return (
     <div className="space-y-4">
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="bg-white p-6 rounded-lg shadow-md border animate-pulse">
+                <div key={index} className="bg-white p-3 sm:p-6 rounded-lg shadow-md border animate-pulse">
           {/* Header */}
-          <div className="flex justify-between items-start mb-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-2 sm:space-y-0">
             <div className="flex-1">
               {/* Title skeleton */}
               <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
