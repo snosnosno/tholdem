@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, documentId, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 interface StaffData {
   id: string; 
@@ -139,18 +140,41 @@ const StaffListPage: React.FC = () => {
     if (!editingCell) return;
     
     const { rowId, field } = editingCell;
+    const currentStaff = staffData.find(staff => staff.id === rowId);
     
-    // 임시 데이터 업데이트
-    setStaffData(prevData => 
-      prevData.map(staff => 
-        staff.id === rowId 
-          ? { ...staff, [field]: field === 'age' ? Number(editingValue) || 0 : editingValue }
-          : staff
-      )
-    );
+    if (!currentStaff) {
+      setError(t('staffListPage.staffNotFound'));
+      return;
+    }
     
-    // 여기에 Firebase 업데이트 로직 추가 가능
-    // TODO: Firebase users 컶렉션 업데이트
+    const newValue = field === 'age' ? Number(editingValue) || 0 : editingValue;
+    
+    try {
+      // Firebase users 컬렉션 업데이트
+      const userRef = doc(db, 'users', currentStaff.userId);
+      await updateDoc(userRef, {
+        [field]: newValue,
+        updatedAt: serverTimestamp()
+      });
+      
+      // 로컬 상태 업데이트
+      setStaffData(prevData => 
+        prevData.map(staff => 
+          staff.id === rowId 
+            ? { ...staff, [field]: newValue }
+            : staff
+        )
+      );
+      
+      console.log(`스태프 ${field} 필드가 성공적으로 업데이트되었습니다:`, newValue);
+    } catch (error: any) {
+      console.error('스태프 정보 업데이트 오류:', error);
+      setError(error.message || t('staffListPage.updateError'));
+      
+      // 오류 발생 시 editingValue를 원래 값으로 되돌림
+      setEditingValue(String(currentStaff[field] || ''));
+      return;
+    }
     
     setEditingCell(null);
     setEditingValue('');
@@ -169,26 +193,64 @@ const StaffListPage: React.FC = () => {
     }
   };
   
-  // 새 행 추가 기능
-  const addNewRow = () => {
-    const newStaff: StaffData = {
-      id: `temp-${Date.now()}`,
-      userId: `temp-user-${Date.now()}`,
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-      gender: '',
-      age: 0,
-      experience: '',
-      nationality: '',
-      history: '',
-      notes: '',
-      postingId: jobPostings[0]?.id || '',
-      postingTitle: jobPostings[0]?.title || ''
-    };
+  // 새 행 추가 기능 - Firebase에 실제 저장
+  const addNewRow = async () => {
+    if (!currentUser || jobPostings.length === 0) {
+      setError(t('staffListPage.cannotAddStaff'));
+      return;
+    }
+  
+    const defaultPostingId = jobPostings[0].id;
+    const defaultPostingTitle = jobPostings[0].title;
     
-    setStaffData(prevData => [...prevData, newStaff]);
+    // 기본 이메일 생성 (임시)
+    const tempEmail = `staff${Date.now()}@temp.com`;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Firebase Functions를 통해 새 사용자 계정 생성
+      const functions = getFunctions();
+      const createUser = httpsCallable(functions, 'createUserAccount');
+      
+      const newUserData = {
+        email: tempEmail,
+        name: t('staffListPage.newStaff'),
+        role: 'Dealer'
+      };
+      
+      const result = await createUser(newUserData);
+      const userData = result.data as { uid: string; email: string; name: string };
+      
+      // 새로운 스태프 데이터 생성
+      const newStaff: StaffData = {
+        id: `${defaultPostingId}-${userData.uid}-${Date.now()}`,
+        userId: userData.uid,
+        name: userData.name,
+        email: userData.email,
+        phone: '',
+        role: 'Dealer',
+        gender: '',
+        age: 0,
+        experience: '',
+        nationality: '',
+        history: '',
+        notes: '',
+        postingId: defaultPostingId,
+        postingTitle: defaultPostingTitle
+      };
+      
+      // 로컬 상태 업데이트
+      setStaffData(prevData => [...prevData, newStaff]);
+      
+      alert(t('staffListPage.staffAddedSuccess'));
+    } catch (error: any) {
+      console.error('새 스태프 추가 오류:', error);
+      setError(error.message || t('staffListPage.addStaffError'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 드롭다운용 정렬 처리 함수

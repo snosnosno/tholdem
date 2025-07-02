@@ -243,7 +243,13 @@
     "fetchError": "Failed to fetch staff data.",
     "noPostings": "You have not created any job postings.",
     "noConfirmedStaff": "No staff have been confirmed for this posting yet.",
-    "unknownUser": "Unknown User"
+    "unknownUser": "Unknown User",
+    "cannotAddStaff": "Cannot add staff. Current user or posting information is not available.",
+    "newStaff": "New Staff",
+    "staffAddedSuccess": "New staff added successfully!",
+    "addStaffError": "An error occurred while adding staff.",
+    "staffNotFound": "Staff not found.",
+    "updateError": "An error occurred while updating staff information."
   },
   "editUserModal": {
     "title": "Edit User Information",
