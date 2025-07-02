@@ -195,12 +195,28 @@ const StaffListPage: React.FC = () => {
     const newValue = field === 'age' ? Number(editingValue) || 0 : editingValue;
     
     try {
-      // Firebase users 컬렉션 업데이트
-      const userRef = doc(db, 'users', currentStaff.userId);
-      await updateDoc(userRef, {
-        [field]: newValue,
-        updatedAt: serverTimestamp()
-      });
+      // 임시 스태프와 기존 사용자 구분
+      if (currentStaff.userId && currentStaff.userId.trim() !== '') {
+        // 기존 사용자의 경우 users 컸렉션 업데이트
+        const userRef = doc(db, 'users', currentStaff.userId);
+        await updateDoc(userRef, {
+          [field]: newValue,
+          updatedAt: serverTimestamp()
+        });
+      }
+      
+      // staff 컸렉션에도 업데이트 (모든 스태프)
+      // 단, staff 컸렉션에 문서가 있는 경우에만
+      try {
+        const staffRef = doc(db, 'staff', currentStaff.id);
+        await updateDoc(staffRef, {
+          [field]: newValue,
+          updatedAt: serverTimestamp()
+        });
+      } catch (staffUpdateError) {
+        // staff 컸렉션에 문서가 없으면 무시 (기존 job postings에서 온 데이터)
+        console.log('스태프 컸렉션 업데이트 스킵:', staffUpdateError);
+      }
       
       // 로컬 상태 업데이트
       setStaffData(prevData => 
@@ -217,7 +233,6 @@ const StaffListPage: React.FC = () => {
       setError(error.message || t('staffListPage.updateError'));
       
       // 오류 발생 시 editingValue를 원래 값으로 되돌림
-      setEditingValue(String(currentStaff[field] || ''));
       return;
     }
     
