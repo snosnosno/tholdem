@@ -830,7 +830,8 @@ const StaffListPage: React.FC = () => {
                   <option value="Registration">레지</option>
                   <option value="Security">보안요원</option>
                   <option value="Cashier">캐셔</option>
-                <input
+                  </select>
+                  <input
                   type="text"
                   placeholder="성별"
                   className="w-full p-2 border border-gray-300 rounded-md"
