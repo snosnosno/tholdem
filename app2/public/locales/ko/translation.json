@@ -492,7 +492,7 @@
     "participants": "참가자",
     "playerCount": "{{count}}명",
     "prizePool": "총상금",
-    "currency": "{{amount, currency}}원",
+    "currency": "{{amount}}원",
     "winner": "우승자",
     "finalRanking": "최종 순위",
     "rank": "순위",

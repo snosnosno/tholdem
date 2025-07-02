@@ -73,7 +73,7 @@
     "roleTitle": "Account Type",
     "roleStaff": "Staff",
     "roleManager": "Admin Member",
-    "managerApprovalNotice": "Admin Member registration requires operator approval. Please request to join.",
+    "managerApprovalNotice": "Admin Member registration requires operator approval.\nPlease submit your registration request.",
     "signUpButton": "Sign Up",
     "signingUpButton": "Signing up...",
     "orSignUpWith": "Or sign up with",
@@ -540,7 +540,7 @@
       "filters": {
       "location": "Location",
       "allLocations": "All Locations",
-      "type": "Job Type",
+      "type": "Recruitment Type",
       "allTypes": "All Types",
       "startDate": "Start Date",
       "endDate": "End Date",
