@@ -36,6 +36,14 @@ const JobBoardPage = () => {
   
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    location: 'all',
+    type: 'all',
+    startDate: '',
+    endDate: ''
+  });
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<{ timeSlot: string, role: string } | null>(null);
@@ -58,7 +66,20 @@ const JobBoardPage = () => {
 
     fetchAppliedJobs();
   }, [jobPostings, currentUser, jobPostingsSnap]);
-
+  
+  // Filter handlers
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+  
+  const resetFilters = () => {
+    setFilters({
+      location: 'all',
+      type: 'all',
+      startDate: '',
+      endDate: ''
+    });
+  };
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -158,6 +179,88 @@ const JobBoardPage = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
+      
+      {/* Filter Component */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Location Filter */}
+          <div>
+            <label htmlFor="location-filter" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.filters.location')}
+            </label>
+            <select
+              id="location-filter"
+              value={filters.location}
+              onChange={(e) => handleFilterChange('location', e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+              <option value="all">{t('jobBoard.filters.allLocations')}</option>
+              <option value="seoul">{t('locations.seoul')}</option>
+              <option value="busan">{t('locations.busan')}</option>
+              <option value="daegu">{t('locations.daegu')}</option>
+              <option value="incheon">{t('locations.incheon')}</option>
+              <option value="gwangju">{t('locations.gwangju')}</option>
+              <option value="daejeon">{t('locations.daejeon')}</option>
+              <option value="ulsan">{t('locations.ulsan')}</option>
+              <option value="gyeonggi">{t('locations.gyeonggi')}</option>
+            </select>
+          </div>
+          
+          {/* Type Filter */}
+          <div>
+            <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.filters.type')}
+            </label>
+            <select
+              id="type-filter"
+              value={filters.type}
+              onChange={(e) => handleFilterChange('type', e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+              <option value="all">{t('jobBoard.filters.allTypes')}</option>
+              <option value="application">{t('jobPostingAdmin.create.typeApplication')}</option>
+              <option value="fixed">{t('jobPostingAdmin.create.typeFixed')}</option>
+            </select>
+          </div>
+          
+          {/* Date Range Filter */}
+          <div>
+            <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.filters.startDate')}
+            </label>
+            <input
+              id="start-date"
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.filters.endDate')}
+            </label>
+            <input
+              id="end-date"
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+        
+        {/* Reset Button */}
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={resetFilters}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            {t('jobBoard.filters.reset')}
+          </button>
+        </div>
+      </div>
       <div className="space-y-4">
         {jobPostings?.map((post) => {
             const formattedStartDate = formatDate(post.startDate);

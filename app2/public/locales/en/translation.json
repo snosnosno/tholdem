@@ -536,6 +536,16 @@
       "full": "Full",
       "cancel": "Cancel",
       "confirm": "Confirm Application"
+      },
+      "filters": {
+      "location": "Location",
+      "allLocations": "All Locations",
+      "type": "Job Type",
+      "allTypes": "All Types",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "reset": "Reset Filters"
+      }
     }
   },
   "jobPostingAdmin": {

@@ -536,6 +536,16 @@
       "full": "마감",
       "cancel": "취소",
       "confirm": "지원 확정"
+      },
+      "filters": {
+      "location": "지역",
+      "allLocations": "전체 지역",
+      "type": "모집 유형",
+      "allTypes": "전체 유형",
+      "startDate": "시작일",
+      "endDate": "종료일",
+      "reset": "초기화"
+      }
     }
   },
   "jobPostingAdmin": {
