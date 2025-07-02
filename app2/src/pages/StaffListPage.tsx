@@ -594,6 +594,7 @@ const StaffListPage: React.FC = () => {
           )}
         </td>
       );
+    }
     
     return (
       <td 
@@ -877,7 +878,7 @@ const StaffListPage: React.FC = () => {
       </div>
     )}
     </>
-    );
-    }
-    
-    export default StaffListPage;
+  );
+};
+
+export default StaffListPage;
