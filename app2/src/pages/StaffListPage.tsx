@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, documentId, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, documentId, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -145,7 +145,21 @@ const StaffListPage: React.FC = () => {
           })
         );
         
-        setStaffData(combinedData);
+        // staff 컬렉션에서 추가된 스태프 데이터도 가져오기
+        const staffRef = collection(db, 'staff');
+        const staffSnapshot = await getDocs(staffRef);
+        const additionalStaff: StaffData[] = staffSnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as StaffData));
+        
+        // 두 데이터를 합치기 (중복 제거)
+        const allStaff = [...combinedData, ...additionalStaff];
+        const uniqueStaff = allStaff.filter((staff, index, self) => 
+          index === self.findIndex(s => s.id === staff.id)
+        );
+        
+        setStaffData(uniqueStaff);
       } catch (e) {
         console.error("Error fetching staff data: ", e);
         setError(t('staffListPage.fetchError'));
@@ -283,86 +297,122 @@ const StaffListPage: React.FC = () => {
   };
   
   // 기존 사용자를 스태프로 추가
-  const addExistingUser = () => {
+  const addExistingUser = async () => {
     if (!selectedUser || jobPostings.length === 0) return;
     
-    const defaultPostingId = jobPostings[0].id;
-    const defaultPostingTitle = jobPostings[0].title;
-    
-    const newStaff: StaffData = {
-      id: `${defaultPostingId}-${selectedUser.id}-${Date.now()}`,
-      userId: selectedUser.id,
-      name: selectedUser.name || '알 수 없는 사용자',
-      email: selectedUser.email || '',
-      phone: selectedUser.phone || '',
-      role: selectedUser.role || 'Dealer',
-      gender: selectedUser.gender || '',
-      age: selectedUser.age || 0,
-      experience: selectedUser.experience || '',
-      nationality: selectedUser.nationality || '',
-      history: selectedUser.history || '',
-      notes: selectedUser.notes || '',
-      postingId: defaultPostingId,
-      postingTitle: defaultPostingTitle
-    };
-    
-    // 로컬 상태 업데이트 (임시 저장)
-    setStaffData(prevData => [...prevData, newStaff]);
-    
-    // 모달 닫기
-    setIsAddModalOpen(false);
-    setSelectedUser(null);
-    setModalSearchTerm('');
-    setSearchResults([]);
+    try {
+      const defaultPostingId = jobPostings[0].id;
+      const defaultPostingTitle = jobPostings[0].title;
+      
+      const newStaff: StaffData = {
+        id: `user-${selectedUser.id}-${Date.now()}`,
+        userId: selectedUser.id,
+        name: selectedUser.name || '',
+        email: selectedUser.email || '',
+        phone: selectedUser.phone || '',
+        role: selectedUser.role || 'Dealer',
+        gender: selectedUser.gender || '',
+        age: selectedUser.age || 0,
+        experience: selectedUser.experience || '',
+        nationality: selectedUser.nationality || '',
+        history: selectedUser.history || '',
+        notes: selectedUser.notes || '',
+        postingId: defaultPostingId,
+        postingTitle: defaultPostingTitle
+      };
+      
+      // Firebase에 저장
+      const staffRef = collection(db, 'staff');
+      const docRef = await addDoc(staffRef, {
+        ...newStaff,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      // ID를 문서 ID로 업데이트
+      await updateDoc(docRef, { id: docRef.id });
+      newStaff.id = docRef.id;
+      
+      // 로컬 상태 업데이트
+      setStaffData(prevData => [...prevData, newStaff]);
+      
+      // 모달 닫기
+      setIsAddModalOpen(false);
+      setSelectedUser(null);
+      setModalSearchTerm('');
+      setSearchResults([]);
+      
+      setError('');
+    } catch (error: any) {
+      console.error('스태프 추가 오류:', error);
+      setError('스태프 추가에 실패했습니다.');
+    }
   };
   
   // 임시 스태프 추가
-  const addTempStaff = () => {
+  const addTempStaff = async () => {
     if (!tempStaffInfo.name.trim() || jobPostings.length === 0) {
       setError('스태프 이름을 입력해주세요.');
       return;
     }
     
-    const defaultPostingId = jobPostings[0].id;
-    const defaultPostingTitle = jobPostings[0].title;
-    
-    const newStaff: StaffData = {
-      id: `${defaultPostingId}-temp-${Date.now()}`,
-      userId: `temp-${Date.now()}`, // 임시 ID
-      name: tempStaffInfo.name,
-      email: tempStaffInfo.email,
-      phone: tempStaffInfo.phone,
-      role: tempStaffInfo.role,
-      gender: tempStaffInfo.gender,
-      age: tempStaffInfo.age,
-      experience: tempStaffInfo.experience,
-      nationality: tempStaffInfo.nationality,
-      history: tempStaffInfo.history,
-      notes: tempStaffInfo.notes,
-      postingId: defaultPostingId,
-      postingTitle: defaultPostingTitle
-    };
-    
-    // 로컬 상태 업데이트 (임시 저장)
-    setStaffData(prevData => [...prevData, newStaff]);
-    
-    // 모달 닫기
-    setIsAddModalOpen(false);
-    setTempStaffInfo({
-      name: '',
-      email: '',
-      phone: '',
-      role: 'Dealer',
-      gender: '',
-      age: 0,
-      experience: '',
-      nationality: '',
-      history: '',
-      notes: ''
-    });
+    try {
+      const defaultPostingId = jobPostings[0].id;
+      const defaultPostingTitle = jobPostings[0].title;
+      
+      const newStaff: StaffData = {
+        id: `temp-${Date.now()}`,
+        userId: '',
+        name: tempStaffInfo.name,
+        email: tempStaffInfo.email,
+        phone: tempStaffInfo.phone,
+        role: tempStaffInfo.role,
+        gender: tempStaffInfo.gender,
+        age: tempStaffInfo.age,
+        experience: tempStaffInfo.experience,
+        nationality: tempStaffInfo.nationality,
+        history: tempStaffInfo.history,
+        notes: tempStaffInfo.notes,
+        postingId: defaultPostingId,
+        postingTitle: defaultPostingTitle
+      };
+      
+      // Firebase에 저장
+      const staffRef = collection(db, 'staff');
+      const docRef = await addDoc(staffRef, {
+        ...newStaff,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      // ID를 문서 ID로 업데이트
+      await updateDoc(docRef, { id: docRef.id });
+      newStaff.id = docRef.id;
+      
+      // 로컬 상태 업데이트
+      setStaffData(prevData => [...prevData, newStaff]);
+      
+      // 모달 닫기
+      setIsAddModalOpen(false);
+      setTempStaffInfo({
+        name: '',
+        email: '',
+        phone: '',
+        role: 'Dealer',
+        gender: '',
+        age: 0,
+        experience: '',
+        nationality: '',
+        history: '',
+        notes: ''
+      });
+      
+      setError('');
+    } catch (error: any) {
+      console.error('스태프 추가 오류:', error);
+      setError('스태프 추가에 실패했습니다.');
+    }
   };
-
-  // 드롭다운용 정렬 처리 함수
   const handleSortChange = (value: string) => {
     setSortOption(value);
     if (!value) {
@@ -372,6 +422,27 @@ const StaffListPage: React.FC = () => {
     
     const [key, direction] = value.split('-') as [SortKey, 'ascending' | 'descending'];
     setSortConfig({ key, direction });
+  };
+  
+  // 스태프 삭제 기능
+  const deleteStaff = async (staffId: string) => {
+    if (!window.confirm('이 스태프를 삭제하시겠습니까?')) {
+      return;
+    }
+    
+    try {
+      // Firebase에서 삭제
+      const staffDocRef = doc(db, 'staff', staffId);
+      await deleteDoc(staffDocRef);
+      
+      // 로컬 상태에서 삭제
+      setStaffData(prevData => prevData.filter(staff => staff.id !== staffId));
+      
+      setError('');
+    } catch (error: any) {
+      console.error('스태프 삭제 오류:', error);
+      setError('스태프 삭제에 실패했습니다.');
+    }
   };
 
   const filteredAndSortedStaff = useMemo(() => {
@@ -558,6 +629,7 @@ const StaffListPage: React.FC = () => {
                 <TableHeader label={t('profilePage.nationality')} />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -574,11 +646,20 @@ const StaffListPage: React.FC = () => {
                   <EditableCell staff={staff} field="nationality" value={staff.nationality} />
                   <EditableCell staff={staff} field="history" value={staff.history} />
                   <EditableCell staff={staff} field="notes" value={staff.notes} />
-                </tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button
+                      onClick={() => deleteStaff(staff.id)}
+                      className="text-red-600 hover:text-red-900 font-medium"
+                      title="스태프 삭제"
+                    >
+                      삭제
+                    </button>
+                  </td>
+                  </tr>
               )) : (
-                <tr>
-                  <td colSpan={11} className="px-6 py-4 text-center text-sm text-gray-500">
-                    {t('staffListPage.noConfirmedStaff')}
+               <tr>
+                 <td colSpan={12} className="px-6 py-4 text-center text-sm text-gray-500">
+                   {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
               )}
