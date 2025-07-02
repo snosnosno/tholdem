@@ -261,9 +261,9 @@ const StaffListPage: React.FC = () => {
       const q = query(usersRef);
       const querySnapshot = await getDocs(q);
       
-      const users = querySnapshot.docs.map(doc => ({
+      const users: UserData[] = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data() as Omit<UserData, 'id'>
       }));
       
       // 검색어로 필터링
