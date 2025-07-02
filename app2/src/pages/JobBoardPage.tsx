@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db, buildFilteredQuery } from '../firebase';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { useCollection } from 'react-firebase-hooks/firestore';
 import { useTranslation } from 'react-i18next';
+import { useJobPostings } from '../hooks/useJobPostings';
 
 interface RoleRequirement {
     name: string;
@@ -43,16 +43,14 @@ const JobBoardPage = () => {
     endDate: ''
   });
   
-  // Dynamic query based on filters
-  const jobPostingsQuery = useMemo(() => buildFilteredQuery(filters), [filters]);
-  const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
-  const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })) as JobPosting[] | undefined, [jobPostingsSnap]);
+  // React Query based data fetching
+  const { data: jobPostings, isLoading: loading, error } = useJobPostings(filters);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<{ timeSlot: string, role: string } | null>(null);
     
   useEffect(() => {
-    if (!currentUser || !jobPostingsSnap) return;
+    if (!currentUser || !jobPostings) return;
     const fetchAppliedJobs = async () => {
       if (!currentUser || !jobPostings) return;
       const postIds = jobPostings.map(p => p.id);
@@ -68,7 +66,7 @@ const JobBoardPage = () => {
     };
 
     fetchAppliedJobs();
-  }, [jobPostings, currentUser, jobPostingsSnap]);
+  }, [jobPostings, currentUser]);
   
   // Filter handlers
   const handleFilterChange = (key: string, value: string) => {
@@ -182,6 +180,13 @@ const JobBoardPage = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
+      
+      {/* Error Handling */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p>데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.</p>
+        </div>
+      )}
       
       {/* Filter Component */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TournamentProvider } from './contexts/TournamentContext';
 import { Layout } from './components/Layout';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Page Imports
 import Login from './pages/Login';
@@ -52,10 +53,23 @@ const HomeRedirect: React.FC = () => {
   return isAdmin ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/events" replace />;
 };
 
+// Create a client with optimized cache settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <TournamentProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TournamentProvider>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
@@ -108,8 +122,9 @@ const App: React.FC = () => {
             </Route>
           </Route>
         </Routes>
-      </TournamentProvider>
-    </AuthProvider>
+        </TournamentProvider>
+        </AuthProvider>
+        </QueryClientProvider>
   );
 }
 
