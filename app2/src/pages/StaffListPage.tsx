@@ -50,7 +50,25 @@ const StaffListPage: React.FC = () => {
   const [editingCell, setEditingCell] = useState<{ rowId: string; field: keyof StaffData } | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   const [tempStaffData, setTempStaffData] = useState<StaffData[]>([]);
-
+  
+  // 스태프 추가 모달 관련 states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [modalSearchTerm, setModalSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [tempStaffInfo, setTempStaffInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'Dealer',
+    gender: '',
+    age: 0,
+    experience: '',
+    nationality: '',
+    history: '',
+    notes: ''
+  });
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
@@ -193,64 +211,142 @@ const StaffListPage: React.FC = () => {
     }
   };
   
-  // 새 행 추가 기능 - Firebase에 실제 저장
-  const addNewRow = async () => {
+  // 스태프 추가 모달 열기
+  const addNewRow = () => {
     if (!currentUser || jobPostings.length === 0) {
       setError(t('staffListPage.cannotAddStaff'));
       return;
     }
+    setIsAddModalOpen(true);
+    setModalSearchTerm('');
+    setSearchResults([]);
+    setSelectedUser(null);
+    setTempStaffInfo({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'Dealer',
+      gender: '',
+      age: 0,
+      experience: '',
+      nationality: '',
+      history: '',
+      notes: ''
+    });
+  };
   
+  // 기존 사용자 검색
+  const searchExistingUsers = async () => {
+    if (!modalSearchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef);
+      const querySnapshot = await getDocs(q);
+      
+      const users = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // 검색어로 필터링
+      const filteredUsers = users.filter(user => 
+        user.name?.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+        user.phone?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+      );
+      
+      setSearchResults(filteredUsers);
+    } catch (error: any) {
+      console.error('사용자 검색 오류:', error);
+      setError('사용자 검색에 실패했습니다.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  // 기존 사용자를 스태프로 추가
+  const addExistingUser = () => {
+    if (!selectedUser || jobPostings.length === 0) return;
+    
     const defaultPostingId = jobPostings[0].id;
     const defaultPostingTitle = jobPostings[0].title;
     
-    // 기본 이메일 생성 (임시)
-    const tempEmail = `staff${Date.now()}@temp.com`;
+    const newStaff: StaffData = {
+      id: `${defaultPostingId}-${selectedUser.id}-${Date.now()}`,
+      userId: selectedUser.id,
+      name: selectedUser.name || '알 수 없는 사용자',
+      email: selectedUser.email || '',
+      phone: selectedUser.phone || '',
+      role: selectedUser.role || 'Dealer',
+      gender: selectedUser.gender || '',
+      age: selectedUser.age || 0,
+      experience: selectedUser.experience || '',
+      nationality: selectedUser.nationality || '',
+      history: selectedUser.history || '',
+      notes: selectedUser.notes || '',
+      postingId: defaultPostingId,
+      postingTitle: defaultPostingTitle
+    };
     
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Firebase Functions를 통해 새 사용자 계정 생성
-      const functions = getFunctions();
-      const createUser = httpsCallable(functions, 'createUserAccount');
-      
-      const newUserData = {
-        email: tempEmail,
-        name: t('staffListPage.newStaff'),
-        role: 'Dealer'
-      };
-      
-      const result = await createUser(newUserData);
-      const userData = result.data as { uid: string; email: string; name: string };
-      
-      // 새로운 스태프 데이터 생성
-      const newStaff: StaffData = {
-        id: `${defaultPostingId}-${userData.uid}-${Date.now()}`,
-        userId: userData.uid,
-        name: userData.name,
-        email: userData.email,
-        phone: '',
-        role: 'Dealer',
-        gender: '',
-        age: 0,
-        experience: '',
-        nationality: '',
-        history: '',
-        notes: '',
-        postingId: defaultPostingId,
-        postingTitle: defaultPostingTitle
-      };
-      
-      // 로컬 상태 업데이트
-      setStaffData(prevData => [...prevData, newStaff]);
-      
-      alert(t('staffListPage.staffAddedSuccess'));
-    } catch (error: any) {
-      console.error('새 스태프 추가 오류:', error);
-      setError(error.message || t('staffListPage.addStaffError'));
-    } finally {
-      setLoading(false);
+    // 로컬 상태 업데이트 (임시 저장)
+    setStaffData(prevData => [...prevData, newStaff]);
+    
+    // 모달 닫기
+    setIsAddModalOpen(false);
+    setSelectedUser(null);
+    setModalSearchTerm('');
+    setSearchResults([]);
+  };
+  
+  // 임시 스태프 추가
+  const addTempStaff = () => {
+    if (!tempStaffInfo.name.trim() || jobPostings.length === 0) {
+      setError('스태프 이름을 입력해주세요.');
+      return;
     }
+    
+    const defaultPostingId = jobPostings[0].id;
+    const defaultPostingTitle = jobPostings[0].title;
+    
+    const newStaff: StaffData = {
+      id: `${defaultPostingId}-temp-${Date.now()}`,
+      userId: `temp-${Date.now()}`, // 임시 ID
+      name: tempStaffInfo.name,
+      email: tempStaffInfo.email,
+      phone: tempStaffInfo.phone,
+      role: tempStaffInfo.role,
+      gender: tempStaffInfo.gender,
+      age: tempStaffInfo.age,
+      experience: tempStaffInfo.experience,
+      nationality: tempStaffInfo.nationality,
+      history: tempStaffInfo.history,
+      notes: tempStaffInfo.notes,
+      postingId: defaultPostingId,
+      postingTitle: defaultPostingTitle
+    };
+    
+    // 로컬 상태 업데이트 (임시 저장)
+    setStaffData(prevData => [...prevData, newStaff]);
+    
+    // 모달 닫기
+    setIsAddModalOpen(false);
+    setTempStaffInfo({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'Dealer',
+      gender: '',
+      age: 0,
+      experience: '',
+      nationality: '',
+      history: '',
+      notes: ''
+    });
   };
 
   // 드롭다운용 정렬 처리 함수
@@ -477,6 +573,158 @@ const StaffListPage: React.FC = () => {
         </div>
       </div>
     </div>
+    
+    {/* 스태프 추가 모달 */}
+    {isAddModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">스태프 추가</h2>
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 기존 사용자 검색 */}
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-3">기존 사용자 검색</h3>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="이름, 이메일, 전화번호로 검색..."
+                    className="flex-1 p-2 border border-gray-300 rounded-md"
+                    value={modalSearchTerm}
+                    onChange={(e) => setModalSearchTerm(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && searchExistingUsers()}
+                  />
+                  <button
+                    onClick={searchExistingUsers}
+                    disabled={isSearching}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSearching ? '검색중...' : '검색'}
+                  </button>
+                </div>
+                
+                {searchResults.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto border rounded-md">
+                    {searchResults.map((user) => (
+                      <div
+                        key={user.id}
+                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${
+                          selectedUser?.id === user.id ? 'bg-blue-50 border-blue-300' : ''
+                        }`}
+                        onClick={() => setSelectedUser(user)}
+                      >
+                        <div className="font-medium">{user.name || '이름 없음'}</div>
+                        <div className="text-sm text-gray-600">{user.email}</div>
+                        <div className="text-sm text-gray-600">{user.role || 'Dealer'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {selectedUser && (
+                  <div className="mt-3">
+                    <div className="p-3 bg-blue-50 rounded-md">
+                      <div className="font-medium">선택된 사용자: {selectedUser.name}</div>
+                      <div className="text-sm text-gray-600">{selectedUser.email}</div>
+                    </div>
+                    <button
+                      onClick={addExistingUser}
+                      className="w-full mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      이 사용자를 스태프로 추가
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* 임시 스태프 추가 */}
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-3">임시 스태프 추가</h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="이름 *"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.name}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, name: e.target.value }))}
+                />
+                <input
+                  type="email"
+                  placeholder="이메일"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.email}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, email: e.target.value }))}
+                />
+                <input
+                  type="text"
+                  placeholder="전화번호"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.phone}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, phone: e.target.value }))}
+                />
+                <select
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.role}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="Dealer">딜러</option>
+                  <option value="Floor">플로어</option>
+                  <option value="Manager">매니저</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="성별"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.gender}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, gender: e.target.value }))}
+                />
+                <input
+                  type="number"
+                  placeholder="나이"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.age || ''}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, age: Number(e.target.value) || 0 }))}
+                />
+                <textarea
+                  placeholder="경력"
+                  className="w-full p-2 border border-gray-300 rounded-md h-20"
+                  value={tempStaffInfo.experience}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, experience: e.target.value }))}
+                />
+                <input
+                  type="text"
+                  placeholder="국적"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={tempStaffInfo.nationality}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, nationality: e.target.value }))}
+                />
+                <textarea
+                  placeholder="비고"
+                  className="w-full p-2 border border-gray-300 rounded-md h-20"
+                  value={tempStaffInfo.notes}
+                  onChange={(e) => setTempStaffInfo(prev => ({ ...prev, notes: e.target.value }))}
+                />
+                <button
+                  onClick={addTempStaff}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  임시 스태프 추가
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   );
 };
 
