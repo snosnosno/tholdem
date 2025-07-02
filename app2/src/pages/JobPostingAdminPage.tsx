@@ -67,7 +67,17 @@ const JobPostingAdminPage = () => {
   const [selectedAssignment, setSelectedAssignment] = useState<{ [key: string]: { timeSlot: string, role: string } }>({});
 
 
-  const predefinedRoles = ['dealer', 'floor', 'registration', 'serving'];
+  // 모든 JobRole을 포함하도록 확장된 역할 목록
+  const predefinedRoles = [
+    'dealer',              // 딜러
+    'floor',               // 플로어  
+    'serving',             // 서빙
+    'tournament_director', // 토너먼트 디렉터
+    'chip_master',         // 칩 마스터
+    'registration',        // 레지스트레이션
+    'security',            // 보안요원
+    'cashier'              // 캐셔
+  ];
   const locations = [
     '서울', '경기', '인천', '강원', '대전', '세종', '충남', '충북', 
     '광주', '전남', '전북', '대구', '경북', '부산', '울산', '경남', '제주', '해외', '기타'
@@ -354,8 +364,12 @@ const JobPostingAdminPage = () => {
             const jobRoleMap: { [key: string]: string } = {
                 'dealer': 'Dealer',
                 'floor': 'Floor',
+                'serving': 'Server',
+                'tournament_director': 'Tournament Director',
+                'chip_master': 'Chip Master', 
                 'registration': 'Registration',
-                'serving': 'Server'
+                'security': 'Security',
+                'cashier': 'Cashier'
             };
             const jobRole = jobRoleMap[role] || role.charAt(0).toUpperCase() + role.slice(1);
             
