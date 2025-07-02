@@ -590,7 +590,7 @@ const StaffListPage: React.FC = () => {
           value={filterPostId}
           onChange={(e) => setFilterPostId(e.target.value)}
         >
-          <option value="">{t('jobPostingAdmin.manage.title')} ({t('common.all', 'All')})</option>
+          <option value="">구인공고 ({t('common.all', 'All')})</option>
           {jobPostings.map(post => (
             <option key={post.id} value={post.id}>{post.title}</option>
           ))}
@@ -601,10 +601,10 @@ const StaffListPage: React.FC = () => {
           onChange={(e) => handleSortChange(e.target.value)}
         >
           <option value="">{t('common.sort', '정렬')} ({t('common.none', '없음')})</option>
-          <option value="postingTitle-ascending">{t('jobPostingAdmin.manage.title')} (오름차순)</option>
-          <option value="postingTitle-descending">{t('jobPostingAdmin.manage.title')} (내림차순)</option>
-          <option value="role-ascending">{t('jobPostingAdmin.create.roleName')} (오름차순)</option>
-          <option value="role-descending">{t('jobPostingAdmin.create.roleName')} (내림차순)</option>
+          <option value="postingTitle-ascending">구인공고 (오름차순)</option>
+          <option value="postingTitle-descending">구인공고 (내림차순)</option>
+          <option value="role-ascending">역할 (오름차순)</option>
+          <option value="role-descending">역할 (내림차순)</option>
           <option value="name-ascending">{t('staffNew.labelName')} (오름차순)</option>
           <option value="name-descending">{t('staffNew.labelName')} (내림차순)</option>
           <option value="gender-ascending">{t('signUp.genderLabel')} (오름차순)</option>
@@ -633,8 +633,8 @@ const StaffListPage: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <TableHeader label={t('jobPostingAdmin.manage.title')} />
-                <TableHeader label={t('jobPostingAdmin.create.roleName')} />
+                <TableHeader label="구인공고" />
+                <TableHeader label="역할" />
                 <TableHeader label={t('staffNew.labelName')} />
                 <TableHeader label={t('signUp.genderLabel')} />
                 <TableHeader label={t('profilePage.age')} />
