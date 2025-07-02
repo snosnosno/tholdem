@@ -545,14 +545,12 @@
       "allTypes": "All Types",
       "startDate": "Start Date",
       "endDate": "End Date",
-      "reset": "Reset Filters"
-      },
+      "reset": "Reset Filters",
       "search": {
-      "label": "Search",
-      "placeholder": "Search in title or description..."
+        "label": "Search",
+        "placeholder": "Search in title or description..."
       }
       }
-    }
   },
   "jobPostingAdmin": {
     "alerts": {
@@ -808,15 +806,6 @@
   "tableCard": {
     "dealer": "Dealer:",
     "waiting": "Waiting"
-  },
-  "days": {
-    "0": "Sun",
-    "1": "Mon",
-    "2": "Tue",
-    "3": "Wed",
-    "4": "Thu",
-    "5": "Fri",
-    "6": "Sat"
   },
   "tournament": {
     "initialName": "T-Holdem Initial Tournament"
