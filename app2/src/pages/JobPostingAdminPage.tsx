@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../firebase';
+import { db, promoteToStaff } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth
@@ -339,6 +339,35 @@ const JobPostingAdminPage = () => {
                 assignedTime: timeSlot,
             });
         });
+        
+        // 지원자를 스태프로 승격
+        console.log('🔍 JobPostingAdminPage - 지원자 확정 시도:', {
+            applicantId: applicant.applicantId,
+            applicantName: applicant.applicantName,
+            role,
+            postId: currentPost.id,
+            managerId: currentUser?.uid
+        });
+        
+        if (currentUser) {
+            // role 값을 적절한 JobRole 형식으로 변환
+            const jobRoleMap: { [key: string]: string } = {
+                'dealer': 'Dealer',
+                'floor': 'Floor',
+                'registration': 'Registration',
+                'serving': 'Server'
+            };
+            const jobRole = jobRoleMap[role] || role.charAt(0).toUpperCase() + role.slice(1);
+            
+            await promoteToStaff(
+                applicant.applicantId, 
+                applicant.applicantName, 
+                jobRole, 
+                currentPost.id, 
+                currentUser.uid
+            );
+            console.log('✅ promoteToStaff 성공!');
+        }
         
         alert(t('jobPostingAdmin.alerts.applicantConfirmSuccess'));
         await checkAndClosePosting(currentPost.id);
