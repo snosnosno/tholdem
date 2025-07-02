@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, buildFilteredQuery } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useTranslation } from 'react-i18next';
@@ -30,9 +30,7 @@ interface JobPosting {
 const JobBoardPage = () => {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-  const jobPostingsQuery = useMemo(() => query(collection(db, 'jobPostings'), where('status', '==', 'open')), []);
-  const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
-  const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })) as JobPosting[] | undefined, [jobPostingsSnap]);
+  
   
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -44,6 +42,11 @@ const JobBoardPage = () => {
     startDate: '',
     endDate: ''
   });
+  
+  // Dynamic query based on filters
+  const jobPostingsQuery = useMemo(() => buildFilteredQuery(filters), [filters]);
+  const [jobPostingsSnap, loading] = useCollection(jobPostingsQuery);
+  const jobPostings = useMemo(() => jobPostingsSnap?.docs.map(d => ({ id: d.id, ...d.data() })) as JobPosting[] | undefined, [jobPostingsSnap]);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<{ timeSlot: string, role: string } | null>(null);

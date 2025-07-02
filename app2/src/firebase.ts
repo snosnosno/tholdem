@@ -1,7 +1,7 @@
 // Firebase 초기화 및 인증/DB 인스턴스 export
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, collection, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, Timestamp, Query } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
@@ -62,4 +62,87 @@ export const setupTestData = async () => {
     console.error("Error writing test data: ", error);
     return 'ERROR';
   }
+};
+
+export const promoteToStaff = async (userId: string, userName: string, jobRole: string, postingId: string, managerId: string) => {
+  console.log('🔍 promoteToStaff 함수 호출:', { userId, userName, jobRole, postingId, managerId });
+  
+  if (!userId || !jobRole || !userName || !postingId || !managerId) {
+    console.error("User ID, User Name, Job Role, Posting ID, and Manager ID are required to promote to staff.");
+    return;
+  }
+
+  const staffRef = doc(db, 'staff', userId);
+  
+  try {
+    console.log('🔍 staff 문서 확인 시도:', userId);
+    const staffSnap = await getDoc(staffRef);
+    if (!staffSnap.exists()) {
+      console.log('✅ 새로운 staff 문서 생성 시도');
+      await setDoc(staffRef, {
+        name: userName,
+        userRole: 'staff',
+        jobRole: [jobRole],
+        assignedEvents: [postingId],
+        createdAt: new Date(),
+        managerId: managerId,
+        postingId: postingId,
+      });
+      console.log(`✅ New staff document created for user: ${userName} (${userId}) with role: ${jobRole}`);
+    } else {
+      console.log('🔄 기존 staff 문서 업데이트 시도');
+      // 스태프 문서가 있으면 jobRole 및 이벤트 참여 이력 업데이트
+      await updateDoc(staffRef, {
+        jobRole: arrayUnion(jobRole),
+        assignedEvents: arrayUnion(postingId)
+      });
+      console.log(`Staff document updated for user: ${userName} (${userId}). Added role: ${jobRole} for posting: ${postingId}`);
+    }
+  } catch (error) {
+    console.error(`Failed to promote user ${userName} (${userId}) to staff:`, error);
+  }
+};
+
+// Filter interface
+interface JobPostingFilters {
+  location: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+}
+
+// Build filtered query for job postings
+export const buildFilteredQuery = (filters: JobPostingFilters): Query => {
+  const jobPostingsRef = collection(db, 'jobPostings');
+  let queryConstraints: any[] = [];
+  
+  // Always filter for open status
+  queryConstraints.push(where('status', '==', 'open'));
+  
+  // Apply location filter
+  if (filters.location && filters.location !== 'all') {
+    queryConstraints.push(where('location', '==', filters.location));
+  }
+  
+  // Apply type filter
+  if (filters.type && filters.type !== 'all') {
+    queryConstraints.push(where('type', '==', filters.type));
+  }
+  
+  // Apply date range filters
+  if (filters.startDate) {
+    const startDate = Timestamp.fromDate(new Date(filters.startDate));
+    queryConstraints.push(where('startDate', '>=', startDate));
+  }
+  
+  if (filters.endDate) {
+    const endDate = Timestamp.fromDate(new Date(filters.endDate + 'T23:59:59'));
+    queryConstraints.push(where('endDate', '<=', endDate));
+  }
+  
+  // Add ordering and limit for pagination
+  queryConstraints.push(orderBy('createdAt', 'desc'));
+  queryConstraints.push(limit(20));
+  
+  return query(jobPostingsRef, ...queryConstraints);
 };
