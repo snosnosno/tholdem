@@ -861,5 +861,15 @@
     "save": "Save",
     "assignedDealer": "assigned",
     "minuteInterval": "minute interval"
+    },
+    "errors": {
+    "title": "An error has occurred",
+    "general": "A temporary error has occurred. Please try again later.",
+    "network": "There is a network connection issue. Please check your internet connection.",
+    "permission": "You do not have permission. Please try logging in again.",
+    "quota": "Service usage limit has been temporarily exceeded. Please try again later.",
+    "retry": "Try again",
+    "refresh": "Refresh page",
+    "details": "Show developer information"
   }
 }

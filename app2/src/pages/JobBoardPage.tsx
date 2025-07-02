@@ -9,6 +9,8 @@ import { useDebounceSearch } from '../hooks/useDebounceSearch';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { prepareSearchTerms } from '../utils/searchUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
+import JobPostingSkeleton from '../components/JobPostingSkeleton';
+import JobBoardErrorBoundary from '../components/JobBoardErrorBoundary';
 
 const JobBoardPage = () => {
   const { t } = useTranslation();
@@ -184,11 +186,17 @@ const JobBoardPage = () => {
 
 
   if (loading) {
-    return <div>{t('jobBoard.loading')}</div>;
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
+        <JobPostingSkeleton count={5} />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <JobBoardErrorBoundary>
+      <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
       
       {/* Error Handling */}
@@ -429,7 +437,8 @@ const JobBoardPage = () => {
           )}
         </div>
     </div>
-  );
+    </JobBoardErrorBoundary>
+    );
 };
 
 export default JobBoardPage;
