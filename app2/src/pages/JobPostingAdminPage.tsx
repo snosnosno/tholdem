@@ -49,6 +49,7 @@ const JobPostingAdminPage = () => {
   const initialTimeSlot = { time: '09:00', roles: [{ name: 'dealer', count: 1 }] };
   const [formData, setFormData] = useState({
     title: '',
+    type: 'application', // 모집 유형: 'application'(지원) 또는 'fixed'(고정)
     timeSlots: [initialTimeSlot],
     description: '',
     status: 'open',
@@ -195,6 +196,7 @@ const JobPostingAdminPage = () => {
       alert(t('jobPostingAdmin.alerts.createSuccess'));
       setFormData({
         title: '',
+        type: 'application',
         timeSlots: [initialTimeSlot],
         description: '',
         status: 'open',
@@ -449,6 +451,13 @@ const JobPostingAdminPage = () => {
                 <input type="text" name="title" id="title" value={formData.title} onChange={handleFormChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
             </div>
             
+            <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.type')}</label>
+                <select name="type" id="type" value={formData.type} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="application">{t('jobPostingAdmin.create.typeApplication')}</option>
+                    <option value="fixed">{t('jobPostingAdmin.create.typeFixed')}</option>
+                </select>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.create.location')}</label>
@@ -612,6 +621,13 @@ const JobPostingAdminPage = () => {
                             <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.postingTitle')}</label>
                             <input type="text" id="edit-title" value={currentPost.title} onChange={(e) => setCurrentPost({...currentPost, title: e.target.value})} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                         </div>
+                        <div>
+                            <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.type')}</label>
+                            <select id="edit-type" name="type" value={currentPost.type} onChange={(e) => setCurrentPost({...currentPost, type: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="application">{t('jobPostingAdmin.edit.typeApplication')}</option>
+                                <option value="fixed">{t('jobPostingAdmin.edit.typeFixed')}</option>
+                            </select>
+                            </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <div>
                                 <label htmlFor="edit-location" className="block text-sm font-medium text-gray-700">{t('jobPostingAdmin.edit.location')}</label>
