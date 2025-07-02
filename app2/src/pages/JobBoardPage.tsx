@@ -3,9 +3,11 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { useJobPostings } from '../hooks/useJobPostings';
+import { useJobPostings, useInfiniteJobPostings } from '../hooks/useJobPostings';
 import { useDebounceSearch } from '../hooks/useDebounceSearch';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { prepareSearchTerms, highlightSearchTerms } from '../utils/searchUtils';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface RoleRequirement {
     name: string;
@@ -54,8 +56,25 @@ const JobBoardPage = () => {
     searchTerms: searchTerms.length > 0 ? searchTerms : undefined
   };
   
-  // React Query based data fetching
-  const { data: jobPostings, isLoading: loading, error } = useJobPostings(dynamicFilters);
+  // Infinite Query based data fetching
+  const {
+    data: infiniteData,
+    isLoading: loading,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage
+  } = useInfiniteJobPostings(dynamicFilters);
+  
+  // Flatten the infinite query data
+  const jobPostings = infiniteData?.pages.flatMap(page => page.jobs) || [];
+  
+  // Infinite scroll hook
+  const { loadMoreRef } = useInfiniteScroll({
+    hasNextPage: hasNextPage || false,
+    isFetchingNextPage,
+    fetchNextPage
+  });
   
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
@@ -418,6 +437,18 @@ const JobBoardPage = () => {
                 </div>
             </div>
         )}
+        
+        {/* Infinite Scroll Loading Indicator */}
+        <div ref={loadMoreRef} className="flex justify-center py-4">
+          {isFetchingNextPage && (
+            <LoadingSpinner size="md" text="추가 공고를 불러오는 중..." />
+          )}
+          {!hasNextPage && jobPostings.length > 0 && (
+            <p className="text-gray-500 text-center py-4">
+              더 이상 공고가 없습니다.
+            </p>
+          )}
+        </div>
     </div>
   );
 };

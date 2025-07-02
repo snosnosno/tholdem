@@ -112,8 +112,16 @@ interface JobPostingFilters {
   searchTerms?: string[]; // Optional search terms for array-contains-any query
 }
 
+interface PaginationOptions {
+  limit?: number;
+  startAfterDoc?: any;
+}
+
 // Build filtered query for job postings
-export const buildFilteredQuery = (filters: JobPostingFilters): Query => {
+export const buildFilteredQuery = (
+  filters: JobPostingFilters, 
+  pagination?: PaginationOptions
+): Query => {
   const jobPostingsRef = collection(db, 'jobPostings');
   let queryConstraints: any[] = [];
   
@@ -146,14 +154,21 @@ export const buildFilteredQuery = (filters: JobPostingFilters): Query => {
     queryConstraints.push(where('endDate', '<=', endDate));
   }
   
-  // Add ordering and limit for pagination
+  // Add ordering and pagination
   queryConstraints.push(orderBy('createdAt', 'desc'));
-  queryConstraints.push(limit(20));
+  
+  // Add startAfter for pagination if provided
+  if (pagination?.startAfterDoc) {
+    queryConstraints.push(startAfter(pagination.startAfterDoc));
+  }
+  
+  // Add limit (default 20 for regular queries, customizable for infinite scroll)
+  queryConstraints.push(limit(pagination?.limit || 20));
   
   return query(jobPostingsRef, ...queryConstraints);
-};
-
-// Migration function to add searchIndex to existing job postings
+  };
+  
+  // Migration function to add searchIndex to existing job postings
 export const migrateJobPostingsSearchIndex = async (): Promise<void> => {
   console.log('Starting searchIndex migration for job postings...');
   

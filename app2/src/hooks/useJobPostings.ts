@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { getDocs } from 'firebase/firestore';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { getDocs, startAfter, limit } from 'firebase/firestore';
 import { buildFilteredQuery } from '../firebase';
 
 export interface JobPostingFilters {
@@ -43,9 +43,32 @@ export const useJobPostings = (filters: JobPostingFilters) => {
   });
 };
 
-// For infinite scroll (future use)
+// Infinite scroll implementation
 export const useInfiniteJobPostings = (filters: JobPostingFilters) => {
-  // TODO: Implement useInfiniteQuery for pagination
-  // This will be used in later tasks for infinite scroll
-  return null;
+  return useInfiniteQuery({
+    queryKey: ['jobPostings', 'infinite', filters],
+    queryFn: async ({ pageParam }) => {
+      const query = buildFilteredQuery(filters, {
+        limit: 20,
+        startAfterDoc: pageParam
+      });
+      
+      const snapshot = await getDocs(query);
+      const jobs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as JobPosting[];
+      
+      // Return jobs and cursor for next page
+      return {
+        jobs,
+        nextCursor: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
 };
