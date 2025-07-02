@@ -22,6 +22,19 @@ interface StaffData {
   postingTitle: string;
 }
 
+interface UserData {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  gender?: string;
+  age?: number;
+  experience?: string;
+  nationality?: string;
+  history?: string;
+  notes?: string;
+}
 interface JobPosting {
   id: string;
   title: string;
@@ -54,8 +67,8 @@ const StaffListPage: React.FC = () => {
   // 스태프 추가 모달 관련 states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [modalSearchTerm, setModalSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<UserData[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [tempStaffInfo, setTempStaffInfo] = useState({
     name: '',
@@ -474,6 +487,7 @@ const StaffListPage: React.FC = () => {
   };
 
   return (
+    <>
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">{t('staffListPage.title')}</h1>
 
@@ -725,7 +739,7 @@ const StaffListPage: React.FC = () => {
         </div>
       </div>
     )}
-  );
-};
-
+    </>
+    );
+  };
 export default StaffListPage;
