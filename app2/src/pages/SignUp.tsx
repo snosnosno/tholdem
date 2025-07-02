@@ -13,7 +13,7 @@ const SignUp: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('dealer'); // 'dealer' or 'manager'
+  const [role, setRole] = useState('staff'); // 'staff' or 'manager'
   const [gender, setGender] = useState(''); // 'male' or 'female'
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,7 @@ const SignUp: React.FC = () => {
         gender,
       });
 
-      const successMessage = role === 'dealer' 
+      const successMessage = role === 'staff' 
         ? t('signUp.dealerSuccessMessage') 
         : t('signUp.managerSuccessMessage');
       
@@ -104,8 +104,8 @@ const SignUp: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">{t('signUp.roleTitle')}</label>
             <div className="flex items-center mt-2">
-              <input type="radio" id="dealer" name="role" value="dealer" checked={role === 'dealer'} onChange={() => setRole('dealer')} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
-              <label htmlFor="dealer" className="ml-2 block text-sm text-gray-900">{t('signUp.roleDealer')}</label>
+              <input type="radio" id="staff" name="role" value="staff" checked={role === 'staff'} onChange={() => setRole('staff')} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
+              <label htmlFor="staff" className="ml-2 block text-sm text-gray-900">{t('signUp.roleStaff')}</label>
               <input type="radio" id="manager" name="role" value="manager" checked={role === 'manager'} onChange={() => setRole('manager')} className="ml-4 focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"/>
               <label htmlFor="manager" className="ml-2 block text-sm text-gray-900">{t('signUp.roleManager')}</label>
             </div>

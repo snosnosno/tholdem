@@ -17,7 +17,7 @@ type JobRole =
   | 'Cashier';            // 캐셔
 
 // 계정 권한은 기존 유지
-type UserRole = 'dealer' | 'manager' | 'admin' | 'pending_manager';
+type UserRole = 'staff' | 'manager' | 'admin' | 'pending_manager';
 
 interface StaffData {
   id: string; 
@@ -148,7 +148,7 @@ const StaffListPage: React.FC = () => {
               email: userDetails?.email,
               phone: userDetails?.phone,
               role: (staff.role as JobRole) || 'Dealer',  // 업무 역할
-              userRole: (userDetails?.role as UserRole) || 'dealer', // 계정 권한
+              userRole: (userDetails?.role as UserRole) || 'staff', // 계정 권한
               gender: userDetails?.gender,
               age: userDetails?.age,
               experience: userDetails?.experience,
@@ -399,7 +399,7 @@ const StaffListPage: React.FC = () => {
         email: tempStaffInfo.email,
         phone: tempStaffInfo.phone,
         role: tempStaffInfo.role,
-        userRole: 'dealer' as UserRole, // 임시 스태프 기본 권한
+        userRole: 'staff' as UserRole, // 임시 스태프 기본 권한
         gender: tempStaffInfo.gender,
         age: tempStaffInfo.age,
         experience: tempStaffInfo.experience,
@@ -770,7 +770,7 @@ const StaffListPage: React.FC = () => {
                       >
                         <div className="font-medium">{user.name || '이름 없음'}</div>
                         <div className="text-sm text-gray-600">{user.email}</div>
-                        <div className="text-sm text-gray-600">계정 권한: {user.userRole || 'dealer'}</div>
+                        <div className="text-sm text-gray-600">계정 권한: {user.userRole || 'staff'}</div>
                       </div>
                     ))}
                   </div>
