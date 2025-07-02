@@ -109,6 +109,7 @@ interface JobPostingFilters {
   type: string;
   startDate: string;
   endDate: string;
+  searchTerms?: string[]; // Optional search terms for array-contains-any query
 }
 
 // Build filtered query for job postings
@@ -129,6 +130,11 @@ export const buildFilteredQuery = (filters: JobPostingFilters): Query => {
     queryConstraints.push(where('type', '==', filters.type));
   }
   
+  // Apply search terms filter
+  if (filters.searchTerms && filters.searchTerms.length > 0) {
+    queryConstraints.push(where('searchIndex', 'array-contains-any', filters.searchTerms));
+  }
+  
   // Apply date range filters
   if (filters.startDate) {
     const startDate = Timestamp.fromDate(new Date(filters.startDate));
@@ -145,4 +151,58 @@ export const buildFilteredQuery = (filters: JobPostingFilters): Query => {
   queryConstraints.push(limit(20));
   
   return query(jobPostingsRef, ...queryConstraints);
+};
+
+// Migration function to add searchIndex to existing job postings
+export const migrateJobPostingsSearchIndex = async (): Promise<void> => {
+  console.log('Starting searchIndex migration for job postings...');
+  
+  try {
+    const jobPostingsRef = collection(db, 'jobPostings');
+    const snapshot = await getDocs(jobPostingsRef);
+    
+    const batch = writeBatch(db);
+    let updateCount = 0;
+    
+    snapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      
+      // Skip if searchIndex already exists
+      if (data.searchIndex) {
+        return;
+      }
+      
+      const title = data.title || '';
+      const description = data.description || '';
+      
+      // Generate search index
+      const searchIndex = generateSearchIndexForJobPosting(title, description);
+      
+      // Update document
+      const docRef = doc(db, 'jobPostings', docSnapshot.id);
+      batch.updateDoc(docRef, { searchIndex });
+      updateCount++;
+    });
+    
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`Successfully updated ${updateCount} job postings with searchIndex`);
+    } else {
+      console.log('No job postings needed searchIndex migration');
+    }
+  } catch (error) {
+    console.error('Error during searchIndex migration:', error);
+    throw error;
+  }
+};
+
+// Helper function to generate search index for job postings
+const generateSearchIndexForJobPosting = (title: string, description: string): string[] => {
+  const text = `${title} ${description}`.toLowerCase();
+  const words = text
+    .replace(/[^\w\s가-힣]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 1);
+  
+  return [...new Set(words)];
 };

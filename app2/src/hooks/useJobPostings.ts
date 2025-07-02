@@ -7,6 +7,7 @@ export interface JobPostingFilters {
   type: string;
   startDate: string;
   endDate: string;
+  searchTerms?: string[]; // Optional search terms
 }
 
 export interface JobPosting {

@@ -4,6 +4,8 @@ import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useJobPostings } from '../hooks/useJobPostings';
+import { useDebounceSearch } from '../hooks/useDebounceSearch';
+import { prepareSearchTerms, highlightSearchTerms } from '../utils/searchUtils';
 
 interface RoleRequirement {
     name: string;
@@ -35,6 +37,8 @@ const JobBoardPage = () => {
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   
+  // Debounced search
+  const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebounceSearch(300);
   // Filter states
   const [filters, setFilters] = useState({
     location: 'all',
@@ -43,8 +47,16 @@ const JobBoardPage = () => {
     endDate: ''
   });
   
+  // Prepare search terms and build dynamic filters
+  const searchTerms = prepareSearchTerms(debouncedSearchTerm);
+  const dynamicFilters = {
+    ...filters,
+    searchTerms: searchTerms.length > 0 ? searchTerms : undefined
+  };
+  
   // React Query based data fetching
-  const { data: jobPostings, isLoading: loading, error } = useJobPostings(filters);
+  const { data: jobPostings, isLoading: loading, error } = useJobPostings(dynamicFilters);
+  
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<JobPosting | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<{ timeSlot: string, role: string } | null>(null);
@@ -187,6 +199,28 @@ const JobBoardPage = () => {
           <p>데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.</p>
         </div>
       )}
+      
+      {/* Search Component */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div className="max-w-md">
+          <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-1">
+            {t('jobBoard.search.label', '검색')}
+          </label>
+          <input
+            type="text"
+            id="search-input"
+            placeholder={t('jobBoard.search.placeholder', '제목이나 설명에서 검색...')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+          {debouncedSearchTerm && (
+            <p className="text-sm text-gray-500 mt-1">
+              "{debouncedSearchTerm}" 검색 중...
+            </p>
+          )}
+        </div>
+      </div>
       
       {/* Filter Component */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">

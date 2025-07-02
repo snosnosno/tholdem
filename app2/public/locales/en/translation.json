@@ -545,6 +545,11 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "reset": "Reset Filters"
+      },
+      "search": {
+      "label": "Search",
+      "placeholder": "Search in title or description..."
+      }
       }
     }
   },
