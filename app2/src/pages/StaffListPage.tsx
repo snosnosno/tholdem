@@ -107,75 +107,47 @@ const StaffListPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        // 디버깅: 현재 사용자 ID 확인
+        console.log('🔍 StaffListPage - 현재 사용자 ID:', currentUser.uid);
+        
+        // 먼저 모든 staff 문서를 확인해보자
+        const allStaffQuery = query(collection(db, 'staff'));
+        const allStaffSnapshot = await getDocs(allStaffQuery);
+        console.log('🔍 전체 Staff 문서 수:', allStaffSnapshot.size);
+        allStaffSnapshot.forEach(doc => {
+          console.log('🔍 Staff 문서:', doc.id, doc.data());
+        });
+        
+        // 현재 로그인한 관리자(manager)의 ID와 일치하는 managerId를 가진 스태프만 가져옵니다.
+        const staffQuery = query(collection(db, 'staff'), where('managerId', '==', currentUser.uid));
+        const staffSnapshot = await getDocs(staffQuery);
+        console.log('🔍 관리자별 Staff 문서 수:', staffSnapshot.size);
+    
+        if (staffSnapshot.empty) {
+          console.log('⚠️ 해당 관리자의 스태프가 없습니다.');
+          setStaffData([]);
+          setLoading(false);
+          return;
+        }
+
+        const staffList: StaffData[] = staffSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // jobRole 배열을 role 필드로 매핑 (promoteToStaff에서 저장한 데이터 호환성)
+            role: data.jobRole && Array.isArray(data.jobRole) ? data.jobRole[0] as JobRole : data.role
+          } as StaffData;
+        });
+
+        setStaffData(staffList);
+
+        // JobPostings 정보는 필터링을 위해서만 최소한으로 가져옵니다.
         const postingsQuery = query(collection(db, 'jobPostings'), where('managerId', '==', currentUser.uid));
         const postingsSnapshot = await getDocs(postingsQuery);
-        
-        if (postingsSnapshot.empty) {
-            setStaffData([]);
-            setJobPostings([]);
-            setLoading(false);
-            return;
-        }
+        const postingsData = postingsSnapshot.docs.map(doc => ({ id: doc.id, title: doc.data().title }));
+        setJobPostings(postingsData);
 
-        const postingsData: JobPosting[] = postingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobPosting));
-
-        setJobPostings(postingsData.map(({ id, title }) => ({ id, title })));
-
-        const postingsWithStaff = postingsData.filter(p => p.confirmedStaff && p.confirmedStaff.length > 0);
-
-        if (postingsWithStaff.length === 0) {
-            setStaffData([]);
-            setLoading(false);
-            return;
-        }
-
-        const allUserIds = Array.from(new Set(postingsWithStaff.flatMap(p => p.confirmedStaff!.map(s => s.userId))));
-        
-        let usersMap = new Map<string, any>();
-        if (allUserIds.length > 0) {
-          const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', allUserIds));
-          const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach(doc => usersMap.set(doc.id, doc.data()));
-        }
-
-        const combinedData: StaffData[] = postingsWithStaff.flatMap(posting => 
-          posting.confirmedStaff!.map((staff, index) => {
-            const userDetails = usersMap.get(staff.userId);
-            return {
-              id: `${posting.id}-${staff.userId}-${index}`,
-              userId: staff.userId,
-              name: userDetails?.name || t('staffListPage.unknownUser'),
-              email: userDetails?.email,
-              phone: userDetails?.phone,
-              role: (staff.role as JobRole) || 'Dealer',  // 업무 역할
-              userRole: (userDetails?.role as UserRole) || 'staff', // 계정 권한
-              gender: userDetails?.gender,
-              age: userDetails?.age,
-              experience: userDetails?.experience,
-              nationality: userDetails?.nationality,
-              history: userDetails?.history,
-              notes: userDetails?.notes,
-              postingId: posting.id,
-              postingTitle: posting.title,
-            };
-          })
-        );
-        
-        // staff 컬렉션에서 추가된 스태프 데이터도 가져오기
-        const staffRef = collection(db, 'staff');
-        const staffSnapshot = await getDocs(staffRef);
-        const additionalStaff: StaffData[] = staffSnapshot.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data() 
-        } as StaffData));
-        
-        // 두 데이터를 합치기 (중복 제거)
-        const allStaff = [...combinedData, ...additionalStaff];
-        const uniqueStaff = allStaff.filter((staff, index, self) => 
-          index === self.findIndex(s => s.id === staff.id)
-        );
-        
-        setStaffData(uniqueStaff);
       } catch (e) {
         console.error("Error fetching staff data: ", e);
         setError(t('staffListPage.fetchError'));
@@ -227,6 +199,8 @@ const StaffListPage: React.FC = () => {
         const staffRef = doc(db, 'staff', currentStaff.id);
         await updateDoc(staffRef, {
           [field]: newValue,
+          // role 필드 업데이트 시 jobRole 배열도 함께 업데이트
+          ...(field === 'role' && { jobRole: [newValue] }),
           updatedAt: serverTimestamp()
         });
       } catch (staffUpdateError) {
