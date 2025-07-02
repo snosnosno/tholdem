@@ -120,7 +120,7 @@ export const Layout = () => {
             className={`w-full flex items-center p-2 rounded-lg transition-colors text-red-600 hover:bg-red-100 ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}
           >
             <span className="text-lg"><FaSignOutAlt /></span>
-            <span className={`ml-3 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 h-0 w-0'}`}>{currentUser?.displayName || t('nav.logout')}</span>
+                        <span className={`ml-3 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 h-0 w-0'}`}>{t('nav.logout')}</span>
           </button>
         </div>
 
