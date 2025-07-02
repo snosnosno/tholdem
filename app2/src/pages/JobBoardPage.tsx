@@ -3,39 +3,18 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { useJobPostings, useInfiniteJobPostings } from '../hooks/useJobPostings';
+import { useToast } from '../contexts/ToastContext';
+import { useInfiniteJobPostings, JobPosting, TimeSlot, RoleRequirement } from '../hooks/useJobPostings';
 import { useDebounceSearch } from '../hooks/useDebounceSearch';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { prepareSearchTerms, highlightSearchTerms } from '../utils/searchUtils';
+import { prepareSearchTerms } from '../utils/searchUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-interface RoleRequirement {
-    name: string;
-    count: number;
-}
-
-interface TimeSlot {
-    time: string;
-    roles: RoleRequirement[];
-}
-
-interface JobPosting {
-  id: string;
-  title: string;
-  description: string;
-  status: 'open' | 'closed';
-  location: string;
-  startDate: string;
-  endDate: string;
-  timeSlots: TimeSlot[];
-  confirmedStaff: any[];
-}
 
 const JobBoardPage = () => {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-  
-  
+    const { showSuccess, showError, showInfo, showWarning } = useToast();
+
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   
@@ -67,7 +46,7 @@ const JobBoardPage = () => {
   } = useInfiniteJobPostings(dynamicFilters);
   
   // Flatten the infinite query data
-  const jobPostings = infiniteData?.pages.flatMap(page => page.jobs) || [];
+  const jobPostings = infiniteData?.pages.flatMap((page: any) => page.jobs) || [];
   
   // Infinite scroll hook
   const { loadMoreRef } = useInfiniteScroll({
@@ -130,11 +109,11 @@ const JobBoardPage = () => {
   
   const handleApply = async () => {
     if (!currentUser) {
-      alert(t('jobBoard.alerts.loginRequired'));
+      showError(t('jobBoard.alerts.loginRequired'));
       return;
     }
     if (!selectedPost || !selectedAssignment) {
-        alert(t('jobBoard.alerts.selectAssignment'));
+        showWarning(t('jobBoard.alerts.selectAssignment'));
         return;
     }
 
@@ -142,7 +121,7 @@ const JobBoardPage = () => {
     try {
       const staffDoc = await getDoc(doc(db, 'users', currentUser.uid));
       if(!staffDoc.exists()){
-        alert(t('jobBoard.alerts.profileNotFound'));
+        showError(t('jobBoard.alerts.profileNotFound'));
         return;
       }
       
@@ -157,14 +136,14 @@ const JobBoardPage = () => {
         assignedTime: selectedAssignment.timeSlot,
       });
 
-      alert(t('jobBoard.alerts.applicationSuccess'));
+      showSuccess(t('jobBoard.alerts.applicationSuccess'));
       setAppliedJobs(prev => new Map(prev).set(selectedPost.id, 'applied'));
       setIsApplyModalOpen(false);
       setSelectedPost(null);
 
     } catch (error) {
       console.error("Error submitting application: ", error);
-      alert(t('jobBoard.alerts.applicationFailed'));
+      showError(t('jobBoard.alerts.applicationFailed'));
     } finally {
         setIsProcessing(null);
     }
@@ -172,7 +151,7 @@ const JobBoardPage = () => {
 
   const handleCancelApplication = async (postId: string) => {
       if (!currentUser) {
-        alert(t('jobBoard.alerts.loginRequired'));
+        showError(t('jobBoard.alerts.loginRequired'));
         return;
       }
 
@@ -188,7 +167,7 @@ const JobBoardPage = () => {
               });
               await Promise.all(deletePromises);
 
-              alert(t('jobBoard.alerts.cancelSuccess'));
+              showSuccess(t('jobBoard.alerts.cancelSuccess'));
               setAppliedJobs(prev => {
                   const newMap = new Map(prev);
                   newMap.delete(postId);
@@ -196,7 +175,7 @@ const JobBoardPage = () => {
               });
           } catch (error) {
               console.error("Error cancelling application: ", error);
-              alert(t('jobBoard.alerts.cancelFailed'));
+              showError(t('jobBoard.alerts.cancelFailed'));
           } finally {
               setIsProcessing(null);
           }
@@ -344,11 +323,11 @@ const JobBoardPage = () => {
                             <p className="text-sm text-gray-500 mb-1">
                                 {t('jobPostingAdmin.manage.date')}: {post.endDate && post.endDate !== post.startDate ? `${formattedStartDate} ~ ${formattedEndDate}` : formattedStartDate}
                             </p>
-                            {post.timeSlots?.map((ts, index) => (
+                            {post.timeSlots?.map((ts: TimeSlot, index: number) => (
                                 <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
                                     <p className="text-sm font-semibold text-gray-700">{t('jobPostingAdmin.manage.time')}: {ts.time}</p>
                                     <div className="text-sm text-gray-600">
-                                        {ts.roles.map((r, i) => (
+                                        {ts.roles.map((r: RoleRequirement, i: number) => (
                                             <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
                                         ))}
                                     </div>
@@ -360,7 +339,7 @@ const JobBoardPage = () => {
                         </div>
                         <div className='flex flex-col items-end space-y-2'>
                              <button
-                                onClick={() => alert('Detailed view not implemented yet.')}
+                                onClick={() => showInfo('Detailed view not implemented yet.')}
                                 className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                             >
                                 {t('jobBoard.viewDetails')}
@@ -414,8 +393,8 @@ const JobBoardPage = () => {
                             }}
                         >
                             <option value="" disabled>{t('jobBoard.applyModal.selectPlaceholder')}</option>
-                            {selectedPost.timeSlots.flatMap(ts => 
-                                ts.roles.map(r => {
+                            {selectedPost.timeSlots?.flatMap((ts: TimeSlot) => 
+                                ts.roles.map((r: RoleRequirement) => {
                                     const value = `${ts.time}__${r.name}`;
                                     const confirmedCount = selectedPost.confirmedStaff?.filter(staff => staff.timeSlot === ts.time && staff.role === r.name).length || 0;
                                     const isFull = confirmedCount >= r.count;
