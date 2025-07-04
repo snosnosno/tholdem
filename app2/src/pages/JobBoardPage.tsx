@@ -323,9 +323,12 @@ const JobBoardPage = () => {
                 <option value="all">{t('jobBoard.filters.allRoles')}</option>
                 <option value="dealer">{t('roles.dealer')}</option>
                 <option value="floor">{t('roles.floor')}</option>
+                <option value="serving">{t('roles.serving')}</option>
+                <option value="tournament_director">{t('roles.tournament_director')}</option>
+                <option value="chip_master">{t('roles.chip_master')}</option>
+                <option value="registration">{t('roles.registration')}</option>
+                <option value="security">{t('roles.security')}</option>
                 <option value="cashier">{t('roles.cashier')}</option>
-                <option value="supervisor">{t('roles.supervisor')}</option>
-                <option value="manager">{t('roles.manager')}</option>
               </select>
             </div>
           </div>
