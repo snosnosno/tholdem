@@ -267,14 +267,25 @@ const JobBoardPage = () => {
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="all">{t('jobBoard.filters.allLocations')}</option>
-                <option value="seoul">{t('locations.seoul')}</option>
-                <option value="busan">{t('locations.busan')}</option>
-                <option value="daegu">{t('locations.daegu')}</option>
-                <option value="incheon">{t('locations.incheon')}</option>
-                <option value="gwangju">{t('locations.gwangju')}</option>
-                <option value="daejeon">{t('locations.daejeon')}</option>
-                <option value="ulsan">{t('locations.ulsan')}</option>
-                <option value="gyeonggi">{t('locations.gyeonggi')}</option>
+                <option value="서울">서울</option>
+                <option value="경기">경기</option>
+                <option value="인천">인천</option>
+                <option value="강원">강원</option>
+                <option value="대전">대전</option>
+                <option value="세종">세종</option>
+                <option value="충남">충남</option>
+                <option value="충북">충북</option>
+                <option value="광주">광주</option>
+                <option value="전남">전남</option>
+                <option value="전북">전북</option>
+                <option value="대구">대구</option>
+                <option value="경북">경북</option>
+                <option value="부산">부산</option>
+                <option value="울산">울산</option>
+                <option value="경남">경남</option>
+                <option value="제주">제주</option>
+                <option value="해외">해외</option>
+                <option value="기타">기타</option>
               </select>
             </div>
           

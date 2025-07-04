@@ -517,6 +517,7 @@
   "jobBoard": {
     "title": "구인구직 게시판",
     "search": {
+      "label": "검색",
       "placeholder": "공고 제목, 설명으로 검색...",
       "button": "검색"
     },
@@ -527,7 +528,8 @@
       "allTypes": "전체 유형",
       "role": "역할",
       "allRoles": "전체 역할",
-      "startDate": "시작일"
+      "startDate": "시작일",
+      "reset": "초기화"
     },
     "types": {
       "application": "지원",
@@ -536,12 +538,21 @@
     "noResults": "검색 결과가 없습니다.",
     "loadMore": "더 보기",
     "apply": "지원하기",
+    "applyNow": "지원하기",
+    "applying": "지원 중...",
+    "cancelApplication": "지원 취소",
+    "cancelling": "취소 중...",
+    "confirmed": "확정",
+    "viewDetails": "자세히 보기",
     "applyModal": {
       "title": "지원하기",
       "selectTimeAndRole": "시간대와 역할을 선택하세요:",
+      "selectAssignment": "시간 및 역할 선택",
+      "selectPlaceholder": "시간과 역할을 선택하세요",
       "full": "마감",
       "cancel": "취소",
       "submit": "지원",
+      "confirm": "지원 확정",
       "success": "지원이 완료되었습니다!",
       "error": "지원 중 오류가 발생했습니다.",
       "alreadyApplied": "이미 지원한 공고입니다.",
