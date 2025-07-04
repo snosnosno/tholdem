@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db, runJobPostingsMigrations } from '../firebase';
+
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
@@ -18,8 +18,7 @@ const JobBoardPage = () => {
   const { currentUser } = useAuth();
   const { showSuccess, showError, showInfo, showWarning } = useToast();
   
-  // Initialize Firebase Functions
-  const functions = getFunctions();
+
 
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -256,29 +255,7 @@ const JobBoardPage = () => {
       }
   };
 
-  const handleRunMigrations = async () => {
-    if (!window.confirm('기존 공고 데이터를 서버에서 일괄 업데이트하시겠습니까? (requiredRoles 필드 및 날짜 형식 변환)')) {
-      return;
-    }
-    
-    setIsProcessing('migration');
-    try {
-      // Call Firebase Functions instead of client-side migration
-      const migrateJobPostings = httpsCallable(functions, 'migrateJobPostings');
-      const result = await migrateJobPostings();
-      
-      const data = result.data as any;
-      showSuccess(`데이터 마이그레이션이 완료되었습니다. 총 ${data.stats.total}개 중 ${data.stats.migrated}개 업데이트, ${data.stats.skipped}개 스킵되었습니다.`);
-    } catch (error: any) {
-      console.error('Migration failed:', error);
-      const errorMsg = error.message?.includes('permission') 
-        ? '관리자 권한이 필요합니다.' 
-        : '마이그레이션 중 오류가 발생했습니다.';
-      showError(errorMsg);
-    } finally {
-      setIsProcessing(null);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -472,15 +449,8 @@ const JobBoardPage = () => {
             </div>
           </div>
         
-          {/* Reset Button and Migration Button */}
-          <div className="mt-4 flex justify-end space-x-2">
-            <button
-              onClick={handleRunMigrations}
-              disabled={isProcessing === 'migration'}
-              className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-gray-400"
-            >
-              {isProcessing === 'migration' ? '마이그레이션 중...' : '데이터 업데이트'}
-            </button>
+          {/* Reset Button */}
+          <div className="mt-4 flex justify-end">
             <button
               onClick={resetFilters}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
