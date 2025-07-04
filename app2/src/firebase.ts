@@ -140,15 +140,16 @@ export const buildFilteredQuery = (
       queryConstraints.push(where('type', '==', filters.type));
     }
     
-    // Date filters - only if no search to avoid complex indexes
+    // Date filters - prioritize over other filters to avoid complex indexes
     if (filters.startDate) {
       const startDate = Timestamp.fromDate(new Date(filters.startDate));
       queryConstraints.push(where('startDate', '>=', startDate));
-    }
-    
-    // Role filter - only if no search to avoid complex indexes
-    if (filters.role && filters.role !== 'all') {
-      queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
+      // Skip other filters when using date filter to avoid complex index requirements
+    } else {
+      // Role filter - only if no date filter to avoid complex indexes
+      if (filters.role && filters.role !== 'all') {
+        queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
+      }
     }
   }
   

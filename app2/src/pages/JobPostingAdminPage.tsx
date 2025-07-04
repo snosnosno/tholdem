@@ -187,8 +187,14 @@ const JobPostingAdminPage = () => {
     }
     setIsSubmitting(true);
     try {
+      // Extract unique roles from timeSlots for filtering
+      const requiredRoles = Array.from(new Set(
+        formData.timeSlots.flatMap(ts => ts.roles.map(r => r.name))
+      ));
+      
       await addDoc(collection(db, 'jobPostings'), {
         ...formData,
+        requiredRoles, // Add for role filtering
         managerId: currentUser.uid, // Add managerId
         createdAt: serverTimestamp(),
         confirmedStaff: [],
@@ -237,8 +243,16 @@ const JobPostingAdminPage = () => {
     
     const postRef = doc(db, 'jobPostings', currentPost.id);
     try {
+      // Extract unique roles from timeSlots for filtering
+      const requiredRoles = Array.from(new Set(
+        currentPost.timeSlots.flatMap((ts: TimeSlot) => ts.roles.map(r => r.name))
+      ));
+      
       const { id, ...postData } = currentPost;
-      await updateDoc(postRef, postData);
+      await updateDoc(postRef, {
+        ...postData,
+        requiredRoles // Add for role filtering
+      });
       alert(t('jobPostingAdmin.alerts.updateSuccess'));
       setIsEditModalOpen(false);
       setCurrentPost(null);

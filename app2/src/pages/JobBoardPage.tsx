@@ -372,7 +372,7 @@ const JobBoardPage = () => {
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 mb-1">
-                      {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
+                      {t('jobPostingAdmin.manage.location')}: {post.location}
                     </p>
                     <p className="text-sm text-gray-500 mb-1">
                       {t('jobPostingAdmin.manage.date')}: {formattedStartDate}
