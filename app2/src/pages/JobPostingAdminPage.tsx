@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, doc, updateDoc, where, getDocs, deleteDoc, arrayUnion, runTransaction, getDoc, Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, promoteToStaff } from '../firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -225,9 +225,20 @@ const JobPostingAdminPage = () => {
         formData.timeSlots.flatMap(ts => ts.roles.map(r => r.name))
       ));
       
+      // Create search index for text search
+      const searchIndex = [
+        formData.title,
+        formData.location,
+        formData.description,
+        ...requiredRoles
+      ].join(' ').toLowerCase().split(/\s+/).filter(word => word.length > 0);
+      
       await addDoc(collection(db, 'jobPostings'), {
         ...formData,
+        startDate: Timestamp.fromDate(new Date(formData.startDate)), // Convert to Timestamp
+        endDate: Timestamp.fromDate(new Date(formData.endDate)), // Convert to Timestamp
         requiredRoles, // Add for role filtering
+        searchIndex, // Add for text search
         managerId: currentUser.uid, // Add managerId
         createdAt: serverTimestamp(),
         confirmedStaff: [],
@@ -281,10 +292,21 @@ const JobPostingAdminPage = () => {
         currentPost.timeSlots.flatMap((ts: TimeSlot) => ts.roles.map(r => r.name))
       ));
       
+      // Create search index for text search
+      const searchIndex = [
+        currentPost.title,
+        currentPost.location,
+        currentPost.description,
+        ...requiredRoles
+      ].join(' ').toLowerCase().split(/\s+/).filter(word => word.length > 0);
+      
       const { id, ...postData } = currentPost;
       await updateDoc(postRef, {
         ...postData,
-        requiredRoles // Add for role filtering
+        startDate: Timestamp.fromDate(new Date(currentPost.startDate)), // Convert to Timestamp
+        endDate: Timestamp.fromDate(new Date(currentPost.endDate)), // Convert to Timestamp
+        requiredRoles, // Add for role filtering
+        searchIndex // Add for text search
       });
       alert(t('jobPostingAdmin.alerts.updateSuccess'));
       setIsEditModalOpen(false);

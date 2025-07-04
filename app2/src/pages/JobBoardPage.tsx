@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, runJobPostingsMigrations } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,9 @@ const JobBoardPage = () => {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { showSuccess, showError, showInfo, showWarning } = useToast();
+  
+  // Initialize Firebase Functions
+  const functions = getFunctions();
 
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -253,17 +257,24 @@ const JobBoardPage = () => {
   };
 
   const handleRunMigrations = async () => {
-    if (!window.confirm('기존 공고 데이터를 업데이트하시겠습니까? (requiredRoles 필드 및 날짜 형식 변환)')) {
+    if (!window.confirm('기존 공고 데이터를 서버에서 일괄 업데이트하시겠습니까? (requiredRoles 필드 및 날짜 형식 변환)')) {
       return;
     }
     
     setIsProcessing('migration');
     try {
-      await runJobPostingsMigrations();
-      showSuccess('데이터 마이그레이션이 완료되었습니다. 페이지를 새로고침해주세요.');
-    } catch (error) {
+      // Call Firebase Functions instead of client-side migration
+      const migrateJobPostings = httpsCallable(functions, 'migrateJobPostings');
+      const result = await migrateJobPostings();
+      
+      const data = result.data as any;
+      showSuccess(`데이터 마이그레이션이 완료되었습니다. 총 ${data.stats.total}개 중 ${data.stats.migrated}개 업데이트, ${data.stats.skipped}개 스킵되었습니다.`);
+    } catch (error: any) {
       console.error('Migration failed:', error);
-      showError('마이그레이션 중 오류가 발생했습니다.');
+      const errorMsg = error.message?.includes('permission') 
+        ? '관리자 권한이 필요합니다.' 
+        : '마이그레이션 중 오류가 발생했습니다.';
+      showError(errorMsg);
     } finally {
       setIsProcessing(null);
     }
