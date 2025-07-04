@@ -7,6 +7,8 @@ export interface JobPostingFilters {
   type: string;
   startDate: string;
   role: string;
+  month?: string; // Optional month filter (01-12)
+  day?: string;   // Optional day filter (01-31)
   searchTerms?: string[]; // Optional search terms
 }
 

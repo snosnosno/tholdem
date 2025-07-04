@@ -27,7 +27,9 @@ const JobBoardPage = () => {
     location: 'all',
     type: 'all',
     startDate: '',
-    role: 'all'
+    role: 'all',
+    month: '',
+    day: ''
   });
   
   // Prepare search terms and build dynamic filters
@@ -92,7 +94,31 @@ const JobBoardPage = () => {
       location: 'all',
       type: 'all',
       startDate: '',
-      role: 'all'
+      role: 'all',
+      month: '',
+      day: ''
+    });
+  };
+
+  // Date filter handler for month/day dropdowns
+  const handleDateFilterChange = (type: 'month' | 'day', value: string) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [type]: value };
+      
+      // When month or day changes, update startDate accordingly
+      if (newFilters.month && newFilters.day) {
+        newFilters.startDate = `2025-${newFilters.month}-${newFilters.day}`;
+      } else {
+        newFilters.startDate = '';
+      }
+      
+      // If month is cleared, also clear day
+      if (type === 'month' && !value) {
+        newFilters.day = '';
+        newFilters.startDate = '';
+      }
+      
+      return newFilters;
     });
   };
 
@@ -323,18 +349,53 @@ const JobBoardPage = () => {
               </select>
             </div>
           
-            {/* Date Range Filter */}
+            {/* Date Filter - Month/Day Dropdowns */}
             <div>
-              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t('jobBoard.filters.startDate')}
               </label>
-              <input
-                id="start-date"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
+              <div className="flex space-x-2">
+                {/* Month Dropdown */}
+                <select
+                  value={filters.month || ''}
+                  onChange={(e) => handleDateFilterChange('month', e.target.value)}
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                >
+                  <option value="">전체</option>
+                  <option value="01">1월</option>
+                  <option value="02">2월</option>
+                  <option value="03">3월</option>
+                  <option value="04">4월</option>
+                  <option value="05">5월</option>
+                  <option value="06">6월</option>
+                  <option value="07">7월</option>
+                  <option value="08">8월</option>
+                  <option value="09">9월</option>
+                  <option value="10">10월</option>
+                  <option value="11">11월</option>
+                  <option value="12">12월</option>
+                </select>
+                
+                {/* Day Dropdown */}
+                <select
+                  value={filters.day || ''}
+                  onChange={(e) => handleDateFilterChange('day', e.target.value)}
+                  disabled={!filters.month}
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100"
+                >
+                  <option value="">일</option>
+                  {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day.toString().padStart(2, '0')}>
+                      {day}일
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {filters.month && filters.day && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {parseInt(filters.month)}월 {parseInt(filters.day)}일
+                </p>
+              )}
             </div>
           
             {/* Role Filter */}
