@@ -204,7 +204,29 @@ const JobBoardPage = () => {
       {/* Error Handling */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <p>데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.</p>
+          <div className="flex">
+            <div className="py-1">
+              <svg className="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">데이터 로딩 오류</p>
+              <p className="text-sm">
+                {error.message?.includes('index') || error.message?.includes('Index') 
+                  ? 'Firebase 인덱스 설정이 필요합니다. 관리자에게 문의하세요.'
+                  : error.message?.includes('permission')
+                  ? '권한이 없습니다. 로그인 상태를 확인해 주세요.'
+                  : error.message?.includes('network')
+                  ? '네트워크 연결을 확인해 주세요.'
+                  : '데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.'}
+              </p>
+              <details className="mt-2">
+                <summary className="text-xs cursor-pointer text-red-600 hover:text-red-800">기술적 세부사항</summary>
+                <pre className="text-xs mt-1 bg-red-50 p-2 rounded overflow-auto">{error.message || 'Unknown error'}</pre>
+              </details>
+            </div>
+          </div>
         </div>
       )}
       

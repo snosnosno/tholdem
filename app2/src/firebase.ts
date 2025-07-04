@@ -1,10 +1,10 @@
 // Firebase 초기화 및 인증/DB 인스턴스 export
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, Timestamp, Query } from "firebase/firestore";
+import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, startAfter, Timestamp, Query } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
-
+import type { JobPostingFilters } from './hooks/useJobPostings';
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDiwCKWr83N1NRy5NwA1WLc5bRD73VaqRo",
@@ -103,21 +103,12 @@ export const promoteToStaff = async (userId: string, userName: string, jobRole: 
   }
 };
 
-// Filter interface
-interface JobPostingFilters {
-  location: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  searchTerms?: string[]; // Optional search terms for array-contains-any query
-}
-
 interface PaginationOptions {
   limit?: number;
   startAfterDoc?: any;
 }
 
-// Build filtered query for job postings
+// Build filtered query for job postings - OPTIMIZED VERSION
 export const buildFilteredQuery = (
   filters: JobPostingFilters, 
   pagination?: PaginationOptions
@@ -128,33 +119,40 @@ export const buildFilteredQuery = (
   // Always filter for open status
   queryConstraints.push(where('status', '==', 'open'));
   
-  // Apply location filter
-  if (filters.location && filters.location !== 'all') {
-    queryConstraints.push(where('location', '==', filters.location));
-  }
-  
-  // Apply type filter
-  if (filters.type && filters.type !== 'all') {
-    queryConstraints.push(where('type', '==', filters.type));
-  }
-  
-  // Apply search terms filter
+  // Prioritize search over other filters for performance
   if (filters.searchTerms && filters.searchTerms.length > 0) {
+    // When searching, only use location or type filter to reduce complexity
     queryConstraints.push(where('searchIndex', 'array-contains-any', filters.searchTerms));
+    
+    // Add one additional filter to avoid too many combinations
+    if (filters.location && filters.location !== 'all') {
+      queryConstraints.push(where('location', '==', filters.location));
+    } else if (filters.type && filters.type !== 'all') {
+      queryConstraints.push(where('type', '==', filters.type));
+    }
+  } else {
+    // When not searching, apply other filters
+    if (filters.location && filters.location !== 'all') {
+      queryConstraints.push(where('location', '==', filters.location));
+    }
+    
+    if (filters.type && filters.type !== 'all') {
+      queryConstraints.push(where('type', '==', filters.type));
+    }
+    
+    // Date filters - only if no search to avoid complex indexes
+    if (filters.startDate) {
+      const startDate = Timestamp.fromDate(new Date(filters.startDate));
+      queryConstraints.push(where('startDate', '>=', startDate));
+    }
+    
+    if (filters.endDate) {
+      const endDate = Timestamp.fromDate(new Date(filters.endDate + 'T23:59:59'));
+      queryConstraints.push(where('endDate', '<=', endDate));
+    }
   }
   
-  // Apply date range filters
-  if (filters.startDate) {
-    const startDate = Timestamp.fromDate(new Date(filters.startDate));
-    queryConstraints.push(where('startDate', '>=', startDate));
-  }
-  
-  if (filters.endDate) {
-    const endDate = Timestamp.fromDate(new Date(filters.endDate + 'T23:59:59'));
-    queryConstraints.push(where('endDate', '<=', endDate));
-  }
-  
-  // Add ordering and pagination
+  // Add ordering
   queryConstraints.push(orderBy('createdAt', 'desc'));
   
   // Add startAfter for pagination if provided
@@ -165,10 +163,16 @@ export const buildFilteredQuery = (
   // Add limit (default 20 for regular queries, customizable for infinite scroll)
   queryConstraints.push(limit(pagination?.limit || 20));
   
-  return query(jobPostingsRef, ...queryConstraints);
-  };
+  console.log('🔍 Building optimized query with constraints:', {
+    filters,
+    constraintsCount: queryConstraints.length,
+    hasSearch: !!(filters.searchTerms && filters.searchTerms.length > 0)
+  });
   
-  // Migration function to add searchIndex to existing job postings
+  return query(jobPostingsRef, ...queryConstraints);
+};
+
+// Migration function to add searchIndex to existing job postings
 export const migrateJobPostingsSearchIndex = async (): Promise<void> => {
   console.log('Starting searchIndex migration for job postings...');
   
@@ -195,7 +199,7 @@ export const migrateJobPostingsSearchIndex = async (): Promise<void> => {
       
       // Update document
       const docRef = doc(db, 'jobPostings', docSnapshot.id);
-      batch.updateDoc(docRef, { searchIndex });
+      batch.update(docRef, { searchIndex });
       updateCount++;
     });
     
@@ -219,5 +223,5 @@ const generateSearchIndexForJobPosting = (title: string, description: string): s
     .split(/\s+/)
     .filter(word => word.length > 1);
   
-  return [...new Set(words)];
+  return Array.from(new Set(words));
 };
