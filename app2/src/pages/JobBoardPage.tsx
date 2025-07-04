@@ -15,7 +15,7 @@ import JobBoardErrorBoundary from '../components/JobBoardErrorBoundary';
 const JobBoardPage = () => {
   const { t } = useTranslation();
   const { currentUser } = useAuth();
-    const { showSuccess, showError, showInfo, showWarning } = useToast();
+  const { showSuccess, showError, showInfo, showWarning } = useToast();
 
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -95,6 +95,7 @@ const JobBoardPage = () => {
       role: 'all'
     });
   };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -186,10 +187,9 @@ const JobBoardPage = () => {
       }
   };
 
-
   if (loading) {
     return (
-            <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
         <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
         <JobPostingSkeleton count={5} />
       </div>
@@ -201,256 +201,270 @@ const JobBoardPage = () => {
       <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
         <h1 className="text-2xl font-bold mb-4">{t('jobBoard.title')}</h1>
       
-      {/* Error Handling */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <div className="flex">
-            <div className="py-1">
-              <svg className="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/>
-              </svg>
+        {/* Error Handling */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="flex">
+              <div className="py-1">
+                <svg className="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold">데이터 로딩 오류</p>
+                <p className="text-sm">
+                  {error.message?.includes('index') || error.message?.includes('Index') 
+                    ? 'Firebase 인덱스 설정이 필요합니다. 관리자에게 문의하세요.'
+                    : error.message?.includes('permission')
+                    ? '권한이 없습니다. 로그인 상태를 확인해 주세요.'
+                    : error.message?.includes('network')
+                    ? '네트워크 연결을 확인해 주세요.'
+                    : '데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.'}
+                </p>
+                <details className="mt-2">
+                  <summary className="text-xs cursor-pointer text-red-600 hover:text-red-800">기술적 세부사항</summary>
+                  <pre className="text-xs mt-1 bg-red-50 p-2 rounded overflow-auto">{error.message || 'Unknown error'}</pre>
+                </details>
+              </div>
             </div>
-            <div>
-              <p className="font-bold">데이터 로딩 오류</p>
-              <p className="text-sm">
-                {error.message?.includes('index') || error.message?.includes('Index') 
-                  ? 'Firebase 인덱스 설정이 필요합니다. 관리자에게 문의하세요.'
-                  : error.message?.includes('permission')
-                  ? '권한이 없습니다. 로그인 상태를 확인해 주세요.'
-                  : error.message?.includes('network')
-                  ? '네트워크 연결을 확인해 주세요.'
-                  : '데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.'}
-              </p>
-              <details className="mt-2">
-                <summary className="text-xs cursor-pointer text-red-600 hover:text-red-800">기술적 세부사항</summary>
-                <pre className="text-xs mt-1 bg-red-50 p-2 rounded overflow-auto">{error.message || 'Unknown error'}</pre>
-              </details>
-            </div>
           </div>
-        </div>
-      )}
+        )}
       
-      {/* Search Component */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
-        <div className="max-w-md">
-          <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-1">
-            {t('jobBoard.search.label', '검색')}
-          </label>
-          <input
-            type="text"
-            id="search-input"
-            placeholder={t('jobBoard.search.placeholder', '제목이나 설명에서 검색...')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {debouncedSearchTerm && (
-            <p className="text-sm text-gray-500 mt-1">
-              "{debouncedSearchTerm}" 검색 중...
-            </p>
-          )}
-        </div>
-      </div>
-      
-      {/* Filter Component */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Location Filter */}
-          <div>
-            <label htmlFor="location-filter" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('jobBoard.filters.location')}
-            </label>
-            <select
-              id="location-filter"
-              value={filters.location}
-              onChange={(e) => handleFilterChange('location', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="all">{t('jobBoard.filters.allLocations')}</option>
-              <option value="seoul">{t('locations.seoul')}</option>
-              <option value="busan">{t('locations.busan')}</option>
-              <option value="daegu">{t('locations.daegu')}</option>
-              <option value="incheon">{t('locations.incheon')}</option>
-              <option value="gwangju">{t('locations.gwangju')}</option>
-              <option value="daejeon">{t('locations.daejeon')}</option>
-              <option value="ulsan">{t('locations.ulsan')}</option>
-              <option value="gyeonggi">{t('locations.gyeonggi')}</option>
-            </select>
-          </div>
-          
-          {/* Type Filter */}
-          <div>
-            <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('jobBoard.filters.type')}
-            </label>
-            <select
-              id="type-filter"
-              value={filters.type}
-              onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="all">{t('jobBoard.filters.allTypes')}</option>
-              <option value="application">{t('jobPostingAdmin.create.typeApplication')}</option>
-              <option value="fixed">{t('jobPostingAdmin.create.typeFixed')}</option>
-            </select>
-          </div>
-          
-          {/* Date Range Filter */}
-          <div>
-            <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('jobBoard.filters.startDate')}
+        {/* Search Component */}
+        <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+          <div className="max-w-md">
+            <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.search.label', '검색')}
             </label>
             <input
-              id="start-date"
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              type="text"
+              id="search-input"
+              placeholder={t('jobBoard.search.placeholder', '제목이나 설명에서 검색...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
+            {debouncedSearchTerm && (
+              <p className="text-sm text-gray-500 mt-1">
+                "{debouncedSearchTerm}" 검색 중...
+              </p>
+            )}
           </div>
+        </div>
+      
+        {/* Filter Component */}
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Location Filter */}
+            <div>
+              <label htmlFor="location-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('jobBoard.filters.location')}
+              </label>
+              <select
+                id="location-filter"
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value="all">{t('jobBoard.filters.allLocations')}</option>
+                <option value="seoul">{t('locations.seoul')}</option>
+                <option value="busan">{t('locations.busan')}</option>
+                <option value="daegu">{t('locations.daegu')}</option>
+                <option value="incheon">{t('locations.incheon')}</option>
+                <option value="gwangju">{t('locations.gwangju')}</option>
+                <option value="daejeon">{t('locations.daejeon')}</option>
+                <option value="ulsan">{t('locations.ulsan')}</option>
+                <option value="gyeonggi">{t('locations.gyeonggi')}</option>
+              </select>
+            </div>
           
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('jobBoard.filters.role')}
-            </label>
-            <select
-              id="role"
-              value={filters.role}
-              onChange={(e) => handleFilterChange('role', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="all">{t('jobBoard.filters.allRoles')}</option>
-              <option value="dealer">{t('roles.dealer')}</option>
-              <option value="floor">{t('roles.floor')}</option>
-              <option value="cashier">{t('roles.cashier')}</option>
-              <option value="supervisor">{t('roles.supervisor')}</option>
-              <option value="manager">{t('roles.manager')}</option>
-            </select>
-        </div>
+            {/* Type Filter */}
+            <div>
+              <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('jobBoard.filters.type')}
+              </label>
+              <select
+                id="type-filter"
+                value={filters.type}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value="all">{t('jobBoard.filters.allTypes')}</option>
+                <option value="application">{t('jobPostingAdmin.create.typeApplication')}</option>
+                <option value="fixed">{t('jobPostingAdmin.create.typeFixed')}</option>
+              </select>
+            </div>
+          
+            {/* Date Range Filter */}
+            <div>
+              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('jobBoard.filters.startDate')}
+              </label>
+              <input
+                id="start-date"
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+          
+            {/* Role Filter */}
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('jobBoard.filters.role')}
+              </label>
+              <select
+                id="role"
+                value={filters.role}
+                onChange={(e) => handleFilterChange('role', e.target.value)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value="all">{t('jobBoard.filters.allRoles')}</option>
+                <option value="dealer">{t('roles.dealer')}</option>
+                <option value="floor">{t('roles.floor')}</option>
+                <option value="cashier">{t('roles.cashier')}</option>
+                <option value="supervisor">{t('roles.supervisor')}</option>
+                <option value="manager">{t('roles.manager')}</option>
+              </select>
+            </div>
+          </div>
         
-        {/* Reset Button */}
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            {t('jobBoard.filters.reset')}
-          </button>
+          {/* Reset Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {t('jobBoard.filters.reset')}
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="space-y-4">
-        {jobPostings?.map((post) => {
+
+        {/* Job Postings List */}
+        <div className="space-y-4">
+          {jobPostings?.map((post) => {
             const formattedStartDate = formatDate(post.startDate);
             const applicationStatus = appliedJobs.get(post.id);
 
             return (
-                                  <div key={post.id} className="bg-white p-3 sm:p-6 rounded-lg shadow-md">
-                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-2 sm:space-y-0">
-                        <div className="flex-grow">
-                            <div className="flex items-center mb-2">
-                                <h2 className="text-xl font-bold mr-4">{post.title}</h2>
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800`}>
-                                    {post.status}
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-500 mb-1">
-                                {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
-                            </p>
-                            <p className="text-sm text-gray-500 mb-1">
-                                {t('jobPostingAdmin.manage.date')}: {formattedStartDate}
-                            </p>
-                            {post.timeSlots?.map((ts: TimeSlot, index: number) => (
-                                <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
-                                    <p className="text-sm font-semibold text-gray-700">{t('jobPostingAdmin.manage.time')}: {ts.time}</p>
-                                    <div className="text-sm text-gray-600">
-                                        {ts.roles.map((r: RoleRequirement, i: number) => (
-                                            <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                            <p className="text-sm text-gray-500 mt-2">
-                                {t('jobPostingAdmin.create.description')}: {post.description}
-                            </p>
-                        </div>
-                        <div className='flex flex-col items-end space-y-2'>
-                             <button
-                                onClick={() => showInfo('Detailed view not implemented yet.')}
-                                className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                            >
-                                {t('jobBoard.viewDetails')}
-                            </button>
-                            {applicationStatus ? (
-                                applicationStatus === 'confirmed' ? (
-                                    <button
-                                        disabled
-                                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 cursor-not-allowed"
-                                    >
-                                        {t('jobBoard.confirmed', 'Confirmed')}
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => handleCancelApplication(post.id)}
-                                        disabled={isProcessing === post.id}
-                                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
-                                    >
-                                        {isProcessing === post.id ? t('jobBoard.cancelling', 'Cancelling...') : t('jobBoard.cancelApplication', 'Cancel Application')}
-                                    </button>
-                                )
-                            ) : (
-                                <button
-                                    onClick={() => handleOpenApplyModal(post)}
-                                    disabled={isProcessing === post.id}
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
-                                >
-                                    {isProcessing === post.id ? t('jobBoard.applying') : t('jobBoard.applyNow')}
-                                </button>
-                            )}
-                        </div>
+              <div key={post.id} className="bg-white p-3 sm:p-6 rounded-lg shadow-md">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-2 sm:space-y-0">
+                  <div className="flex-grow">
+                    <div className="flex items-center mb-2">
+                      <h2 className="text-xl font-bold mr-4">{post.title}</h2>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800`}>
+                        {post.status}
+                      </span>
                     </div>
-                </div>
-            )
-        })}
-      </div>
-
-        {isApplyModalOpen && selectedPost && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobBoard.applyModal.title', { postTitle: selectedPost.title })}</h3>
-                    <div>
-                        <label htmlFor="assignment" className="block text-sm font-medium text-gray-700">{t('jobBoard.applyModal.selectAssignment')}</label>
-                        <select
-                            id="assignment"
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                            value={selectedAssignment ? `${selectedAssignment.timeSlot}__${selectedAssignment.role}` : ''}
-                            onChange={(e) => {
-                                const [timeSlot, role] = e.target.value.split('__');
-                                setSelectedAssignment({ timeSlot, role });
-                            }}
+                    <p className="text-sm text-gray-500 mb-1">
+                      {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
+                    </p>
+                    <p className="text-sm text-gray-500 mb-1">
+                      {t('jobPostingAdmin.manage.date')}: {formattedStartDate}
+                    </p>
+                    {post.timeSlots?.map((ts: TimeSlot, index: number) => (
+                      <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
+                        <p className="text-sm font-semibold text-gray-700">{t('jobPostingAdmin.manage.time')}: {ts.time}</p>
+                        <div className="text-sm text-gray-600">
+                          {ts.roles.map((r: RoleRequirement, i: number) => (
+                            <span key={i} className="mr-4">{t(`jobPostingAdmin.create.${r.name}`, r.name)}: {r.count}{t('jobPostingAdmin.manage.people')}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-sm text-gray-500 mt-2">
+                      {t('jobPostingAdmin.create.description')}: {post.description}
+                    </p>
+                  </div>
+                  <div className='flex flex-col items-end space-y-2'>
+                    <button
+                      onClick={() => showInfo('Detailed view not implemented yet.')}
+                      className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      {t('jobBoard.viewDetails')}
+                    </button>
+                    {applicationStatus ? (
+                      applicationStatus === 'confirmed' ? (
+                        <button
+                          disabled
+                          className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 cursor-not-allowed"
                         >
-                            <option value="" disabled>{t('jobBoard.applyModal.selectPlaceholder')}</option>
-                            {selectedPost.timeSlots?.flatMap((ts: TimeSlot) => 
-                                ts.roles.map((r: RoleRequirement) => {
-                                    const value = `${ts.time}__${r.name}`;
-                                    const confirmedCount = selectedPost.confirmedStaff?.filter(staff => staff.timeSlot === ts.time && staff.role === r.name).length || 0;
-                                    const isFull = confirmedCount >= r.count;
-                                    return (
-                                        <option key={value} value={value} disabled={isFull}>
-                                            {ts.time} - {t(`jobPostingAdmin.create.${r.name}`, r.name)} ({isFull ? t('jobBoard.applyModal.full') : `${confirmedCount}/${r.count}`})
-                                        </option>
-                                    )
-                                })
-                            )}
-                        </select>
-                    </div>
-                    <div className="flex justify-end mt-4 space-x-2">
-                                                <button onClick={() => setIsApplyModalOpen(false)} className="py-3 px-6 sm:py-2 sm:px-4 bg-gray-500 text-white rounded hover:bg-gray-700 min-h-[48px] text-sm sm:text-base">{t('jobBoard.applyModal.cancel')}</button>
-                                                <button onClick={handleApply} disabled={!selectedAssignment || isProcessing === selectedPost.id} className="py-3 px-6 sm:py-2 sm:px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 min-h-[48px] text-sm sm:text-base">
-                           {isProcessing ? t('jobBoard.applying') : t('jobBoard.applyModal.confirm')}
+                          {t('jobBoard.confirmed', 'Confirmed')}
                         </button>
-                    </div>
+                      ) : (
+                        <button
+                          onClick={() => handleCancelApplication(post.id)}
+                          disabled={isProcessing === post.id}
+                          className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400"
+                        >
+                          {isProcessing === post.id ? t('jobBoard.cancelling', 'Cancelling...') : t('jobBoard.cancelApplication', 'Cancel Application')}
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => handleOpenApplyModal(post)}
+                        disabled={isProcessing === post.id}
+                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                      >
+                        {isProcessing === post.id ? t('jobBoard.applying') : t('jobBoard.applyNow')}
+                      </button>
+                    )}
+                  </div>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Apply Modal */}
+        {isApplyModalOpen && selectedPost && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('jobBoard.applyModal.title', { postTitle: selectedPost.title })}</h3>
+              <div>
+                <label htmlFor="assignment" className="block text-sm font-medium text-gray-700">{t('jobBoard.applyModal.selectAssignment')}</label>
+                <select
+                  id="assignment"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  value={selectedAssignment ? `${selectedAssignment.timeSlot}__${selectedAssignment.role}` : ''}
+                  onChange={(e) => {
+                    const [timeSlot, role] = e.target.value.split('__');
+                    setSelectedAssignment({ timeSlot, role });
+                  }}
+                >
+                  <option value="" disabled>{t('jobBoard.applyModal.selectPlaceholder')}</option>
+                  {selectedPost.timeSlots?.flatMap((ts: TimeSlot) => 
+                    ts.roles.map((r: RoleRequirement) => {
+                      const value = `${ts.time}__${r.name}`;
+                      const confirmedCount = selectedPost.confirmedStaff?.filter(staff => staff.timeSlot === ts.time && staff.role === r.name).length || 0;
+                      const isFull = confirmedCount >= r.count;
+                      return (
+                        <option key={value} value={value} disabled={isFull}>
+                          {ts.time} - {t(`jobPostingAdmin.create.${r.name}`, r.name)} ({isFull ? t('jobBoard.applyModal.full') : `${confirmedCount}/${r.count}`})
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+              </div>
+              <div className="flex justify-end mt-4 space-x-2">
+                <button 
+                  onClick={() => setIsApplyModalOpen(false)} 
+                  className="py-3 px-6 sm:py-2 sm:px-4 bg-gray-500 text-white rounded hover:bg-gray-700 min-h-[48px] text-sm sm:text-base"
+                >
+                  {t('jobBoard.applyModal.cancel')}
+                </button>
+                <button 
+                  onClick={handleApply} 
+                  disabled={!selectedAssignment || isProcessing === selectedPost.id} 
+                  className="py-3 px-6 sm:py-2 sm:px-4 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 min-h-[48px] text-sm sm:text-base"
+                >
+                  {isProcessing ? t('jobBoard.applying') : t('jobBoard.applyModal.confirm')}
+                </button>
+              </div>
             </div>
+          </div>
         )}
         
         {/* Infinite Scroll Loading Indicator */}
@@ -464,9 +478,9 @@ const JobBoardPage = () => {
             </p>
           )}
         </div>
-        </div>
-        </JobBoardErrorBoundary>
-        );
-        };
+      </div>
+    </JobBoardErrorBoundary>
+  );
+};
 
 export default JobBoardPage;
