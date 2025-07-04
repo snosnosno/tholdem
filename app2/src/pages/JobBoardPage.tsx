@@ -467,6 +467,6 @@ const JobBoardPage = () => {
         </div>
         </JobBoardErrorBoundary>
         );
-};
+        };
 
 export default JobBoardPage;
