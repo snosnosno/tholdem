@@ -153,8 +153,12 @@ export const buildFilteredQuery = (
     }
   }
   
-  // Add ordering
-  queryConstraints.push(orderBy('createdAt', 'desc'));
+  // Add ordering - use startDate when filtering by date, otherwise use createdAt
+  if (filters.startDate) {
+    queryConstraints.push(orderBy('startDate', 'asc'));
+  } else {
+    queryConstraints.push(orderBy('createdAt', 'desc'));
+  }
   
   // Add startAfter for pagination if provided
   if (pagination?.startAfterDoc) {
