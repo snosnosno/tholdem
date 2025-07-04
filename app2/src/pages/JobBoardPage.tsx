@@ -22,14 +22,20 @@ const JobBoardPage = () => {
   
   // Debounced search
   const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebounceSearch(300);
+  // Get current month as default
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return (now.getMonth() + 1).toString().padStart(2, '0');
+  };
+
   // Filter states
   const [filters, setFilters] = useState({
     location: 'all',
     type: 'all',
     startDate: '',
     role: 'all',
-    month: '',
-    day: ''
+    month: getCurrentMonth(), // Default to current month
+    day: '' // Default to all days
   });
   
   // Prepare search terms and build dynamic filters
@@ -95,8 +101,8 @@ const JobBoardPage = () => {
       type: 'all',
       startDate: '',
       role: 'all',
-      month: '',
-      day: ''
+      month: getCurrentMonth(), // Reset to current month
+      day: '' // Reset to all days
     });
   };
 
@@ -124,12 +130,30 @@ const JobBoardPage = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const dayOfWeek = t(`days.${date.getDay()}`);
-    return `${year}-${month}-${day}(${dayOfWeek})`;
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString);
+        return dateString; // Return original string if invalid
+      }
+      
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      // Get day of week with fallback
+      const dayOfWeekIndex = date.getDay();
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayOfWeek = dayNames[dayOfWeekIndex] || '?';
+      
+      return `${year}-${month}-${day}(${dayOfWeek})`;
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return dateString; // Return original string on error
+    }
   };
 
   const handleOpenApplyModal = (post: JobPosting) => {
@@ -383,7 +407,7 @@ const JobBoardPage = () => {
                   disabled={!filters.month}
                   className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100"
                 >
-                  <option value="">일</option>
+                  <option value="">전체</option>
                   {Array.from({length: 31}, (_, i) => i + 1).map(day => (
                     <option key={day} value={day.toString().padStart(2, '0')}>
                       {day}일
