@@ -128,16 +128,31 @@ const JobBoardPage = () => {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return '';
     
     try {
-      const date = new Date(dateString);
+      let date: Date;
+      
+      // Handle Firebase Timestamp object
+      if (dateInput && typeof dateInput === 'object' && 'seconds' in dateInput) {
+        // Firebase Timestamp object
+        date = new Date(dateInput.seconds * 1000);
+      } else if (dateInput instanceof Date) {
+        // Already a Date object
+        date = dateInput;
+      } else if (typeof dateInput === 'string') {
+        // String date
+        date = new Date(dateInput);
+      } else {
+        console.warn('Unknown date format:', dateInput);
+        return String(dateInput); // Convert to string as fallback
+      }
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.warn('Invalid date string:', dateString);
-        return dateString; // Return original string if invalid
+        console.warn('Invalid date:', dateInput);
+        return String(dateInput); // Convert to string as fallback
       }
       
       const year = date.getFullYear().toString().slice(-2);
@@ -151,8 +166,8 @@ const JobBoardPage = () => {
       
       return `${year}-${month}-${day}(${dayOfWeek})`;
     } catch (error) {
-      console.error('Error formatting date:', error, dateString);
-      return dateString; // Return original string on error
+      console.error('Error formatting date:', error, dateInput);
+      return String(dateInput); // Convert to string as fallback
     }
   };
 

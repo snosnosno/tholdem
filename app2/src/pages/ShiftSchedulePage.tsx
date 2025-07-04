@@ -50,7 +50,7 @@ const ShiftSchedulePage: React.FC = () => {
   );
   
   const availableDealers = useMemo(() =>
-    (allStaff?.filter(s => s.role === 'Dealer') as ShiftDealer[] || []), 
+    (allStaff?.filter(s => Array.isArray(s.jobRole) && s.jobRole.includes('Dealer')) as ShiftDealer[] || []), 
     [allStaff]
   );
   
@@ -165,14 +165,43 @@ const ShiftSchedulePage: React.FC = () => {
   };
   
   // 날짜 포맷팅
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    };
-    return date.toLocaleDateString('ko-KR', options);
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return '';
+    
+    try {
+      let date: Date;
+      
+      // Handle Firebase Timestamp object
+      if (dateInput && typeof dateInput === 'object' && 'seconds' in dateInput) {
+        // Firebase Timestamp object
+        date = new Date(dateInput.seconds * 1000);
+      } else if (dateInput instanceof Date) {
+        // Already a Date object
+        date = dateInput;
+      } else if (typeof dateInput === 'string') {
+        // String date
+        date = new Date(dateInput);
+      } else {
+        console.warn('Unknown date format:', dateInput);
+        return String(dateInput); // Convert to string as fallback
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateInput);
+        return String(dateInput); // Convert to string as fallback
+      }
+      
+      const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      };
+      return date.toLocaleDateString('ko-KR', options);
+    } catch (error) {
+      console.error('Error formatting date:', error, dateInput);
+      return String(dateInput); // Convert to string as fallback
+    }
   };
   
   // 검증 결과 컴포넌트
@@ -465,7 +494,7 @@ const ShiftSchedulePage: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">{dealer.name}</p>
-                    <p className="text-sm text-gray-500">{dealer.role}</p>
+                    <p className="text-sm text-gray-500">{Array.isArray(dealer.jobRole) ? dealer.jobRole.join(', ') : ''}</p>
                   </div>
                   {schedule && (
                     <button 

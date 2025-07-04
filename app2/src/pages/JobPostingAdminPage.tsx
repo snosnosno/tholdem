@@ -84,14 +84,47 @@ const JobPostingAdminPage = () => {
     '광주', '전남', '전북', '대구', '경북', '부산', '울산', '경남', '제주', '해외', '기타'
   ];
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const dayOfWeek = t(`days.${date.getDay()}`);
-    return `${year}-${month}-${day}(${dayOfWeek})`;
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return '';
+    
+    try {
+      let date: Date;
+      
+      // Handle Firebase Timestamp object
+      if (dateInput && typeof dateInput === 'object' && 'seconds' in dateInput) {
+        // Firebase Timestamp object
+        date = new Date(dateInput.seconds * 1000);
+      } else if (dateInput instanceof Date) {
+        // Already a Date object
+        date = dateInput;
+      } else if (typeof dateInput === 'string') {
+        // String date
+        date = new Date(dateInput);
+      } else {
+        console.warn('Unknown date format:', dateInput);
+        return String(dateInput); // Convert to string as fallback
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateInput);
+        return String(dateInput); // Convert to string as fallback
+      }
+      
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      // Get day of week with fallback
+      const dayOfWeekIndex = date.getDay();
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayOfWeek = dayNames[dayOfWeekIndex] || '?';
+      
+      return `${year}-${month}-${day}(${dayOfWeek})`;
+    } catch (error) {
+      console.error('Error formatting date:', error, dateInput);
+      return String(dateInput); // Convert to string as fallback
+    }
   };
 
   // Form handlers
