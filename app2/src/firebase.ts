@@ -108,7 +108,7 @@ interface PaginationOptions {
   startAfterDoc?: any;
 }
 
-// Build filtered query for job postings - OPTIMIZED VERSION
+// Build filtered query for job postings - COMPREHENSIVE INDEX VERSION
 export const buildFilteredQuery = (
   filters: JobPostingFilters, 
   pagination?: PaginationOptions
@@ -121,62 +121,73 @@ export const buildFilteredQuery = (
   // Always filter for open status
   queryConstraints.push(where('status', '==', 'open'));
   
-  // Prioritize search over other filters for performance
+  // Handle search queries with location/type support
   if (filters.searchTerms && filters.searchTerms.length > 0) {
     console.log('🔍 Search mode activated with terms:', filters.searchTerms);
-    // When searching, only use location or type filter to reduce complexity
     queryConstraints.push(where('searchIndex', 'array-contains-any', filters.searchTerms));
     
-    // Add one additional filter to avoid too many combinations
+    // Add location filter if specified (has index: status + searchIndex + location + createdAt)
     if (filters.location && filters.location !== 'all') {
+      console.log('🔍 Search + Location filter applied:', filters.location);
       queryConstraints.push(where('location', '==', filters.location));
-    } else if (filters.type && filters.type !== 'all') {
+    }
+    // Add type filter if specified and no location (has index: status + searchIndex + type + createdAt)
+    else if (filters.type && filters.type !== 'all') {
+      console.log('🔍 Search + Type filter applied:', filters.type);
       queryConstraints.push(where('type', '==', filters.type));
     }
     
-    // Use createdAt ordering for search results
+    // Always use createdAt ordering for search results
     queryConstraints.push(orderBy('createdAt', 'desc'));
-  } else {
-    // When not searching, apply other filters
+  } 
+  // Handle date-based queries (prioritized because of range query limitations)
+  else if (filters.startDate) {
+    console.log('🔍 Date filter applied:', filters.startDate);
+    
+    // Create date at start of day to match job postings
+    const filterDate = new Date(filters.startDate);
+    filterDate.setHours(0, 0, 0, 0);
+    const startDateTimestamp = Timestamp.fromDate(filterDate);
+    console.log('🔍 Converted date to Timestamp:', startDateTimestamp);
+    
+    queryConstraints.push(where('startDate', '>=', startDateTimestamp));
+    
+    // Add location filter if specified (has index: status + location + startDate)
+    if (filters.location && filters.location !== 'all') {
+      console.log('🔍 Date + Location filter applied:', filters.location);
+      queryConstraints.push(where('location', '==', filters.location));
+    }
+    // Add type filter if specified and no location (has index: status + type + startDate)
+    else if (filters.type && filters.type !== 'all') {
+      console.log('🔍 Date + Type filter applied:', filters.type);
+      queryConstraints.push(where('type', '==', filters.type));
+    }
+    
+    // Use startDate ordering for date-filtered queries
+    queryConstraints.push(orderBy('startDate', 'asc'));
+  }
+  // Handle non-date queries
+  else {
+    // Add location filter
     if (filters.location && filters.location !== 'all') {
       console.log('🔍 Location filter applied:', filters.location);
       queryConstraints.push(where('location', '==', filters.location));
     }
     
+    // Add type filter
     if (filters.type && filters.type !== 'all') {
       console.log('🔍 Type filter applied:', filters.type);
       queryConstraints.push(where('type', '==', filters.type));
     }
     
-    // Date filters - prioritize over other filters to avoid complex indexes
-    if (filters.startDate) {
-      console.log('🔍 Date filter applied:', filters.startDate);
-      // Create date at start of day to match job postings
-      const filterDate = new Date(filters.startDate);
-      filterDate.setHours(0, 0, 0, 0);
-      
-      // Handle both Timestamp and string date formats in database
-      // First try with Timestamp comparison
-      const startDateTimestamp = Timestamp.fromDate(filterDate);
-      console.log('🔍 Converted date to Timestamp:', startDateTimestamp);
-      
-      // For backward compatibility, also check string format (YYYY-MM-DD)
-      const startDateString = filters.startDate;
-      console.log('🔍 Date string format:', startDateString);
-      
-      // Use Timestamp for comparison (assuming most recent data uses Timestamp)
-      queryConstraints.push(where('startDate', '>=', startDateTimestamp));
-      queryConstraints.push(orderBy('startDate', 'asc'));
-    } else {
-      // Role filter - only if no date filter to avoid complex indexes
-      if (filters.role && filters.role !== 'all') {
-        console.log('🔍 Role filter applied:', filters.role);
-        queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
-      }
-      
-      // Use createdAt ordering when no date filter
-      queryConstraints.push(orderBy('createdAt', 'desc'));
+    // Add role filter
+    if (filters.role && filters.role !== 'all') {
+      console.log('🔍 Role filter applied:', filters.role);
+      queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
     }
+    
+    // Use createdAt ordering for non-date queries
+    queryConstraints.push(orderBy('createdAt', 'desc'));
   }
   
   // Add startAfter for pagination if provided
