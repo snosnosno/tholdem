@@ -152,12 +152,20 @@ export const buildFilteredQuery = (
     
     queryConstraints.push(where('startDate', '>=', startDateTimestamp));
     
-    // Add location filter if specified (has index: status + location + startDate)
-    if (filters.location && filters.location !== 'all') {
+    // Priority: Role filter first (if specified), then location/type
+    // Note: Firebase doesn't allow inequality + array-contains in same query
+    // So we prioritize role filter and do client-side filtering for others
+    if (filters.role && filters.role !== 'all') {
+      console.log('🔍 Date + Role filter applied (prioritized):', filters.role);
+      queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
+      // Note: location/type will be filtered client-side
+    }
+    // Add location filter if no role filter (has index: status + location + startDate)
+    else if (filters.location && filters.location !== 'all') {
       console.log('🔍 Date + Location filter applied:', filters.location);
       queryConstraints.push(where('location', '==', filters.location));
     }
-    // Add type filter if specified and no location (has index: status + type + startDate)
+    // Add type filter if no role/location filter (has index: status + type + startDate)
     else if (filters.type && filters.type !== 'all') {
       console.log('🔍 Date + Type filter applied:', filters.type);
       queryConstraints.push(where('type', '==', filters.type));

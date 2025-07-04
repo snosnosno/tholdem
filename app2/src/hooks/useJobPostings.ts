@@ -47,10 +47,33 @@ export const useJobPostings = (filters: JobPostingFilters) => {
     queryFn: async (): Promise<JobPosting[]> => {
       const query = buildFilteredQuery(filters);
       const snapshot = await getDocs(query);
-      return snapshot.docs.map(doc => ({
+      let jobs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as JobPosting[];
+      
+      // Client-side filtering for cases where Firebase query constraints are limited
+      if (filters.startDate && filters.role && filters.role !== 'all') {
+        console.log('🔍 Applying client-side role filter:', filters.role);
+        jobs = jobs.filter(job => {
+          const requiredRoles = job.requiredRoles || [];
+          return requiredRoles.includes(filters.role);
+        });
+      }
+      
+      // Client-side location filtering when role filter took priority
+      if (filters.startDate && filters.role && filters.role !== 'all' && filters.location && filters.location !== 'all') {
+        console.log('🔍 Applying client-side location filter:', filters.location);
+        jobs = jobs.filter(job => job.location === filters.location);
+      }
+      
+      // Client-side type filtering when role filter took priority  
+      if (filters.startDate && filters.role && filters.role !== 'all' && filters.type && filters.type !== 'all') {
+        console.log('🔍 Applying client-side type filter:', filters.type);
+        jobs = jobs.filter(job => job.type === filters.type);
+      }
+      
+      return jobs;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -75,12 +98,38 @@ export const useInfiniteJobPostings = (filters: JobPostingFilters) => {
         console.log('📋 Executing Firebase query...');
         const snapshot = await getDocs(query);
         
-        const jobs = snapshot.docs.map(doc => ({
+        let jobs = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as JobPosting[];
         
-        console.log('✅ Query successful:', { jobCount: jobs.length, hasNextPage: snapshot.docs.length >= 20 });
+        // Client-side filtering for cases where Firebase query constraints are limited
+        // This happens when we have date + role filters (Firebase doesn't allow inequality + array-contains)
+        if (filters.startDate && filters.role && filters.role !== 'all') {
+          console.log('🔍 Applying client-side role filter:', filters.role);
+          jobs = jobs.filter(job => {
+            const requiredRoles = job.requiredRoles || [];
+            return requiredRoles.includes(filters.role);
+          });
+        }
+        
+        // Client-side location filtering when role filter took priority
+        if (filters.startDate && filters.role && filters.role !== 'all' && filters.location && filters.location !== 'all') {
+          console.log('🔍 Applying client-side location filter:', filters.location);
+          jobs = jobs.filter(job => job.location === filters.location);
+        }
+        
+        // Client-side type filtering when role filter took priority  
+        if (filters.startDate && filters.role && filters.role !== 'all' && filters.type && filters.type !== 'all') {
+          console.log('🔍 Applying client-side type filter:', filters.type);
+          jobs = jobs.filter(job => job.type === filters.type);
+        }
+        
+        console.log('✅ Query successful:', { 
+          originalCount: snapshot.docs.length, 
+          filteredCount: jobs.length, 
+          hasNextPage: snapshot.docs.length >= 20 
+        });
         
         // Return jobs and cursor for next page
         return {
