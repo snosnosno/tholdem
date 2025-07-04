@@ -116,11 +116,14 @@ export const buildFilteredQuery = (
   const jobPostingsRef = collection(db, 'jobPostings');
   let queryConstraints: any[] = [];
   
+  console.log('🔍 Building query with filters:', filters);
+  
   // Always filter for open status
   queryConstraints.push(where('status', '==', 'open'));
   
   // Prioritize search over other filters for performance
   if (filters.searchTerms && filters.searchTerms.length > 0) {
+    console.log('🔍 Search mode activated with terms:', filters.searchTerms);
     // When searching, only use location or type filter to reduce complexity
     queryConstraints.push(where('searchIndex', 'array-contains-any', filters.searchTerms));
     
@@ -130,34 +133,50 @@ export const buildFilteredQuery = (
     } else if (filters.type && filters.type !== 'all') {
       queryConstraints.push(where('type', '==', filters.type));
     }
+    
+    // Use createdAt ordering for search results
+    queryConstraints.push(orderBy('createdAt', 'desc'));
   } else {
     // When not searching, apply other filters
     if (filters.location && filters.location !== 'all') {
+      console.log('🔍 Location filter applied:', filters.location);
       queryConstraints.push(where('location', '==', filters.location));
     }
     
     if (filters.type && filters.type !== 'all') {
+      console.log('🔍 Type filter applied:', filters.type);
       queryConstraints.push(where('type', '==', filters.type));
     }
     
     // Date filters - prioritize over other filters to avoid complex indexes
     if (filters.startDate) {
-      const startDate = Timestamp.fromDate(new Date(filters.startDate));
-      queryConstraints.push(where('startDate', '>=', startDate));
-      // Skip other filters when using date filter to avoid complex index requirements
+      console.log('🔍 Date filter applied:', filters.startDate);
+      // Create date at start of day to match job postings
+      const filterDate = new Date(filters.startDate);
+      filterDate.setHours(0, 0, 0, 0);
+      
+      // Handle both Timestamp and string date formats in database
+      // First try with Timestamp comparison
+      const startDateTimestamp = Timestamp.fromDate(filterDate);
+      console.log('🔍 Converted date to Timestamp:', startDateTimestamp);
+      
+      // For backward compatibility, also check string format (YYYY-MM-DD)
+      const startDateString = filters.startDate;
+      console.log('🔍 Date string format:', startDateString);
+      
+      // Use Timestamp for comparison (assuming most recent data uses Timestamp)
+      queryConstraints.push(where('startDate', '>=', startDateTimestamp));
+      queryConstraints.push(orderBy('startDate', 'asc'));
     } else {
       // Role filter - only if no date filter to avoid complex indexes
       if (filters.role && filters.role !== 'all') {
+        console.log('🔍 Role filter applied:', filters.role);
         queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
       }
+      
+      // Use createdAt ordering when no date filter
+      queryConstraints.push(orderBy('createdAt', 'desc'));
     }
-  }
-  
-  // Add ordering - use startDate when filtering by date, otherwise use createdAt
-  if (filters.startDate) {
-    queryConstraints.push(orderBy('startDate', 'asc'));
-  } else {
-    queryConstraints.push(orderBy('createdAt', 'desc'));
   }
   
   // Add startAfter for pagination if provided
@@ -168,11 +187,8 @@ export const buildFilteredQuery = (
   // Add limit (default 20 for regular queries, customizable for infinite scroll)
   queryConstraints.push(limit(pagination?.limit || 20));
   
-  console.log('🔍 Building optimized query with constraints:', {
-    filters,
-    constraintsCount: queryConstraints.length,
-    hasSearch: !!(filters.searchTerms && filters.searchTerms.length > 0)
-  });
+  console.log('🔍 Final query constraints count:', queryConstraints.length);
+  console.log('🔍 Query constraints:', queryConstraints.map((c, i) => `${i}: ${c.type || 'unknown'}`));
   
   return query(jobPostingsRef, ...queryConstraints);
 };
@@ -220,6 +236,111 @@ export const migrateJobPostingsSearchIndex = async (): Promise<void> => {
   }
 };
 
+// Migration function to add requiredRoles to existing job postings
+export const migrateJobPostingsRequiredRoles = async (): Promise<void> => {
+  console.log('Starting requiredRoles migration for job postings...');
+  
+  try {
+    const jobPostingsRef = collection(db, 'jobPostings');
+    const snapshot = await getDocs(jobPostingsRef);
+    
+    const batch = writeBatch(db);
+    let updateCount = 0;
+    
+    snapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      
+      // Skip if requiredRoles already exists
+      if (data.requiredRoles && Array.isArray(data.requiredRoles)) {
+        return;
+      }
+      
+      // Extract roles from timeSlots
+      const timeSlots = data.timeSlots || [];
+      const requiredRoles = Array.from(new Set(
+        timeSlots.flatMap((ts: any) => {
+          if (ts.roles && Array.isArray(ts.roles)) {
+            return ts.roles.map((r: any) => r.name);
+          }
+          return [];
+        })
+      ));
+      
+      console.log(`Document ${docSnapshot.id}: extracted roles:`, requiredRoles);
+      
+      // Update document
+      const docRef = doc(db, 'jobPostings', docSnapshot.id);
+      batch.update(docRef, { requiredRoles });
+      updateCount++;
+    });
+    
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`Successfully updated ${updateCount} job postings with requiredRoles`);
+    } else {
+      console.log('No job postings needed requiredRoles migration');
+    }
+  } catch (error) {
+    console.error('Error during requiredRoles migration:', error);
+    throw error;
+  }
+};
+
+// Migration function to convert string dates to Timestamps
+export const migrateJobPostingsDateFormat = async (): Promise<void> => {
+  console.log('Starting date format migration for job postings...');
+  
+  try {
+    const jobPostingsRef = collection(db, 'jobPostings');
+    const snapshot = await getDocs(jobPostingsRef);
+    
+    const batch = writeBatch(db);
+    let updateCount = 0;
+    
+    snapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      
+      // Check if startDate is a string and needs conversion
+      if (data.startDate && typeof data.startDate === 'string') {
+        const dateObj = new Date(data.startDate);
+        if (!isNaN(dateObj.getTime())) {
+          const startDateTimestamp = Timestamp.fromDate(dateObj);
+          console.log(`Document ${docSnapshot.id}: converting date ${data.startDate} to Timestamp`);
+          
+          // Update document
+          const docRef = doc(db, 'jobPostings', docSnapshot.id);
+          batch.update(docRef, { startDate: startDateTimestamp });
+          updateCount++;
+        }
+      }
+      
+      // Also handle endDate if it exists
+      if (data.endDate && typeof data.endDate === 'string') {
+        const dateObj = new Date(data.endDate);
+        if (!isNaN(dateObj.getTime())) {
+          const endDateTimestamp = Timestamp.fromDate(dateObj);
+          console.log(`Document ${docSnapshot.id}: converting endDate ${data.endDate} to Timestamp`);
+          
+          // Update document
+          const docRef = doc(db, 'jobPostings', docSnapshot.id);
+          batch.update(docRef, { endDate: endDateTimestamp });
+          updateCount++;
+        }
+      }
+    });
+    
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`Successfully updated ${updateCount} job postings with proper date format`);
+    } else {
+      console.log('No job postings needed date format migration');
+    }
+  } catch (error) {
+    console.error('Error during date format migration:', error);
+    throw error;
+  }
+};
+
 // Helper function to generate search index for job postings
 const generateSearchIndexForJobPosting = (title: string, description: string): string[] => {
   const text = `${title} ${description}`.toLowerCase();
@@ -229,4 +350,19 @@ const generateSearchIndexForJobPosting = (title: string, description: string): s
     .filter(word => word.length > 1);
   
   return Array.from(new Set(words));
+};
+
+// Run all migrations for job postings
+export const runJobPostingsMigrations = async (): Promise<void> => {
+  console.log('🔄 Starting all job postings migrations...');
+  
+  try {
+    await migrateJobPostingsRequiredRoles();
+    await migrateJobPostingsDateFormat();
+    await migrateJobPostingsSearchIndex();
+    console.log('✅ All job postings migrations completed successfully');
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    throw error;
+  }
 };

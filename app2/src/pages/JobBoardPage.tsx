@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, runJobPostingsMigrations } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
@@ -187,6 +187,23 @@ const JobBoardPage = () => {
       }
   };
 
+  const handleRunMigrations = async () => {
+    if (!window.confirm('기존 공고 데이터를 업데이트하시겠습니까? (requiredRoles 필드 및 날짜 형식 변환)')) {
+      return;
+    }
+    
+    setIsProcessing('migration');
+    try {
+      await runJobPostingsMigrations();
+      showSuccess('데이터 마이그레이션이 완료되었습니다. 페이지를 새로고침해주세요.');
+    } catch (error) {
+      console.error('Migration failed:', error);
+      showError('마이그레이션 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4">
@@ -344,8 +361,15 @@ const JobBoardPage = () => {
             </div>
           </div>
         
-          {/* Reset Button */}
-          <div className="mt-4 flex justify-end">
+          {/* Reset Button and Migration Button */}
+          <div className="mt-4 flex justify-end space-x-2">
+            <button
+              onClick={handleRunMigrations}
+              disabled={isProcessing === 'migration'}
+              className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-gray-400"
+            >
+              {isProcessing === 'migration' ? '마이그레이션 중...' : '데이터 업데이트'}
+            </button>
             <button
               onClick={resetFilters}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
