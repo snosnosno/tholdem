@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 
-import { db } from '../firebase';
+import { db, runJobPostingsMigrations } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
@@ -22,6 +22,31 @@ const JobBoardPage = () => {
 
   const [appliedJobs, setAppliedJobs] = useState<Map<string, string>>(new Map());
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [isMigrationRunning, setIsMigrationRunning] = useState(false);
+  
+  // Migration handler
+  const handleRunMigration = async () => {
+    if (!currentUser) {
+      showError('관리자 로그인이 필요합니다.');
+      return;
+    }
+    
+    setIsMigrationRunning(true);
+    try {
+      console.log('🔄 Starting job postings migration...');
+      showInfo('Migration 시작 중...');
+      
+      await runJobPostingsMigrations();
+      
+      console.log('✅ Migration completed successfully');
+      showSuccess('Migration이 성공적으로 완료되었습니다!');
+    } catch (error) {
+      console.error('❌ Migration failed:', error);
+      showError('Migration 실행 중 오류가 발생했습니다.');
+    } finally {
+      setIsMigrationRunning(false);
+    }
+  };
   
   // Debounced search
   const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebounceSearch(300);
@@ -322,6 +347,50 @@ const JobBoardPage = () => {
           </div>
         </div>
       
+      {/* Migration Debug Component - Only for Admin */}
+      {currentUser && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg shadow-md mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-medium text-yellow-800 mb-1">🔧 개발자 디버깅 도구</h3>
+              <p className="text-sm text-yellow-700">
+                검색 기능이 작동하지 않는 경우 Migration을 실행하세요.
+              </p>
+              <p className="text-xs text-yellow-600 mt-1">
+                검색어: "{debouncedSearchTerm || '없음'}" | 검색 결과: {jobPostings.length}개
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  console.log('🔍 Debug Info:', {
+                    searchTerm,
+                    debouncedSearchTerm,
+                    searchTerms: prepareSearchTerms(debouncedSearchTerm),
+                    filters,
+                    dynamicFilters,
+                    jobPostingsCount: jobPostings.length,
+                    hasNextPage,
+                    loading,
+                    error
+                  });
+                  showInfo('디버깅 정보가 콘솔에 출력되었습니다.');
+                }}
+                className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                🔍 디버그 정보
+              </button>
+              <button
+                onClick={handleRunMigration}
+                disabled={isMigrationRunning}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              >
+                {isMigrationRunning ? '🔄 실행 중...' : '🔧 Migration 실행'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         {/* Filter Component */}
         <div className="bg-white p-4 rounded-lg shadow-md mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
