@@ -438,6 +438,7 @@ const JobBoardPage = () => {
         <div className="space-y-4">
           {jobPostings?.map((post) => {
             const formattedStartDate = formatDate(post.startDate);
+            const formattedEndDate = formatDate(post.endDate);
             const applicationStatus = appliedJobs.get(post.id);
 
             return (
@@ -454,7 +455,7 @@ const JobBoardPage = () => {
                       {t('jobPostingAdmin.manage.location')}: {post.location}
                     </p>
                     <p className="text-sm text-gray-500 mb-1">
-                      {t('jobPostingAdmin.manage.date')}: {formattedStartDate}
+                                            {t('jobPostingAdmin.manage.date')}: {formattedStartDate} ~ {formattedEndDate}
                     </p>
                     {post.timeSlots?.map((ts: TimeSlot, index: number) => (
                       <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
