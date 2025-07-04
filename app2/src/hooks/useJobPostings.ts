@@ -10,16 +10,30 @@ export interface JobPostingFilters {
   searchTerms?: string[]; // Optional search terms
 }
 
+export interface RoleRequirement {
+  name: string;
+  count: number;
+}
+
+export interface TimeSlot {
+  time: string;
+  roles: RoleRequirement[];
+}
+
 export interface JobPosting {
   id: string;
   title: string;
   description: string;
   location: string;
   type: string;
-  status: string;
+  status: 'open' | 'closed';
   startDate: any;
   endDate: any;
   createdAt: any;
+  managerId?: string;
+  timeSlots?: TimeSlot[];
+  confirmedStaff?: { userId: string; role: string; timeSlot: string; }[];
+  searchIndex?: string[];
   requirements?: any[];
   manager?: string;
   [key: string]: any;
@@ -45,27 +59,39 @@ export const useJobPostings = (filters: JobPostingFilters) => {
 
 // Infinite scroll implementation
 export const useInfiniteJobPostings = (filters: JobPostingFilters) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<{ jobs: JobPosting[]; nextCursor: any | null }, Error>({
     queryKey: ['jobPostings', 'infinite', filters],
     queryFn: async ({ pageParam }) => {
-      const query = buildFilteredQuery(filters, {
-        limit: 20,
-        startAfterDoc: pageParam
-      });
-      
-      const snapshot = await getDocs(query);
-      const jobs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as JobPosting[];
-      
-      // Return jobs and cursor for next page
-      return {
-        jobs,
-        nextCursor: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null
-      };
+      try {
+        console.log('🔍 useInfiniteJobPostings queryFn called with:', { filters, pageParam });
+        
+        const query = buildFilteredQuery(filters, {
+          limit: 20,
+          startAfterDoc: pageParam
+        });
+        
+        console.log('📋 Executing Firebase query...');
+        const snapshot = await getDocs(query);
+        
+        const jobs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as JobPosting[];
+        
+        console.log('✅ Query successful:', { jobCount: jobs.length, hasNextPage: snapshot.docs.length >= 20 });
+        
+        // Return jobs and cursor for next page
+        return {
+          jobs,
+          nextCursor: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null
+        };
+      } catch (error) {
+        console.error('❌ useInfiniteJobPostings error:', error);
+        throw error;
+      }
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: null,
+    getNextPageParam: (lastPage: { jobs: JobPosting[]; nextCursor: any | null }) => lastPage.nextCursor,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
