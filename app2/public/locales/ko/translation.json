@@ -4,6 +4,7 @@
   "loading": "로딩 중...",
   "locations": {
     "seoul": "서울",
+    "서울": "서울",
     "gyeonggi": "경기",
     "incheon": "인천",
     "gangwon": "강원",
@@ -510,6 +511,10 @@
     "viewResults": "결과 보기"
   },
   "jobBoard": {
+    "search": {
+      "label": "검색",
+      "placeholder": "제목이나 설명에서 검색..."
+    },
     "alerts": {
       "loginRequired": "지원을 위해서는 로그인이 필요합니다.",
       "profileNotFound": "스태프 프로필을 찾을 수 없습니다.",
@@ -544,15 +549,14 @@
       "type": "모집 유형",
       "allTypes": "전체 유형",
       "startDate": "시작일",
-      "endDate": "종료일",
-      "reset": "초기화"
-      },
+      "role": "역할",
+      "allRoles": "전체 역할",
+      "reset": "초기화",
       "search": {
-      "label": "검색",
-      "placeholder": "제목이나 설명에서 검색..."
+        "label": "검색",
+        "placeholder": "제목이나 설명에서 검색..."
       }
       }
-    }
   },
   "jobPostingAdmin": {
     "alerts": {

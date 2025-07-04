@@ -146,9 +146,9 @@ export const buildFilteredQuery = (
       queryConstraints.push(where('startDate', '>=', startDate));
     }
     
-    if (filters.endDate) {
-      const endDate = Timestamp.fromDate(new Date(filters.endDate + 'T23:59:59'));
-      queryConstraints.push(where('endDate', '<=', endDate));
+    // Role filter - only if no search to avoid complex indexes
+    if (filters.role && filters.role !== 'all') {
+      queryConstraints.push(where('requiredRoles', 'array-contains', filters.role));
     }
   }
   

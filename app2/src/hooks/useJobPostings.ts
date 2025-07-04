@@ -6,7 +6,7 @@ export interface JobPostingFilters {
   location: string;
   type: string;
   startDate: string;
-  endDate: string;
+  role: string;
   searchTerms?: string[]; // Optional search terms
 }
 

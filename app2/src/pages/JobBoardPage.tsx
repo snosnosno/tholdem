@@ -27,7 +27,7 @@ const JobBoardPage = () => {
     location: 'all',
     type: 'all',
     startDate: '',
-    endDate: ''
+    role: 'all'
   });
   
   // Prepare search terms and build dynamic filters
@@ -92,7 +92,7 @@ const JobBoardPage = () => {
       location: 'all',
       type: 'all',
       startDate: '',
-      endDate: ''
+      role: 'all'
     });
   };
   const formatDate = (dateString: string) => {
@@ -310,17 +310,22 @@ const JobBoardPage = () => {
           </div>
           
           <div>
-            <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('jobBoard.filters.endDate')}
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+              {t('jobBoard.filters.role')}
             </label>
-            <input
-              id="end-date"
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+            <select
+              id="role"
+              value={filters.role}
+              onChange={(e) => handleFilterChange('role', e.target.value)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
+            >
+              <option value="all">{t('jobBoard.filters.allRoles')}</option>
+              <option value="dealer">{t('roles.dealer')}</option>
+              <option value="floor">{t('roles.floor')}</option>
+              <option value="cashier">{t('roles.cashier')}</option>
+              <option value="supervisor">{t('roles.supervisor')}</option>
+              <option value="manager">{t('roles.manager')}</option>
+            </select>
         </div>
         
         {/* Reset Button */}
@@ -336,7 +341,6 @@ const JobBoardPage = () => {
       <div className="space-y-4">
         {jobPostings?.map((post) => {
             const formattedStartDate = formatDate(post.startDate);
-            const formattedEndDate = formatDate(post.endDate);
             const applicationStatus = appliedJobs.get(post.id);
 
             return (
@@ -353,7 +357,7 @@ const JobBoardPage = () => {
                                 {t('jobPostingAdmin.manage.location')}: {String(t(`locations.${post.location}`, post.location))}
                             </p>
                             <p className="text-sm text-gray-500 mb-1">
-                                {t('jobPostingAdmin.manage.date')}: {post.endDate && post.endDate !== post.startDate ? `${formattedStartDate} ~ ${formattedEndDate}` : formattedStartDate}
+                                {t('jobPostingAdmin.manage.date')}: {formattedStartDate}
                             </p>
                             {post.timeSlots?.map((ts: TimeSlot, index: number) => (
                                 <div key={index} className="mt-2 pl-4 border-l-2 border-gray-200">
