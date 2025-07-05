@@ -7,6 +7,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import AttendanceStatusCard from '../components/AttendanceStatusCard';
 import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
 import QRCodeGeneratorModal from '../components/QRCodeGeneratorModal';
+import WorkTimeEditor from '../components/WorkTimeEditor';
 
 // 업무 역할 정의
 type JobRole = 
@@ -95,6 +96,10 @@ const StaffListPage: React.FC = () => {
   
   // QR 코드 생성 모달 관련 states
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  
+  // 시간 수정 모달 관련 states
+  const [isWorkTimeEditorOpen, setIsWorkTimeEditorOpen] = useState(false);
+  const [selectedWorkLog, setSelectedWorkLog] = useState<any | null>(null);
   
   // 스태프 추가 모달 관련 states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -258,6 +263,30 @@ const StaffListPage: React.FC = () => {
     } else if (e.key === 'Escape') {
       handleCellCancel();
     }
+  };
+  
+  // 출퇴근 시간 수정 핸들러
+  const handleEditWorkTime = (staffId: string) => {
+    // 해당 스태프의 출석 기록을 찾기
+    const workLog = attendanceRecords.find(record => 
+      record.workLog?.eventId === 'default-event' && 
+      record.staffId === staffId &&
+      record.workLog?.date === new Date().toISOString().split('T')[0]
+    );
+    
+    if (workLog) {
+      setSelectedWorkLog(workLog);
+      setIsWorkTimeEditorOpen(true);
+    } else {
+      // 오늘 날짜에 대한 근무 기록이 없는 경우
+      console.log('오늘 날짜에 대한 근무 기록을 찾을 수 없습니다.');
+    }
+  };
+  
+  const handleWorkTimeUpdate = (updatedWorkLog: any) => {
+    // 업데이트된 근무 로그로 로컬 상태 업데이트
+    // 실제로는 useAttendanceStatus 훅이 자동으로 업데이트됨
+    console.log('근무 시간이 업데이트되었습니다:', updatedWorkLog);
   };
   
   // 스태프 추가 모달 열기
@@ -679,6 +708,7 @@ const StaffListPage: React.FC = () => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">출석 상태</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간 수정</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
@@ -716,6 +746,15 @@ const StaffListPage: React.FC = () => {
                       );
                     })()}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button
+                      onClick={() => handleEditWorkTime(staff.id)}
+                      className="text-blue-600 hover:text-blue-900 font-medium mr-3"
+                      title="시간 수정"
+                    >
+                      시간 수정
+                    </button>
+                  </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <button
                       onClick={() => deleteStaff(staff.id)}
@@ -728,7 +767,7 @@ const StaffListPage: React.FC = () => {
                   </tr>
               )) : (
                <tr>
-                 <td colSpan={13} className="px-6 py-4 text-center text-sm text-gray-500">
+                 <td colSpan={14} className="px-6 py-4 text-center text-sm text-gray-500">
                    {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
@@ -903,6 +942,14 @@ const StaffListPage: React.FC = () => {
         eventId="default-event"
         title={t('attendance.actions.generateQR')}
         description="스태프들이 출석 체크를 할 수 있는 QR 코드를 생성합니다."
+        />
+        
+        {/* 시간 수정 모달 */}
+        <WorkTimeEditor
+          isOpen={isWorkTimeEditorOpen}
+          onClose={() => setIsWorkTimeEditorOpen(false)}
+          workLog={selectedWorkLog}
+          onUpdate={handleWorkTimeUpdate}
         />
         </>
         );
