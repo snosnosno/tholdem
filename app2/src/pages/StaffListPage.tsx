@@ -8,6 +8,8 @@ import AttendanceStatusCard from '../components/AttendanceStatusCard';
 import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
 import QRCodeGeneratorModal from '../components/QRCodeGeneratorModal';
 import WorkTimeEditor from '../components/WorkTimeEditor';
+// import { AttendanceExceptionHandler } from '../components/AttendanceExceptionHandler';
+// import { attendanceExceptionDetector, getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
 
 // 업무 역할 정의
 type JobRole = 
@@ -100,6 +102,10 @@ const StaffListPage: React.FC = () => {
   // 시간 수정 모달 관련 states
   const [isWorkTimeEditorOpen, setIsWorkTimeEditorOpen] = useState(false);
   const [selectedWorkLog, setSelectedWorkLog] = useState<any | null>(null);
+  
+  // 예외 상황 처리 모달 관련 states
+  const [isExceptionModalOpen, setIsExceptionModalOpen] = useState(false);
+  const [selectedExceptionWorkLog, setSelectedExceptionWorkLog] = useState<any | null>(null);
   
   // 스태프 추가 모달 관련 states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -287,6 +293,26 @@ const StaffListPage: React.FC = () => {
     // 업데이트된 근무 로그로 로컬 상태 업데이트
     // 실제로는 useAttendanceStatus 훅이 자동으로 업데이트됨
     console.log('근무 시간이 업데이트되었습니다:', updatedWorkLog);
+  };
+  
+  // 예외 상황 처리 함수
+  const handleExceptionEdit = (staffId: string) => {
+    const workLog = attendanceRecords.find(record => 
+      record.workLog?.eventId === 'default-event' && 
+      record.staffId === staffId &&
+      record.workLog?.date === new Date().toISOString().split('T')[0]
+    );
+    
+    if (workLog?.workLog) {
+      setSelectedExceptionWorkLog(workLog.workLog);
+      setIsExceptionModalOpen(true);
+    }
+  };
+  
+  const handleExceptionUpdate = (updatedWorkLog: any) => {
+    console.log('예외 상황이 업데이트되었습니다:', updatedWorkLog);
+    setIsExceptionModalOpen(false);
+    setSelectedExceptionWorkLog(null);
   };
   
   // 스태프 추가 모달 열기
@@ -708,7 +734,7 @@ const StaffListPage: React.FC = () => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">출석 상태</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간 수정</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">예외 상황</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
@@ -746,6 +772,10 @@ const StaffListPage: React.FC = () => {
                       );
                     })()}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {/* 예외 상황 처리 기능 - 개발 중 */}
+                    <span className="text-gray-400 text-xs">개발 중</span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <button
                       onClick={() => handleEditWorkTime(staff.id)}
@@ -754,7 +784,14 @@ const StaffListPage: React.FC = () => {
                     >
                       시간 수정
                     </button>
-                  </td>
+                    <button
+                      onClick={() => handleExceptionEdit(staff.id)}
+                      className="text-orange-600 hover:text-orange-900 font-medium mr-3"
+                      title="예외 상황 처리"
+                    >
+                      예외 처리
+                    </button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <button
                       onClick={() => deleteStaff(staff.id)}
@@ -767,7 +804,7 @@ const StaffListPage: React.FC = () => {
                   </tr>
               )) : (
                <tr>
-                 <td colSpan={14} className="px-6 py-4 text-center text-sm text-gray-500">
+                 <td colSpan={15} className="px-6 py-4 text-center text-sm text-gray-500">
                    {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
@@ -951,6 +988,8 @@ const StaffListPage: React.FC = () => {
           workLog={selectedWorkLog}
           onUpdate={handleWorkTimeUpdate}
         />
+        
+        {/* 예외 상황 처리 모달 - 개발 중 */}
         </>
         );
         };
