@@ -1,7 +1,7 @@
 // Firebase 초기화 및 인증/DB 인스턴스 export
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, startAfter, Timestamp, Query } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, startAfter, Timestamp, Query, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import type { JobPostingFilters } from './hooks/useJobPostings';
@@ -22,14 +22,39 @@ export const db = getFirestore(app); // Export db as a named export
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// Connect to Firebase Functions emulator for local development
-if (process.env.NODE_ENV === 'development') {
+// Connect to Firebase Emulators for local development
+const isEmulator = process.env.NODE_ENV === 'development' || process.env.REACT_APP_USE_FIREBASE_EMULATOR === 'true';
+
+if (isEmulator) {
+  console.log('🔧 Connecting to Firebase Emulators...');
+  
   try {
+    // Connect Auth Emulator
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    console.log('✅ Connected to Firebase Auth emulator');
+  } catch (error) {
+    console.log('📝 Auth emulator already connected or not available');
+  }
+  
+  try {
+    // Connect Firestore Emulator
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    console.log('✅ Connected to Firebase Firestore emulator');
+  } catch (error) {
+    console.log('📝 Firestore emulator already connected or not available');
+  }
+  
+  try {
+    // Connect Functions Emulator
     connectFunctionsEmulator(functions, 'localhost', 5001);
-    console.log('🔧 Connected to Firebase Functions emulator');
+    console.log('✅ Connected to Firebase Functions emulator');
   } catch (error) {
     console.log('📝 Functions emulator already connected or not available');
   }
+  
+  console.log('🎯 All Firebase services connected to emulators!');
+} else {
+  console.log('🌐 Using production Firebase services');
 }
 
 export const setupTestData = async () => {
