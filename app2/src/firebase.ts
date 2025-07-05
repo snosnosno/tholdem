@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, collection, getDocs, writeBatch, getDoc, setDoc, updateDoc, arrayUnion, query, where, orderBy, limit, startAfter, Timestamp, Query } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import type { JobPostingFilters } from './hooks/useJobPostings';
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -21,6 +21,16 @@ export const auth = getAuth(app);
 export const db = getFirestore(app); // Export db as a named export
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
+
+// Connect to Firebase Functions emulator for local development
+if (process.env.NODE_ENV === 'development') {
+  try {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log('🔧 Connected to Firebase Functions emulator');
+  } catch (error) {
+    console.log('📝 Functions emulator already connected or not available');
+  }
+}
 
 export const setupTestData = async () => {
   const tablesCollectionRef = collection(db, 'tables');
