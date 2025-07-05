@@ -1,1 +1,130 @@
-import React, { useState } from 'react';\nimport { httpsCallable } from 'firebase/functions';\nimport { QRCodeSVG } from 'qrcode.react';\nimport { useTranslation } from 'react-i18next';\nimport { functions } from '../firebase';\nimport Modal from './Modal';\nimport { useToast } from '../hooks/useToast';\n\ninterface QRCodeGeneratorModalProps {\n  isOpen: boolean;\n  onClose: () => void;\n  eventId?: string;\n  title?: string;\n  description?: string;\n}\n\nconst QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({\n  isOpen,\n  onClose,\n  eventId = 'default-event',\n  title,\n  description\n}) => {\n  const { t } = useTranslation();\n  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);\n  const [isGenerating, setIsGenerating] = useState(false);\n  const { showToast } = useToast();\n\n  const handleGenerateQrCode = async () => {\n    if (!eventId) {\n      showToast(t('attendance.messages.attendanceError'), 'error');\n      return;\n    }\n\n    setIsGenerating(true);\n    try {\n      const generateTokenFunc = httpsCallable(functions, 'generateQrCodeToken');\n      const result = await generateTokenFunc({ eventId });\n      const token = (result.data as { token: string }).token;\n      \n      if (token) {\n        const qrUrl = `${window.location.origin}/attend/${token}`;\n        setQrCodeValue(qrUrl);\n        showToast(t('attendance.messages.qrCodeGenerated'), 'success');\n      } else {\n        throw new Error('Token was not generated.');\n      }\n    } catch (error) {\n      console.error('Error generating QR code:', error);\n      showToast(t('attendance.messages.attendanceError'), 'error');\n    } finally {\n      setIsGenerating(false);\n    }\n  };\n\n  const handleClose = () => {\n    setQrCodeValue(null);\n    setIsGenerating(false);\n    onClose();\n  };\n\n  const modalTitle = title || t('attendance.actions.generateQR');\n  const modalDescription = description || t('eventDetail.qrModalDescription');\n\n  return (\n    <Modal \n      isOpen={isOpen} \n      onClose={handleClose} \n      title={modalTitle}\n    >\n      <div className=\"p-6 flex flex-col items-center\">\n        <p className=\"mb-6 text-center text-gray-600\">{modalDescription}</p>\n        \n        {!qrCodeValue && !isGenerating && (\n          <button\n            onClick={handleGenerateQrCode}\n            className=\"mb-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium\"\n          >\n            {t('attendance.actions.generateQR')}\n          </button>\n        )}\n        \n        {isGenerating && (\n          <div className=\"mb-6 flex items-center space-x-2\">\n            <div className=\"animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500\"></div>\n            <span className=\"text-gray-600\">{t('eventDetail.qrGenerating')}</span>\n          </div>\n        )}\n        \n        {qrCodeValue && (\n          <div className=\"mb-6\">\n            <div className=\"p-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm\">\n              <QRCodeSVG \n                value={qrCodeValue} \n                size={256}\n                level=\"M\"\n                includeMargin\n              />\n            </div>\n            <p className=\"mt-4 text-sm text-gray-500 text-center max-w-xs\">\n              {t('attendancePage.success')}\n            </p>\n          </div>\n        )}\n        \n        <div className=\"flex justify-end space-x-3 w-full\">\n          {qrCodeValue && (\n            <button\n              onClick={() => {\n                setQrCodeValue(null);\n                setIsGenerating(false);\n              }}\n              className=\"px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors\"\n            >\n              새로 생성\n            </button>\n          )}\n          <button\n            onClick={handleClose}\n            className=\"px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors\"\n          >\n            {t('common.cancel')}\n          </button>\n        </div>\n      </div>\n    </Modal>\n  );\n};\n\nexport default QRCodeGeneratorModal;"
+import React, { useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { QRCodeSVG } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
+import { functions } from '../firebase';
+import Modal from './Modal';
+import { useToast } from '../hooks/useToast';
+
+interface QRCodeGeneratorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  eventId?: string;
+  title?: string;
+  description?: string;
+}
+
+const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
+  isOpen,
+  onClose,
+  eventId = 'default-event',
+  title,
+  description
+}) => {
+  const { t } = useTranslation();
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { showSuccess, showError } = useToast();
+
+  const handleGenerateQrCode = async () => {
+    if (!eventId) {
+            showError(t('attendance.messages.attendanceError'));
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const generateTokenFunc = httpsCallable(functions, 'generateQrCodeToken');
+      const result = await generateTokenFunc({ eventId });
+      const token = (result.data as { token: string }).token;
+      
+      if (token) {
+        const qrUrl = `${window.location.origin}/attend/${token}`;
+        setQrCodeValue(qrUrl);
+                showSuccess(t('attendance.messages.qrCodeGenerated'));
+      } else {
+        throw new Error('Token was not generated.');
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+            showError(t('attendance.messages.attendanceError'));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleClose = () => {
+    setQrCodeValue(null);
+    setIsGenerating(false);
+    onClose();
+  };
+
+  const modalTitle = title || t('attendance.actions.generateQR');
+  const modalDescription = description || t('eventDetail.qrModalDescription');
+
+  return (
+    <Modal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      title={modalTitle}
+    >
+      <div className="p-6 flex flex-col items-center">
+        <p className="mb-6 text-center text-gray-600">{modalDescription}</p>
+        
+        {!qrCodeValue && !isGenerating && (
+          <button
+            onClick={handleGenerateQrCode}
+            className="mb-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+          >
+            {t('attendance.actions.generateQR')}
+          </button>
+        )}
+        
+        {isGenerating && (
+          <div className="mb-6 flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <span className="text-gray-600">{t('eventDetail.qrGenerating')}</span>
+          </div>
+        )}
+        
+        {qrCodeValue && (
+          <div className="mb-6">
+            <div className="p-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm">
+              <QRCodeSVG 
+                value={qrCodeValue} 
+                size={256}
+                level="M"
+                includeMargin
+              />
+            </div>
+            <p className="mt-4 text-sm text-gray-500 text-center max-w-xs">
+              {t('attendancePage.success')}
+            </p>
+          </div>
+        )}
+        
+        <div className="flex justify-end space-x-3 w-full">
+          {qrCodeValue && (
+            <button
+              onClick={() => {
+                setQrCodeValue(null);
+                setIsGenerating(false);
+              }}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              새로 생성
+            </button>
+          )}
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            {t('common.cancel')}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+export default QRCodeGeneratorModal;
