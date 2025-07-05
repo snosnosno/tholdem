@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import AttendanceStatusCard from '../components/AttendanceStatusCard';
 import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
+import QRCodeGeneratorModal from '../components/QRCodeGeneratorModal';
 
 // 업무 역할 정의
 type JobRole = 
@@ -91,6 +92,9 @@ const StaffListPage: React.FC = () => {
   const [editingCell, setEditingCell] = useState<{ rowId: string; field: keyof StaffData } | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   const [tempStaffData, setTempStaffData] = useState<StaffData[]>([]);
+  
+  // QR 코드 생성 모달 관련 states
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   
   // 스태프 추가 모달 관련 states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -649,7 +653,13 @@ const StaffListPage: React.FC = () => {
           className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap"
         >
           + 추가
-        </button>
+          </button>
+          <button
+          onClick={() => setIsQrModalOpen(true)}
+          className="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+          >
+          {t('attendance.actions.generateQR')}
+          </button>
         </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -883,10 +893,19 @@ const StaffListPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    )}
-    </>
-  );
-};
-
-export default StaffListPage;
+        </div>
+        )}
+        
+        {/* QR 코드 생성 모달 */}
+        <QRCodeGeneratorModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        eventId="default-event"
+        title={t('attendance.actions.generateQR')}
+        description="스태프들이 출석 체크를 할 수 있는 QR 코드를 생성합니다."
+        />
+        </>
+        );
+        };
+        
+        export default StaffListPage;
