@@ -8,8 +8,9 @@ import AttendanceStatusCard from '../components/AttendanceStatusCard';
 import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
 import QRCodeGeneratorModal from '../components/QRCodeGeneratorModal';
 import WorkTimeEditor from '../components/WorkTimeEditor';
-// import { AttendanceExceptionHandler } from '../components/AttendanceExceptionHandler';
-// import { attendanceExceptionDetector, getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
+import { AttendanceExceptionHandler } from '../components/AttendanceExceptionHandler';
+import { attendanceExceptionDetector, getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
+import { FaTimes } from 'react-icons/fa';
 
 // 업무 역할 정의
 type JobRole = 
@@ -763,6 +764,7 @@ const StaffListPage: React.FC = () => {
                           scheduledStartTime={attendanceRecord.scheduledStartTime}
                           scheduledEndTime={attendanceRecord.scheduledEndTime}
                           size="sm"
+                          exception={attendanceRecord.workLog?.exception}
                         />
                       ) : (
                         <AttendanceStatusCard
@@ -773,8 +775,26 @@ const StaffListPage: React.FC = () => {
                     })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {/* 예외 상황 처리 기능 - 개발 중 */}
-                    <span className="text-gray-400 text-xs">개발 중</span>
+                    {/* 예외 상황 처리 기능 */}
+                    {(() => {
+                      const record = attendanceRecords.find(r => r.staffId === staff.id);
+                      if (record?.workLog?.exception) {
+                        const exceptionType = record.workLog.exception.type;
+                        const exceptionIcon = getExceptionIcon(exceptionType);
+                        const severity = getExceptionSeverity(exceptionType);
+                        return (
+                          <div className="flex items-center gap-1">
+                            <span className={`text-${severity === 'high' ? 'red' : severity === 'medium' ? 'yellow' : 'orange'}-500`}>
+                              {exceptionIcon}
+                            </span>
+                            <span className="text-xs text-gray-600">
+                              {t(`exceptions.types.${exceptionType}`)}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return <span className="text-gray-400 text-xs">정상</span>;
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <button
@@ -987,9 +1007,31 @@ const StaffListPage: React.FC = () => {
           onClose={() => setIsWorkTimeEditorOpen(false)}
           workLog={selectedWorkLog}
           onUpdate={handleWorkTimeUpdate}
-        />
-        
-        {/* 예외 상황 처리 모달 - 개발 중 */}
+          />
+          
+          {selectedExceptionWorkLog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">{t('exceptions.title', '예외 상황 처리')}</h3>
+                <button
+                  onClick={() => {
+                    setIsExceptionModalOpen(false);
+                    setSelectedExceptionWorkLog(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              
+              <AttendanceExceptionHandler
+                workLog={selectedExceptionWorkLog}
+                onExceptionUpdated={handleExceptionUpdate}
+              />
+            </div>
+          </div>
+        )}
         </>
         );
         };

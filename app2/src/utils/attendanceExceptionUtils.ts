@@ -70,9 +70,8 @@ export const getExceptionIcon = (type: ExceptionType): string => {
     default: return '⚠️';
   }
 };
-
-export const getExceptionSeverity = (exception: AttendanceException): 'low' | 'medium' | 'high' => {
-  switch (exception.type) {
+export const getExceptionSeverity = (type: ExceptionType): 'low' | 'medium' | 'high' => {
+  switch (type) {
     case 'absence': return 'high';
     case 'late': return 'medium';
     case 'early_leave': return 'medium';
