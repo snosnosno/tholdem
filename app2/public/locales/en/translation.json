@@ -944,6 +944,30 @@
       "note": "Note",
       "updateSuccess": "Exception updated successfully",
       "updateError": "Failed to update exception"
+    },
+    "payroll": {
+      "calculate": "Calculate Payroll",
+      "generating": "Generating Payroll...",
+      "export": "Export Payroll CSV",
+      "noDataToExport": "No payroll data to export.",
+      "summary": {
+        "title": "Payroll Summary",
+        "totalHours": "Total Hours",
+        "regularHours": "Regular",
+        "overtimeHours": "Overtime",
+        "totalPay": "Total Pay",
+        "basePay": "Base Pay",
+        "exceptions": "Exceptions",
+        "deductions": "Deductions"
+      },
+      "details": {
+        "title": "Staff Payroll Details",
+        "staffName": "Staff Name",
+        "workHours": "Work Hours",
+        "overtime": "Overtime",
+        "exceptions": "Exceptions",
+        "totalPay": "Total Pay"
+      }
     }
     }
     }

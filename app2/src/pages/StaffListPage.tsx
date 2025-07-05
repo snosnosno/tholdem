@@ -11,6 +11,9 @@ import WorkTimeEditor from '../components/WorkTimeEditor';
 import { AttendanceExceptionHandler } from '../components/AttendanceExceptionHandler';
 import { attendanceExceptionDetector, getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
 import { FaTimes } from 'react-icons/fa';
+import { usePayrollData } from '../hooks/usePayrollData';
+import { PayrollCalculationData } from '../utils/payroll/types';
+import PayrollSummaryModal from '../components/PayrollSummaryModal';
 
 // 업무 역할 정의
 type JobRole = 
@@ -85,6 +88,18 @@ const StaffListPage: React.FC = () => {
     eventId: 'default-event',
     date: new Date().toISOString().split('T')[0] 
   });
+  
+  // 급여 데이터 관리
+  const {
+    generatePayrollFromWorkLogs,
+    payrollData: generatedPayrollData,
+    summary: payrollSummary,
+    loading: payrollLoading,
+    error: payrollError,
+    exportToCSV
+  } = usePayrollData({
+    eventId: 'default-event'
+  });
 
   // States for filtering and sorting
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,6 +122,11 @@ const StaffListPage: React.FC = () => {
   // 예외 상황 처리 모달 관련 states
   const [isExceptionModalOpen, setIsExceptionModalOpen] = useState(false);
   const [selectedExceptionWorkLog, setSelectedExceptionWorkLog] = useState<any | null>(null);
+  
+  // 급여 처리 관련 states
+  const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
+  const [payrollData, setPayrollData] = useState<PayrollCalculationData[]>([]);
+  const [isGeneratingPayroll, setIsGeneratingPayroll] = useState(false);
   
   // 스태프 추가 모달 관련 states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -314,6 +334,39 @@ const StaffListPage: React.FC = () => {
     console.log('예외 상황이 업데이트되었습니다:', updatedWorkLog);
     setIsExceptionModalOpen(false);
     setSelectedExceptionWorkLog(null);
+  };
+  
+  // 급여 처리 관련 함수들
+  const handleGeneratePayroll = async () => {
+    setIsGeneratingPayroll(true);
+    try {
+      const currentDate = new Date().toISOString().split('T')[0];
+      await generatePayrollFromWorkLogs('default-event', currentDate, currentDate);
+      setPayrollData(generatedPayrollData);
+      setIsPayrollModalOpen(true);
+    } catch (error) {
+      console.error('급여 데이터 생성 오류:', error);
+    } finally {
+      setIsGeneratingPayroll(false);
+    }
+  };
+  
+  const handleExportPayrollCSV = () => {
+    if (payrollData.length === 0) {
+      alert(t('payroll.noDataToExport', '내보낼 급여 데이터가 없습니다.'));
+      return;
+    }
+    
+    const csvData = exportToCSV();
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `payroll_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
   
   // 스태프 추가 모달 열기
@@ -716,6 +769,20 @@ const StaffListPage: React.FC = () => {
           >
           {t('attendance.actions.generateQR')}
           </button>
+          <button
+            onClick={handleGeneratePayroll}
+            disabled={isGeneratingPayroll}
+            className="w-full md:w-auto px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGeneratingPayroll ? t('payroll.generating', '급여 계산중...') : t('payroll.calculate', '급여 계산')}
+          </button>
+          <button
+            onClick={handleExportPayrollCSV}
+            disabled={payrollData.length === 0 || payrollLoading}
+            className="w-full md:w-auto px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t('payroll.export', '급여 CSV 내보내기')}
+          </button>
         </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -1032,6 +1099,16 @@ const StaffListPage: React.FC = () => {
             </div>
           </div>
         )}
+        
+        
+        {/* 급여 계산 요약 모달 */}
+        <PayrollSummaryModal
+          isOpen={isPayrollModalOpen}
+          onClose={() => setIsPayrollModalOpen(false)}
+          payrollData={payrollData}
+          summary={payrollSummary}
+          onExport={handleExportPayrollCSV}
+        />
         </>
         );
         };

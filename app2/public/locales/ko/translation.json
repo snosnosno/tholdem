@@ -952,5 +952,29 @@
     "note": "메모",
     "updateSuccess": "예외 상황이 업데이트되었습니다",
     "updateError": "예외 상황 업데이트에 실패했습니다"
+    },
+    "payroll": {
+      "calculate": "급여 계산",
+      "generating": "급여 계산중...",
+      "export": "급여 CSV 내보내기",
+      "noDataToExport": "내보낼 급여 데이터가 없습니다.",
+      "summary": {
+        "title": "급여 계산 요약",
+        "totalHours": "총 근무시간",
+        "regularHours": "정규",
+        "overtimeHours": "초과",
+        "totalPay": "총 급여",
+        "basePay": "기본급",
+        "exceptions": "예외 사항",
+        "deductions": "공제액"
+      },
+      "details": {
+        "title": "스태프별 급여 상세",
+        "staffName": "스태프명",
+        "workHours": "근무시간",
+        "overtime": "초과근무",
+        "exceptions": "예외사항",
+        "totalPay": "총 급여"
+      }
     }
     }
