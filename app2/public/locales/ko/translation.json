@@ -870,6 +870,40 @@
     "assignedDealer": "명 배정됨",
     "minuteInterval": "분 간격"
   },
+  "attendance": {
+    "status": {
+      "not_started": "출근 전",
+      "checked_in": "출근 중",
+      "checked_out": "퇴근",
+      "absent": "결근"
+    },
+    "labels": {
+      "checkIn": "출근 시간",
+      "checkOut": "퇴근 시간",
+      "scheduled": "예정 시간",
+      "actual": "실제 시간",
+      "totalHours": "총 근무 시간",
+      "attendanceStatus": "출석 상태",
+      "workingHours": "근무 시간",
+      "breakTime": "휴식 시간"
+    },
+    "actions": {
+      "checkIn": "출근 체크",
+      "checkOut": "퇴근 체크",
+      "editTime": "시간 수정",
+      "generateQR": "QR 생성",
+      "scanQR": "QR 스캔"
+    },
+    "messages": {
+      "checkInSuccess": "출근이 성공적으로 기록되었습니다!",
+      "checkOutSuccess": "퇴근이 성공적으로 기록되었습니다!",
+      "alreadyCheckedIn": "이미 출근 체크가 완료되었습니다.",
+      "alreadyCheckedOut": "이미 퇴근 체크가 완료되었습니다.",
+      "qrCodeGenerated": "QR 코드가 생성되었습니다.",
+      "attendanceError": "출석 기록 중 오류가 발생했습니다.",
+      "timeUpdated": "시간이 성공적으로 수정되었습니다."
+    }
+  },
   "errors": {
     "title": "오류가 발생했습니다",
     "general": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",

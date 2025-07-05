@@ -852,6 +852,40 @@
     "assignedDealer": "assigned",
     "minuteInterval": "minute interval"
     },
+    "attendance": {
+      "status": {
+        "not_started": "Not Started",
+        "checked_in": "Checked In",
+        "checked_out": "Checked Out",
+        "absent": "Absent"
+      },
+      "labels": {
+        "checkIn": "Check In Time",
+        "checkOut": "Check Out Time",
+        "scheduled": "Scheduled Time",
+        "actual": "Actual Time",
+        "totalHours": "Total Hours",
+        "attendanceStatus": "Attendance Status",
+        "workingHours": "Working Hours",
+        "breakTime": "Break Time"
+      },
+      "actions": {
+        "checkIn": "Check In",
+        "checkOut": "Check Out",
+        "editTime": "Edit Time",
+        "generateQR": "Generate QR",
+        "scanQR": "Scan QR"
+      },
+      "messages": {
+        "checkInSuccess": "Check-in recorded successfully!",
+        "checkOutSuccess": "Check-out recorded successfully!",
+        "alreadyCheckedIn": "Already checked in.",
+        "alreadyCheckedOut": "Already checked out.",
+        "qrCodeGenerated": "QR code generated.",
+        "attendanceError": "Error occurred while recording attendance.",
+        "timeUpdated": "Time updated successfully."
+      }
+    },
     "errors": {
     "title": "An error has occurred",
     "general": "A temporary error has occurred. Please try again later.",

@@ -4,6 +4,8 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, documentId, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import AttendanceStatusCard from '../components/AttendanceStatusCard';
+import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
 
 // 업무 역할 정의
 type JobRole = 
@@ -50,7 +52,7 @@ interface UserData {
   history?: string;
   notes?: string;
 }
-interface JobPosting {
+interface StaffJobPosting {
   id: string;
   title: string;
   confirmedStaff?: { userId: string; role: string; timeSlot: string; }[];
@@ -64,9 +66,20 @@ const StaffListPage: React.FC = () => {
   const { currentUser } = useAuth();
   
   const [staffData, setStaffData] = useState<StaffData[]>([]);
-  const [jobPostings, setJobPostings] = useState<Pick<JobPosting, 'id' | 'title'>[]>([]);
+  const [jobPostings, setJobPostings] = useState<Pick<StaffJobPosting, 'id' | 'title'>[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 출석 상태 관리
+  const { 
+    attendanceRecords, 
+    loading: attendanceLoading, 
+    error: attendanceError,
+    getStaffAttendanceStatus 
+  } = useAttendanceStatus({ 
+    eventId: 'default-event',
+    date: new Date().toISOString().split('T')[0] 
+  });
 
   // States for filtering and sorting
   const [searchTerm, setSearchTerm] = useState('');
@@ -655,6 +668,7 @@ const StaffListPage: React.FC = () => {
                 <TableHeader label={t('profilePage.nationality')} />
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.history')}</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('profilePage.notes')}</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">출석 상태</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
@@ -672,8 +686,28 @@ const StaffListPage: React.FC = () => {
                   <EditableCell staff={staff} field="nationality" value={staff.nationality} />
                   <EditableCell staff={staff} field="history" value={staff.history} />
                   <EditableCell staff={staff} field="notes" value={staff.notes} />
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <button
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {(() => {
+                      const attendanceRecord = getStaffAttendanceStatus(staff.id);
+                      return attendanceRecord ? (
+                        <AttendanceStatusCard
+                          status={attendanceRecord.status}
+                          checkInTime={attendanceRecord.checkInTime}
+                          checkOutTime={attendanceRecord.checkOutTime}
+                          scheduledStartTime={attendanceRecord.scheduledStartTime}
+                          scheduledEndTime={attendanceRecord.scheduledEndTime}
+                          size="sm"
+                        />
+                      ) : (
+                        <AttendanceStatusCard
+                          status="not_started"
+                          size="sm"
+                        />
+                      );
+                    })()}
+                  </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <button
                       onClick={() => deleteStaff(staff.id)}
                       className="text-red-600 hover:text-red-900 font-medium"
                       title="스태프 삭제"
@@ -684,7 +718,7 @@ const StaffListPage: React.FC = () => {
                   </tr>
               )) : (
                <tr>
-                 <td colSpan={12} className="px-6 py-4 text-center text-sm text-gray-500">
+                 <td colSpan={13} className="px-6 py-4 text-center text-sm text-gray-500">
                    {t('staffListPage.noConfirmedStaff')}
                   </td>
                 </tr>
