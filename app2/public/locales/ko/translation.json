@@ -901,9 +901,28 @@
       "alreadyCheckedOut": "이미 퇴근 체크가 완료되었습니다.",
       "qrCodeGenerated": "QR 코드가 생성되었습니다.",
       "attendanceError": "출석 기록 중 오류가 발생했습니다.",
-      "timeUpdated": "시간이 성공적으로 수정되었습니다."
-    }
-  },
+      "timeUpdated": "시간이 성공적으로 수정되었습니다.",
+      "updateError": "시간 수정 중 오류가 발생했습니다."
+      },
+      "editWorkTime": "출퇴근 시간 수정",
+      "date": "날짜",
+      "eventId": "이벤트 ID",
+      "scheduledTimes": "예정 시간",
+      "scheduledStartTime": "예정 출근시간",
+      "scheduledEndTime": "예정 퇴근시간",
+      "actualTimes": "실제 시간",
+      "actualStartTime": "실제 출근시간",
+      "actualEndTime": "실제 퇴근시간",
+      "workTimeSummary": "근무시간 요약",
+      "scheduledMinutes": "예정 근무시간",
+      "actualMinutes": "실제 근무시간",
+      "validation": {
+      "startTimeRequired": "출근시간을 입력해주세요.",
+      "endTimeRequired": "퇴근시간을 입력해주세요.",
+      "invalidTimeFormat": "올바른 시간 형식(HH:MM)을 입력해주세요.",
+      "endTimeAfterStart": "퇴근시간은 출근시간보다 늦어야 합니다."
+      }
+      },
   "errors": {
     "title": "오류가 발생했습니다",
     "general": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
@@ -913,5 +932,25 @@
     "retry": "다시 시도",
     "refresh": "페이지 새로고침",
     "details": "개발자 정보 보기"
-  }
-}
+    },
+    "exceptions": {
+    "late": {
+      "description": "지각 ({{minutes}}분 늦음)"
+    },
+    "earlyLeave": {
+      "description": "조퇴 ({{minutes}}분 일찍 퇴근)"
+    },
+    "absence": {
+      "description": "출근 기록이 없습니다"
+    },
+    "overtime": {
+      "description": "초과근무 ({{minutes}}분 초과)"
+    },
+    "managerNote": "매니저 메모",
+    "managerNotePlaceholder": "예외 상황에 대한 설명을 입력하세요...",
+    "edit": "수정",
+    "note": "메모",
+    "updateSuccess": "예외 상황이 업데이트되었습니다",
+    "updateError": "예외 상황 업데이트에 실패했습니다"
+    }
+    }

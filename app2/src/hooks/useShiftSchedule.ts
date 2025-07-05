@@ -3,6 +3,8 @@ import { db } from '../firebase';
 import { collection, doc, onSnapshot, query, where, updateDoc, setDoc, serverTimestamp, Timestamp, addDoc, getDocs } from 'firebase/firestore';
 import { generateTimeSlots as utilGenerateTimeSlots, convertAssignmentData } from '../utils/timeUtils';
 import { validateSchedule, ValidationResult, ValidationSettings, DEFAULT_VALIDATION_SETTINGS, DealerSchedule } from '../utils/shiftValidation';
+import { AttendanceException } from '../types/attendance';
+
 
 // ShiftSchedule 데이터 구조 정의
 export interface ShiftSchedule {
@@ -27,7 +29,7 @@ export interface ShiftSchedule {
 export interface ShiftDealer {
   id: string;
   name: string;
-  role: string;
+  jobRole?: string[]; // 직무 배열 (예: ['Dealer', 'Floor'])
   status?: 'on_table' | 'available' | 'on_break';
   assignedTableId?: string;
   photoURL?: string;
@@ -49,6 +51,7 @@ export interface WorkLog {
   totalBreakMinutes: number; // 총 휴식시간 (분)
   tableAssignments: string[]; // 배정된 테이블 목록
   status: 'scheduled' | 'in_progress' | 'completed'; // 상태
+  exception?: AttendanceException; // 예외 상황 (지각, 조퇴, 결근 등)
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
