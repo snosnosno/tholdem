@@ -13,7 +13,7 @@ export const generateSearchIndex = (title: string, description: string): string[
     .filter(word => word.length > 1); // Filter out single characters
   
   // Remove duplicates
-  return [...new Set(words)];
+  return Array.from(new Set(words));
 };
 
 /**

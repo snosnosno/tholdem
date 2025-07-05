@@ -6,7 +6,7 @@ import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTranslation } from 'react-i18next';
 
-import { db, functions } from '../../firebase';
+import { db, functions, promoteToStaff } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Modal from '../../components/Modal';
 import { httpsCallable } from 'firebase/functions';
@@ -20,7 +20,9 @@ interface EventData {
   status: string;
   assignedDealers: { id: string; name: string; }[];
   qrCodeToken?: string;
+  managerId?: string;
 }
+
 
 interface Dealer {
     id: string;
@@ -128,19 +130,34 @@ const EventDetailPage: React.FC = () => {
   };
 
   const handleAssignDealer = async (dealerId: string) => {
-    if (!eventId) return;
+    if (!eventId || !event || !currentUser) return;
     const selectedDealer = availableDealers.find(d => d.id === dealerId);
     if (!selectedDealer) return;
-
-    const eventRef = doc(db, 'events', eventId);
+  
     try {
+      // 먼저 Staff 정보를 업데이트/생성합니다.
+      const managerId = event.managerId || currentUser.uid;
+      console.log('🔍 EventDetailPage - 지원자 확정 시도:', {
+        dealerId: selectedDealer.id,
+        dealerName: selectedDealer.name,
+        eventId,
+        managerId,
+        eventManagerId: event.managerId,
+        currentUserId: currentUser.uid
+      });
+      
+      await promoteToStaff(selectedDealer.id, selectedDealer.name, 'Dealer', eventId, managerId);
+      console.log('✅ promoteToStaff 성공!');
+    
+      // 기존 로직: 이벤트에 딜러를 배정합니다.
+      const eventRef = doc(db, 'events', eventId);
       await updateDoc(eventRef, {
         assignedDealers: arrayUnion({
             id: selectedDealer.id,
             name: selectedDealer.name
         })
-      });
-      console.log("Dealer assigned successfully");
+        });
+        console.log("Dealer assigned successfully");
       setModalOpen(false);
     } catch (error) {
       console.error("Error assigning dealer: ", error);

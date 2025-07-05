@@ -9,7 +9,7 @@ import { useAttendanceStatus } from '../hooks/useAttendanceStatus';
 import QRCodeGeneratorModal from '../components/QRCodeGeneratorModal';
 import WorkTimeEditor from '../components/WorkTimeEditor';
 import { AttendanceExceptionHandler } from '../components/AttendanceExceptionHandler';
-import { attendanceExceptionDetector, getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
+import { getExceptionIcon, getExceptionSeverity } from '../utils/attendanceExceptionUtils';
 import { FaTimes } from 'react-icons/fa';
 import { usePayrollData } from '../hooks/usePayrollData';
 import { PayrollCalculationData } from '../utils/payroll/types';

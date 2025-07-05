@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logActionHttp = exports.logAction = exports.deleteUser = exports.updateUser = exports.getDashboardStats = exports.onUserRoleChange = exports.createUserData = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
+exports.logActionHttp = exports.logAction = exports.deleteUser = exports.updateUser = exports.getDashboardStats = exports.onUserRoleChange = exports.createUserData = exports.createUserAccount = exports.processRegistration = exports.requestRegistration = exports.migrateJobPostings = exports.submitDealerRating = exports.getPayrolls = exports.calculatePayrollsForEvent = exports.recordAttendance = exports.generateEventQrToken = exports.assignDealerToEvent = exports.matchDealersToEvent = exports.validateJobPostingData = exports.onJobPostingCreated = exports.onApplicationStatusChange = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const cors_1 = __importDefault(require("cors"));
@@ -39,6 +39,62 @@ const corsHandler = (0, cors_1.default)({ origin: true });
 // --- Existing Functions (placeholders for brevity) ---
 exports.onApplicationStatusChange = functions.firestore.document('applications/{applicationId}').onUpdate(async (change, context) => { });
 exports.onJobPostingCreated = functions.firestore.document("jobPostings/{postId}").onCreate(async (snap, context) => { });
+/**
+ * Firestore trigger that automatically validates and fixes job posting data
+ * when a new job posting is created or updated
+ */
+exports.validateJobPostingData = functions.firestore.document("jobPostings/{postId}").onWrite(async (change, context) => {
+    const postId = context.params.postId;
+    // Skip if document was deleted
+    if (!change.after.exists) {
+        return;
+    }
+    const data = change.after.data();
+    if (!data)
+        return;
+    let needsUpdate = false;
+    const updates = {};
+    // Auto-generate requiredRoles if missing
+    if (!data.requiredRoles && data.timeSlots) {
+        const requiredRoles = Array.from(new Set(data.timeSlots.flatMap((ts) => ts.roles ? ts.roles.map((r) => r.name) : [])));
+        updates.requiredRoles = requiredRoles;
+        needsUpdate = true;
+        functions.logger.info(`Auto-generating requiredRoles for post ${postId}:`, requiredRoles);
+    }
+    // Auto-generate searchIndex if missing
+    if (!data.searchIndex) {
+        const searchIndex = [
+            data.title || '',
+            data.location || '',
+            data.description || '',
+            ...(updates.requiredRoles || data.requiredRoles || [])
+        ].join(' ').toLowerCase().split(/\s+/).filter(word => word.length > 0);
+        updates.searchIndex = searchIndex;
+        needsUpdate = true;
+        functions.logger.info(`Auto-generating searchIndex for post ${postId}`);
+    }
+    // Convert string dates to Timestamp if needed
+    if (data.startDate && typeof data.startDate === 'string') {
+        updates.startDate = admin.firestore.Timestamp.fromDate(new Date(data.startDate));
+        needsUpdate = true;
+        functions.logger.info(`Converting startDate to Timestamp for post ${postId}`);
+    }
+    if (data.endDate && typeof data.endDate === 'string') {
+        updates.endDate = admin.firestore.Timestamp.fromDate(new Date(data.endDate));
+        needsUpdate = true;
+        functions.logger.info(`Converting endDate to Timestamp for post ${postId}`);
+    }
+    // Apply updates if needed
+    if (needsUpdate) {
+        try {
+            await change.after.ref.update(updates);
+            functions.logger.info(`Auto-fixed job posting ${postId}`, updates);
+        }
+        catch (error) {
+            functions.logger.error(`Failed to auto-fix job posting ${postId}:`, error);
+        }
+    }
+});
 exports.matchDealersToEvent = functions.https.onCall(async (data, context) => { });
 exports.assignDealerToEvent = functions.https.onCall(async (data, context) => { });
 exports.generateEventQrToken = functions.https.onCall(async (data, context) => { });
@@ -46,6 +102,81 @@ exports.recordAttendance = functions.https.onCall(async (data, context) => { });
 exports.calculatePayrollsForEvent = functions.https.onCall(async (data, context) => { });
 exports.getPayrolls = functions.https.onCall(async (data, context) => { });
 exports.submitDealerRating = functions.https.onCall(async (data, context) => { });
+// --- Data Migration Functions ---
+/**
+ * Migrates existing job postings to include requiredRoles and proper date formats
+ * Only callable by admin users
+ */
+exports.migrateJobPostings = functions.https.onCall(async (data, context) => {
+    var _a, _b;
+    // Check admin permissions
+    if (((_b = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.role) !== 'admin') {
+        throw new functions.https.HttpsError('permission-denied', 'Only admins can run data migrations.');
+    }
+    functions.logger.info("Starting job postings migration...");
+    try {
+        const jobPostingsRef = db.collection('jobPostings');
+        const snapshot = await jobPostingsRef.get();
+        let migratedCount = 0;
+        let skippedCount = 0;
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            const data = doc.data();
+            let needsUpdate = false;
+            const updates = {};
+            // Check if requiredRoles field is missing
+            if (!data.requiredRoles && data.timeSlots) {
+                const requiredRoles = Array.from(new Set(data.timeSlots.flatMap((ts) => ts.roles ? ts.roles.map((r) => r.name) : [])));
+                updates.requiredRoles = requiredRoles;
+                needsUpdate = true;
+            }
+            // Check if searchIndex field is missing
+            if (!data.searchIndex) {
+                const searchIndex = [
+                    data.title || '',
+                    data.location || '',
+                    data.description || '',
+                    ...(updates.requiredRoles || data.requiredRoles || [])
+                ].join(' ').toLowerCase().split(/\s+/).filter(word => word.length > 0);
+                updates.searchIndex = searchIndex;
+                needsUpdate = true;
+            }
+            // Check if dates need conversion to Timestamp
+            if (data.startDate && typeof data.startDate === 'string') {
+                updates.startDate = admin.firestore.Timestamp.fromDate(new Date(data.startDate));
+                needsUpdate = true;
+            }
+            if (data.endDate && typeof data.endDate === 'string') {
+                updates.endDate = admin.firestore.Timestamp.fromDate(new Date(data.endDate));
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                batch.update(doc.ref, updates);
+                migratedCount++;
+            }
+            else {
+                skippedCount++;
+            }
+        });
+        if (migratedCount > 0) {
+            await batch.commit();
+        }
+        functions.logger.info(`Migration completed: ${migratedCount} updated, ${skippedCount} skipped`);
+        return {
+            success: true,
+            message: `Migration completed successfully`,
+            stats: {
+                total: snapshot.docs.length,
+                migrated: migratedCount,
+                skipped: skippedCount
+            }
+        };
+    }
+    catch (error) {
+        functions.logger.error("Migration failed:", error);
+        throw new functions.https.HttpsError('internal', 'Migration failed', error.message);
+    }
+});
 // --- Authentication and Role Management Functions ---
 /**
  * Handles a new user registration request.
@@ -59,10 +190,10 @@ exports.requestRegistration = functions.https.onCall(async (data) => {
     if (!email || !password || !name || !role) {
         functions.logger.error("Validation failed: Missing required fields.", { data });
         throw new functions.https.HttpsError('invalid-argument', 'Missing required fields for registration.');
-    }
-    if (role !== 'dealer' && role !== 'manager') {
-        functions.logger.error("Validation failed: Invalid role.", { role });
-        throw new functions.https.HttpsError('invalid-argument', 'Role must be either "dealer" or "manager".');
+        if (role !== 'staff' && role !== 'manager') {
+            functions.logger.error("Validation failed: Invalid role.", { role });
+            throw new functions.https.HttpsError('invalid-argument', 'Role must be either "staff" or "manager".');
+        }
     }
     try {
         const isManager = role === 'manager';
@@ -175,7 +306,7 @@ exports.createUserData = functions.auth.user().onCreate(async (user) => {
     const { uid, email, displayName, phoneNumber } = user;
     const userRef = db.collection("users").doc(uid);
     functions.logger.info(`New user: ${email} (UID: ${uid}). Parsing displayName: "${displayName}"`);
-    let initialRole = 'dealer';
+    let initialRole = 'staff';
     let finalDisplayName = "Unnamed User";
     let extraData = { phone: phoneNumber || null };
     if (displayName) {
@@ -241,22 +372,22 @@ exports.getDashboardStats = functions.https.onRequest((request, response) => {
         try {
             const now = new Date();
             const ongoingEventsQuery = db.collection("events").where("endDate", ">=", now);
-            const totalDealersQuery = db.collection("users").where("role", "==", "dealer");
-            const topDealersQuery = db.collection("users")
-                .where("role", "==", "dealer")
+            const totalStaffQuery = db.collection("users").where("role", "==", "staff");
+            const topStaffQuery = db.collection("users")
+                .where("role", "==", "staff")
                 .orderBy("rating", "desc")
                 .limit(5);
-            const [ongoingEventsSnapshot, totalDealersSnapshot, topDealersSnapshot,] = await Promise.all([
+            const [ongoingEventsSnapshot, totalStaffSnapshot, topStaffSnapshot,] = await Promise.all([
                 ongoingEventsQuery.get(),
-                totalDealersQuery.get(),
-                topDealersQuery.get(),
+                totalStaffQuery.get(),
+                topStaffQuery.get(),
             ]);
-            const topRatedDealers = topDealersSnapshot.docs.map((doc) => (Object.assign({ id: doc.id }, doc.data())));
+            const topRatedStaff = topStaffSnapshot.docs.map((doc) => (Object.assign({ id: doc.id }, doc.data())));
             response.status(200).send({
                 data: {
                     ongoingEventsCount: ongoingEventsSnapshot.size,
-                    totalDealersCount: totalDealersSnapshot.size,
-                    topRatedDealers,
+                    totalStaffCount: totalStaffSnapshot.size,
+                    topRatedStaff,
                 },
             });
         }

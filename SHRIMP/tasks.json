@@ -1,72 +1,200 @@
 {
   "tasks": [
     {
-      "id": "0f978810-89df-4e6f-9254-d440d18ce196",
-      "name": "[StaffListPage] 데이터 조회 로직 최적화 및 통합",
-      "description": "StaffListPage.tsx의 useEffect 훅 내 데이터 조회 로직을 최적화합니다. 모든 구인 공고(jobPostings)에서 확정된 스태프(confirmedStaff)의 ID를 모두 수집한 후, 단일 'in' 쿼리를 사용하여 모든 사용자 정보를 한 번에 가져옵니다. 최종적으로 사용자 정보, 배정 역할, 시간대, 소속 공고명을 통합하여 하나의 state 배열(staffData)에 저장합니다.",
+      "id": "6da6ba96-c01f-4bfb-b4f0-45c1bb86be94",
+      "name": "스태프관리 페이지 실시간 출석 현황 대시보드 구현",
+      "description": "StaffListPage에 실시간 출석 현황을 표시하는 대시보드 컴포넌트를 추가합니다. 각 스태프의 현재 출석 상태(출근 전/출근/퇴근)를 실시간으로 모니터링하고 표시합니다.",
+      "notes": "기존 useShiftSchedule 훅의 WorkLog 인터페이스 활용. Firebase onSnapshot으로 실시간 동기화. 출석 상태는 출근 전(gray), 출근 중(green), 퇴근(blue), 결근(red)으로 구분",
       "status": "completed",
       "dependencies": [],
-      "createdAt": "2025-06-30T16:17:43.281Z",
-      "updatedAt": "2025-06-30T16:18:34.679Z",
+      "createdAt": "2025-07-05T00:15:33.433Z",
+      "updatedAt": "2025-07-05T00:31:17.641Z",
       "relatedFiles": [
         {
-          "path": "C:\\Users\\user\\Desktop\\T-HOLDEM\\app2\\src\\pages\\StaffListPage.tsx",
+          "path": "app2/src/pages/StaffListPage.tsx",
           "type": "TO_MODIFY",
-          "description": "데이터 조회 로직을 수정하고 통합된 staffData state를 추가해야 하는 주 대상 파일입니다."
+          "description": "메인 스태프 관리 페이지",
+          "lineStart": 1,
+          "lineEnd": 858
+        },
+        {
+          "path": "app2/src/hooks/useShiftSchedule.ts",
+          "type": "REFERENCE",
+          "description": "WorkLog 인터페이스 및 데이터 구조",
+          "lineStart": 34,
+          "lineEnd": 54
+        },
+        {
+          "path": "app2/src/components",
+          "type": "CREATE",
+          "description": "AttendanceStatusCard 컴포넌트 생성 예정"
         }
       ],
-      "implementationGuide": "1. `useEffect` 내에서 현재 매니저의 `jobPostings`를 가져옵니다.\n2. 모든 `posting`의 `confirmedStaff`에서 `userId`를 추출하여 중복 제거된 `allUserIds` 배열을 만듭니다.\n3. `in` 쿼리로 `allUserIds`에 해당하는 `users` 정보를 한번에 가져와 `usersMap`을 생성합니다.\n4. `jobPostings`를 다시 순회하며 `usersMap`의 정보와 조합하여 최종 데이터를 만듭니다.\n5. 이 데이터를 `staffData`라는 새로운 state에 저장합니다.",
-      "verificationCriteria": "1. 페이지 로드 시 Firestore 읽기 횟수가 공고 수나 스태프 수에 비례하지 않고 거의 일정(2회 내외)하게 유지되어야 합니다.\n2. `staffData` state에 모든 확정된 스태프의 정보(이름, 이메일, 역할, 시간대, 소속 공고명 등)가 정확히 포함되어야 합니다.",
-      "summary": "`StaffListPage.tsx`의 데이터 조회 로직을 성공적으로 최적화했습니다. 여러 번의 Firestore 읽기를 유발하던 N+1 쿼리 문제를 해결하기 위해, 모든 `jobPosting`에서 필요한 `userId`를 수집한 후 단일 `in` 쿼리를 사용하여 모든 사용자 정보를 한 번에 효율적으로 가져오도록 수정했습니다. 또한, 사용자 정보, 역할, 시간대, 소속 공고명을 포함하는 통합된 `staffData` state를 도입하여 후속 UI 작업의 기반을 마련했습니다.",
-      "completedAt": "2025-06-30T16:18:34.678Z"
+      "implementationGuide": "1. AttendanceStatusCard 컴포넌트 생성\\n2. Firebase workLogs 컬렉션에서 당일 출석 데이터 실시간 구독\\n3. 스태프별 출석 상태 계산 로직 구현\\n4. StaffListPage 테이블에 출석 상태 컬럼 추가\\n5. 출석 상태별 색상 및 아이콘 표시",
+      "verificationCriteria": "1. StaffListPage에서 각 스태프의 실시간 출석 상태가 정확히 표시됨\\n2. 출석 상태 변경 시 UI가 자동으로 업데이트됨\\n3. 출석 상태별 색상과 아이콘이 직관적으로 표시됨\\n4. 성능 이슈 없이 실시간 동기화가 작동함",
+      "analysisResult": "스태프관리 페이지에 기존 QR 출석 시스템을 통합하여 포괄적인 근무 관리 기능을 구현. 기존 AttendancePage, EventDetailPage, useShiftSchedule 등의 완전히 구현된 기능들을 재사용하여 StaffListPage에 실시간 출석 현황, QR 관리, 시간 수정, 예외 처리, 급여 연동 기능을 단계적으로 통합.",
+      "summary": "스태프관리 페이지에 실시간 출석 현황 대시보드를 성공적으로 구현했습니다. AttendanceStatusCard 컴포넌트와 useAttendanceStatus 훅을 생성하여 Firebase 실시간 동기화를 통한 출석 상태 모니터링 기능을 완성했습니다. 4가지 출석 상태(출근전/출근중/퇴근/결근)의 색상 코딩과 다국어 지원이 포함되어 있으며, StaffListPage 테이블에 통합되어 매니저가 스태프들의 실시간 출석 현황을 한눈에 볼 수 있습니다.",
+      "completedAt": "2025-07-05T00:31:17.640Z"
     },
     {
-      "id": "0cbfee30-994b-4c27-9eb1-0b1630270469",
-      "name": "[StaffListPage] UI 구조 변경 (테이블 레이아웃)",
-      "description": "StaffListPage.tsx의 JSX 반환 부분을 수정하여, 기존의 리스트(ul/li) 구조를 <table> 기반의 테이블 레이아웃으로 변경합니다. 이 테이블은 필터링 및 정렬된 데이터를 표시할 수 있는 기본 구조를 갖추어야 합니다.",
+      "id": "ba1f7b80-7fc9-4268-9fa6-5a0d3f827dd2",
+      "name": "QR 코드 생성 및 관리 기능 통합",
+      "description": "매니저가 StaffListPage에서 직접 출석용 QR 코드를 생성하고 관리할 수 있는 기능을 구현합니다. EventDetailPage의 기존 QR 생성 로직을 재사용합니다.",
+      "notes": "기존 EventDetailPage 코드를 재사용하여 개발 시간 단축. QRCodeSVG 라이브러리 활용. 생성된 QR 코드는 현재 이벤트/날짜 기준으로 생성",
       "status": "completed",
       "dependencies": [
         {
-          "taskId": "0f978810-89df-4e6f-9254-d440d18ce196"
+          "taskId": "6da6ba96-c01f-4bfb-b4f0-45c1bb86be94"
         }
       ],
-      "createdAt": "2025-06-30T16:17:43.281Z",
-      "updatedAt": "2025-06-30T16:19:09.506Z",
+      "createdAt": "2025-07-05T00:15:33.433Z",
+      "updatedAt": "2025-07-05T00:39:44.514Z",
       "relatedFiles": [
         {
-          "path": "C:\\Users\\user\\Desktop\\T-HOLDEM\\app2\\src\\pages\\StaffListPage.tsx",
+          "path": "app2/src/pages/admin/EventDetailPage.tsx",
+          "type": "REFERENCE",
+          "description": "QR 코드 생성 로직 참조",
+          "lineStart": 197,
+          "lineEnd": 210
+        },
+        {
+          "path": "app2/src/pages/StaffListPage.tsx",
           "type": "TO_MODIFY",
-          "description": "JSX 구조를 리스트에서 테이블로 변경해야 합니다."
+          "description": "QR 생성 기능 추가",
+          "lineStart": 450,
+          "lineEnd": 500
+        },
+        {
+          "path": "app2/src/components",
+          "type": "CREATE",
+          "description": "QRCodeGeneratorModal 컴포넌트 생성"
         }
       ],
-      "implementationGuide": "1. `return` 문 내부의 JSX를 `div/ul/li` 구조에서 `table/thead/tbody/tr/th/td` 구조로 변경합니다.\n2. `thead`에는 '공고명', '이름', '연락처', '배정 역할', '시간대' 등의 컬럼 헤더(`th`)를 정의합니다.\n3. `tbody`에서는 (아직 기능 구현 전이므로) `staffData` state를 직접 `.map()`으로 순회하여 각 스태프의 정보를 `tr`과 `td`로 렌더링하는 코드를 작성합니다.",
-      "verificationCriteria": "1. 페이지가 렌더링되었을 때, 확정된 스태프 목록이 리스트가 아닌 테이블 형태로 표시되어야 합니다.\n2. 테이블 헤더와 각 행의 데이터가 올바른 컬럼에 맞게 출력되어야 합니다.",
-      "summary": "`StaffListPage.tsx`의 UI 구조를 성공적으로 변경했습니다. 기존의 구인 공고별 리스트(`ul/li`) 형태의 UI를 하나의 통합된 HTML `<table>` 구조로 전환했습니다. 새로운 테이블은 '공고명', '이름', '이메일', '연락처', '배정 역할', '시간대' 컬럼을 포함하며, 이전 단계에서 생성된 `staffData` state와 연동되어 모든 확정된 스태프 목록을 표 형식으로 명확하게 표시합니다. 이는 다음 단계인 정렬 및 필터링 기능 구현을 위한 기반을 마련합니다.",
-      "completedAt": "2025-06-30T16:19:09.506Z"
+      "implementationGuide": "1. EventDetailPage의 handleGenerateQrCode 로직을 QRCodeGeneratorModal로 분리\\n2. StaffListPage에 QR 생성 버튼 추가\\n3. 생성된 QR 코드를 모달로 표시\\n4. QR 코드 URL 포맷: /attend/token 형식 유지\\n5. Firebase Functions generateEventQrToken 재사용",
+      "verificationCriteria": "1. StaffListPage에서 QR 코드 생성 버튼이 정상 작동함\\n2. 생성된 QR 코드가 모달로 올바르게 표시됨\\n3. 생성된 QR 코드를 AttendancePage에서 정상 스캔 가능\\n4. 기존 Firebase Functions와 호환성 유지",
+      "analysisResult": "스태프관리 페이지에 기존 QR 출석 시스템을 통합하여 포괄적인 근무 관리 기능을 구현. 기존 AttendancePage, EventDetailPage, useShiftSchedule 등의 완전히 구현된 기능들을 재사용하여 StaffListPage에 실시간 출석 현황, QR 관리, 시간 수정, 예외 처리, 급여 연동 기능을 단계적으로 통합.",
+      "summary": "StaffListPage에 QR 코드 생성 및 관리 기능을 성공적으로 통합했습니다. EventDetailPage의 기존 QR 생성 로직을 재사용 가능한 QRCodeGeneratorModal 컴포넌트로 분리하고, StaffListPage 헤더에 QR 생성 버튼을 추가했습니다. Firebase generateQrCodeToken 함수와의 완전한 호환성을 유지하며, Toast 알림, 로딩 상태, 에러 처리 등의 사용자 경험을 개선했습니다. 생성된 QR 코드는 AttendancePage에서 정상적으로 스캔 가능하며, 매니저가 출석 관리를 위한 QR 코드를 쉽게 생성할 수 있습니다.",
+      "completedAt": "2025-07-05T00:39:44.512Z"
     },
     {
-      "id": "182613d0-955f-4360-b08c-ceb5fbd20b0a",
-      "name": "[StaffListPage] 정렬, 검색, 필터링 기능 구현",
-      "description": "테이블 UI에 실제 동작하는 정렬, 검색, 필터링 기능을 구현합니다. 사용자가 상호작용할 때 테이블 내용이 동적으로 변경되어야 합니다.",
+      "id": "ee059db8-02a6-4010-9a0d-fb2f80b4740e",
+      "name": "출퇴근 시간 수정 및 관리 기능 구현",
+      "description": "매니저가 스태프의 출퇴근 시간을 수정하고 관리할 수 있는 기능을 구현합니다. WorkLog 데이터의 actualStartTime/actualEndTime 필드를 수정할 수 있습니다.",
+      "notes": "매니저 권한만 시간 수정 가능. 시간 수정 시 totalWorkMinutes 자동 재계산. 기존 useShiftSchedule의 WorkLog 구조 활용",
       "status": "completed",
       "dependencies": [
         {
-          "taskId": "0cbfee30-994b-4c27-9eb1-0b1630270469"
+          "taskId": "ba1f7b80-7fc9-4268-9fa6-5a0d3f827dd2"
         }
       ],
-      "createdAt": "2025-06-30T16:17:43.281Z",
-      "updatedAt": "2025-06-30T16:20:13.177Z",
+      "createdAt": "2025-07-05T00:15:33.433Z",
+      "updatedAt": "2025-07-05T01:20:00.170Z",
       "relatedFiles": [
         {
-          "path": "C:\\Users\\user\\Desktop\\T-HOLDEM\\app2\\src\\pages\\StaffListPage.tsx",
+          "path": "app2/src/hooks/useShiftSchedule.ts",
+          "type": "REFERENCE",
+          "description": "WorkLog 데이터 구조",
+          "lineStart": 34,
+          "lineEnd": 54
+        },
+        {
+          "path": "app2/src/pages/StaffListPage.tsx",
           "type": "TO_MODIFY",
-          "description": "기능 구현을 위한 state, 핸들러, useMemo 로직을 추가해야 합니다."
+          "description": "시간 수정 기능 추가",
+          "lineStart": 600,
+          "lineEnd": 700
+        },
+        {
+          "path": "app2/src/components",
+          "type": "CREATE",
+          "description": "WorkTimeEditor 컴포넌트 생성"
         }
       ],
-      "implementationGuide": "1. `useState`를 사용하여 `searchTerm`, `filterPostId`, `sortConfig` state를 추가합니다.\n2. 테이블 상단에 검색용 `<input>`과 필터링용 `<select>` (옵션은 `jobPostings` 목록 기반)를 추가하고 각 state와 연결합니다.\n3. `thead`의 `th`에 `onClick` 핸들러를 추가하여 `sortConfig`를 변경하도록 구현합니다.\n4. `useMemo`를 사용하여 `staffData` 원본 배열을 `searchTerm`, `filterPostId`, `sortConfig` state에 따라 필터링하고 정렬한 최종 결과 배열(`filteredAndSortedStaff`)을 계산합니다.\n5. `tbody`의 `.map()`이 이 최종 결과 배열을 사용하도록 수정합니다.",
-      "verificationCriteria": "1. 검색창에 텍스트를 입력하면 테이블 내용이 해당 텍스트를 포함하는 행으로 필터링되어야 합니다.\n2. 필터 드롭다운에서 특정 공고를 선택하면 해당 공고 소속 스태프만 표시되어야 합니다.\n3. 테이블 헤더를 클릭하면 해당 컬럼을 기준으로 데이터가 오름차순/내림차순으로 정렬되어야 합니다.",
-      "summary": "`StaffListPage.tsx`에 동적인 데이터 관리 기능을 성공적으로 구현했습니다. `useState`를 사용하여 검색어(`searchTerm`), 공고 필터(`filterPostId`), 정렬 설정(`sortConfig`)을 위한 상태를 추가했습니다. 테이블 상단에 검색창과 공고 선택 드롭다운을 배치하여 사용자 입력을 받을 수 있도록 했으며, 각 테이블 헤더에 `onClick` 이벤트를 추가하여 양방향 정렬이 가능하게 만들었습니다. `useMemo` 훅을 사용하여 이러한 상태들이 변경될 때마다 원본 `staffData`를 효율적으로 필터링하고 정렬한 뒤, 그 결과를 테이블에 렌더링하도록 하여 상호작용이 가능한 스태프 관리 테이블을 완성했습니다.",
-      "completedAt": "2025-06-30T16:20:13.176Z"
+      "implementationGuide": "1. WorkTimeEditor 컴포넌트 생성\\n2. 스태프별 출퇴근 시간 수정 모달 구현\\n3. WorkLog 문서 업데이트 함수 작성\\n4. 시간 유효성 검증 로직 추가\\n5. 수정 이력 로깅 기능 포함",
+      "verificationCriteria": "1. 매니저가 스태프의 출퇴근 시간을 정확히 수정할 수 있음\\n2. 시간 수정 시 자동으로 총 근무시간이 재계산됨\\n3. 잘못된 시간 입력에 대한 유효성 검증이 작동함\\n4. 시간 수정 이력이 로그에 기록됨",
+      "analysisResult": "스태프관리 페이지에 기존 QR 출석 시스템을 통합하여 포괄적인 근무 관리 기능을 구현. 기존 AttendancePage, EventDetailPage, useShiftSchedule 등의 완전히 구현된 기능들을 재사용하여 StaffListPage에 실시간 출석 현황, QR 관리, 시간 수정, 예외 처리, 급여 연동 기능을 단계적으로 통합.",
+      "summary": "Phase 3 출퇴근 시간 수정 및 관리 기능이 성공적으로 구현되었습니다. WorkTimeEditor 컴포넌트와 StaffListPage 통합이 완료되었고, 컴파일 에러도 해결되었습니다. 매니저가 스태프의 출퇴근 시간을 수정할 수 있는 기능이 정상적으로 동작합니다.",
+      "completedAt": "2025-07-05T01:20:00.168Z"
+    },
+    {
+      "id": "811532b1-1468-40dc-afc7-7c1fc4dc3c8e",
+      "name": "예외 상황 처리 시스템 구현",
+      "description": "지각, 조퇴, 결근 등의 예외 상황을 자동으로 감지하고 처리하는 시스템을 구현합니다. 설정된 기준 시간과 실제 출퇴근 시간을 비교하여 예외 상황을 판단합니다.",
+      "notes": "지각: 예정 시간 + 15분 초과, 조퇴: 예정 시간 - 30분 미만, 결근: 출석 기록 없음. 예외 상황 발생 시 Toast 알림 표시",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "ee059db8-02a6-4010-9a0d-fb2f80b4740e"
+        }
+      ],
+      "createdAt": "2025-07-05T00:15:33.433Z",
+      "updatedAt": "2025-07-05T02:07:53.573Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/hooks/useShiftSchedule.ts",
+          "type": "TO_MODIFY",
+          "description": "WorkLog 인터페이스 확장",
+          "lineStart": 34,
+          "lineEnd": 54
+        },
+        {
+          "path": "app2/src/pages/StaffListPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "예외 상황 표시 기능",
+          "lineStart": 400,
+          "lineEnd": 600
+        },
+        {
+          "path": "app2/src/components",
+          "type": "CREATE",
+          "description": "AttendanceExceptionHandler 컴포넌트"
+        }
+      ],
+      "implementationGuide": "1. AttendanceExceptionHandler 컴포넌트 생성\\n2. 예외 상황 자동 감지 로직 구현 (지각/조퇴/결근)\\n3. 예외 사유 입력 기능 추가\\n4. WorkLog에 exception 필드 추가\\n5. 예외 상황별 색상 코딩 및 알림",
+      "verificationCriteria": "1. 지각/조퇴/결근 상황이 자동으로 정확히 감지됨\\n2. 예외 상황별로 적절한 색상과 아이콘이 표시됨\\n3. 매니저가 예외 사유를 입력하고 수정할 수 있음\\n4. 예외 상황 발생 시 Toast 알림이 정상 표시됨",
+      "analysisResult": "스태프관리 페이지에 기존 QR 출석 시스템을 통합하여 포괄적인 근무 관리 기능을 구현. 기존 AttendancePage, EventDetailPage, useShiftSchedule 등의 완전히 구현된 기능들을 재사용하여 StaffListPage에 실시간 출석 현황, QR 관리, 시간 수정, 예외 처리, 급여 연동 기능을 단계적으로 통합.",
+      "summary": "Phase 4 예외 상황 처리 시스템이 성공적으로 구현되었습니다. AttendanceStatusCard에 exception prop을 추가하여 예외 상황을 시각적으로 표시하고, AttendanceExceptionHandler 컴포넌트를 통해 자동 예외 감지 및 매니저 처리 기능을 완성했습니다. StaffListPage에서 실시간 예외 상황 모니터링이 가능하며, 다국어 지원과 Toast 알림이 통합되어 있습니다.",
+      "completedAt": "2025-07-05T02:07:53.572Z"
+    },
+    {
+      "id": "ff675829-9513-4ce1-a51d-1e3e706c672c",
+      "name": "급여처리 연동 및 데이터 집계 시스템 구현",
+      "description": "출퇴근 기록 데이터를 급여처리 시스템과 연동하기 위한 데이터 집계 및 전송 기능을 구현합니다. 월별/주별 근무시간 합계와 예외 상황을 포함한 급여 계산용 데이터를 준비합니다.",
+      "notes": "기존 PayrollPage와 호환되는 데이터 형식 사용. 정규 근무시간, 초과 근무시간, 지각/조퇴 차감 시간 등을 구분하여 집계",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "811532b1-1468-40dc-afc7-7c1fc4dc3c8e"
+        }
+      ],
+      "createdAt": "2025-07-05T00:15:33.433Z",
+      "updatedAt": "2025-07-05T02:25:55.055Z",
+      "relatedFiles": [
+        {
+          "path": "app2/src/pages/PayrollPage.tsx",
+          "type": "REFERENCE",
+          "description": "기존 급여 처리 페이지",
+          "lineStart": 1,
+          "lineEnd": 100
+        },
+        {
+          "path": "app2/src/pages/StaffListPage.tsx",
+          "type": "TO_MODIFY",
+          "description": "급여 데이터 연동 기능",
+          "lineStart": 800,
+          "lineEnd": 858
+        },
+        {
+          "path": "app2/src/utils",
+          "type": "CREATE",
+          "description": "PayrollDataGenerator 유틸리티"
+        }
+      ],
+      "implementationGuide": "1. PayrollDataGenerator 유틸리티 함수 생성\\n2. 월별/주별 근무시간 집계 로직 구현\\n3. 예외 상황 포함 급여 계산 데이터 구조 정의\\n4. 기존 PayrollPage와 연동 인터페이스 구현\\n5. 데이터 내보내기 기능 추가",
+      "verificationCriteria": "1. 월별/주별 근무시간이 정확히 집계됨\\n2. 예외 상황이 급여 계산에 반영됨\\n3. 급여처리 페이지에서 데이터를 정상 불러올 수 있음\\n4. 데이터 내보내기가 올바른 형식으로 작동함",
+      "analysisResult": "스태프관리 페이지에 기존 QR 출석 시스템을 통합하여 포괄적인 근무 관리 기능을 구현. 기존 AttendancePage, EventDetailPage, useShiftSchedule 등의 완전히 구현된 기능들을 재사용하여 StaffListPage에 실시간 출석 현황, QR 관리, 시간 수정, 예외 처리, 급여 연동 기능을 단계적으로 통합.",
+      "summary": "Phase 5 급여처리 연동 및 데이터 집계 시스템이 성공적으로 구현되었습니다. PayrollDataGenerator 클래스를 통한 자동 급여 계산, usePayrollData 훅을 통한 Firebase 연동, PayrollSummaryModal을 통한 직관적인 UI, StaffListPage 통합을 통해 완전한 급여 관리 시스템을 구축했습니다. 직무별 시급 차등, 예외상황 처리, CSV 내보내기 등 모든 핵심 기능이 완성되었습니다.",
+      "completedAt": "2025-07-05T02:25:55.054Z"
     }
   ]
 }
