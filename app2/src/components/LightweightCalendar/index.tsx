@@ -212,7 +212,7 @@ const LightweightCalendar: React.FC<LightweightCalendarProps> = ({
     // const weekDays = eachDayOfInterval({ start: _weekStart, end: _weekEnd });
     
     return (
-      <div className="text-center py-20 text-gray-500 dark:text-gray-400 dark:text-gray-500">
+      <div className="text-center py-20 text-gray-500 dark:text-gray-400">
         주간 뷰는 준비 중입니다.
       </div>
     );
@@ -221,7 +221,7 @@ const LightweightCalendar: React.FC<LightweightCalendarProps> = ({
   // 일 뷰 렌더링 (간단한 구현)
   const renderDayView = () => {
     return (
-      <div className="text-center py-20 text-gray-500 dark:text-gray-400 dark:text-gray-500">
+      <div className="text-center py-20 text-gray-500 dark:text-gray-400">
         일간 뷰는 준비 중입니다.
       </div>
     );

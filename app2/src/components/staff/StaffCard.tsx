@@ -328,7 +328,7 @@ const StaffCard: React.FC<StaffCardProps> = React.memo(({
         
         <CardBody className="p-0" id={`staff-${staff.id}-details`}>
           {!showActions && onSelect ? (
-            <div className="mt-2 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <div className="mt-2 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
               <span className="flex items-center space-x-1">
                 <span>←</span>
                 <span>액션</span>

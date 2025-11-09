@@ -65,7 +65,7 @@ const StaffDateGroup: React.FC<StaffDateGroupProps> = ({
           <div className="flex items-center space-x-3">
             <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {date === '날짜 미정' ? (
-                <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">📅 날짜 미정</span>
+                <span className="text-gray-500 dark:text-gray-400">📅 날짜 미정</span>
               ) : (
                 <span>📅 {date}</span>
               )}
