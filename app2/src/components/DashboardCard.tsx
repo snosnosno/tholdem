@@ -18,7 +18,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = React.memo(({
   loading = false 
 }) => {
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 ${className}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-gray-900/50 hover:shadow-lg dark:hover:shadow-gray-900/70 transition-shadow duration-200 ${className}`}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">

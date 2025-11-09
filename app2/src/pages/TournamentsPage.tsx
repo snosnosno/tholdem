@@ -314,7 +314,7 @@ const TournamentsPage: React.FC = () => {
                       {tournamentsInDate.map((tournament) => (
             <div
               key={tournament.id}
-              className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow border-l-8"
+              className="bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900/50 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-gray-900/70 transition-shadow border-l-8"
               style={{ borderLeftColor: tournament.color || TOURNAMENT_COLORS[0] }}
             >
               <div className="flex justify-between items-start mb-6">

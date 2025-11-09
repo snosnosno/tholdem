@@ -159,7 +159,7 @@ const FeatureSection: React.FC<FeatureSectionProps> = ({ content, onFeatureClick
               <article
                 key={feature.id}
                 data-testid={`feature-card-${feature.id}`}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl feature-card transition-all duration-300 p-8 cursor-pointer group"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 feature-card transition-all duration-300 p-8 cursor-pointer group"
                 onClick={() => handleFeatureClick(feature.id)}
                 onKeyDown={(e) => handleKeyDown(e, feature.id)}
                 tabIndex={0}

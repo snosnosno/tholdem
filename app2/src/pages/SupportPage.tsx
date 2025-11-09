@@ -343,7 +343,7 @@ const SupportPage: React.FC = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedFAQCategory === 'all'
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {t('common.all')}
@@ -356,7 +356,7 @@ const SupportPage: React.FC = () => {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedFAQCategory === category.key
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <span className="mr-1">{category.icon}</span>

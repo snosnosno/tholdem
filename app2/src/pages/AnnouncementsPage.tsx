@@ -196,7 +196,7 @@ const AnnouncementsPage: React.FC = () => {
             <div
               key={announcement.id}
               onClick={() => handleAnnouncementClick(announcement)}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50 p-6 hover:shadow-lg dark:hover:shadow-gray-900/70 transition-shadow cursor-pointer"
             >
               {/* 카드 헤더 */}
               <div className="flex items-start justify-between mb-3">

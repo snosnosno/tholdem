@@ -233,7 +233,7 @@ const NotificationSettingsPage: React.FC = () => {
           <div className="flex items-center h-16">
             <button
               onClick={() => navigate(-1)}
-              className="mr-4 p-2 hover:bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors"
+              className="mr-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ArrowLeftIcon className="h-6 w-6" />
             </button>

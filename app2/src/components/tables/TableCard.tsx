@@ -86,7 +86,7 @@ const TableCard: React.FC<TableCardProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative p-4 rounded-lg flex flex-col transition-shadow duration-100 bg-white dark:bg-gray-800 shadow-md hover:shadow-xl border-4 dark:border-gray-700 min-h-[200px]`}
+      className={`relative p-4 rounded-lg flex flex-col transition-shadow duration-100 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 border-4 dark:border-gray-700 min-h-[200px]`}
       onClick={onTableClick}
     >
       {/* Card Header */}

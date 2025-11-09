@@ -661,7 +661,7 @@ const EnhancedPayrollTab: React.FC<EnhancedPayrollTabProps> = ({ jobPosting, eve
           <div className="flex gap-2">
             <button
               onClick={toggleSelectAll}
-              className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-200 transition-colors"
+              className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               {selectedStaffIds.length === staffWorkData.length ? '전체 해제' : '전체 선택'}
             </button>
