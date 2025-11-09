@@ -64,9 +64,9 @@ const getCellStyle = (
     );
     
     if (hasError) {
-      baseStyle += ' border-2 border-red-500 ring-1 ring-red-300';
+      baseStyle += ' border-2 border-red-500 dark:border-red-400 ring-1 ring-red-300 dark:ring-red-700';
     } else if (hasWarning) {
-      baseStyle += ' border border-yellow-500 ring-1 ring-yellow-200';
+      baseStyle += ' border border-yellow-500 dark:border-yellow-400 ring-1 ring-yellow-200 dark:ring-yellow-700';
     }
   }
   
