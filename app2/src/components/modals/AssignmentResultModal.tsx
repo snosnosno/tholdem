@@ -30,7 +30,7 @@ const AssignmentResultModal: React.FC<AssignmentResultModalProps> = ({
         {/* 헤더 */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
             총 {results.length}명의 참가자가 배정되었습니다.
           </p>
         </div>
@@ -54,13 +54,13 @@ const AssignmentResultModal: React.FC<AssignmentResultModalProps> = ({
                 <div className="flex items-center gap-2">
                   {result.fromTableNumber !== undefined && result.fromSeatNumber !== undefined && (
                     <>
-                      <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
                         T{result.fromTableNumber}-{result.fromSeatNumber}
                       </span>
-                      <span className="text-gray-400 dark:text-gray-500 dark:text-gray-500">→</span>
+                      <span className="text-gray-400 dark:text-gray-500">→</span>
                     </>
                   )}
-                  <span className="text-sm font-semibold text-blue-600">
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                     T{result.toTableNumber}-{result.toSeatNumber}
                   </span>
                 </div>

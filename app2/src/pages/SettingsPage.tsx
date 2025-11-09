@@ -149,7 +149,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <Icon
                       className={`h-5 w-5 ${
-                        isActive ? 'text-blue-700' : 'text-gray-500 dark:text-gray-400'
+                        isActive ? 'text-blue-700 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
                       }`}
                     />
                     <span>{tab.label}</span>
@@ -203,7 +203,7 @@ const SettingsPage: React.FC = () => {
                       />
                       <div className="flex-1">
                         <div className="font-medium text-gray-900 dark:text-gray-100">한국어</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Korean</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Korean</div>
                       </div>
                     </label>
                     <label className="flex items-center space-x-3 p-4 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
@@ -217,7 +217,7 @@ const SettingsPage: React.FC = () => {
                       />
                       <div className="flex-1">
                         <div className="font-medium text-gray-900 dark:text-gray-100">English</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">영어</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">영어</div>
                       </div>
                     </label>
                   </div>
