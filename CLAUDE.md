@@ -41,23 +41,23 @@
 T-HOLDEM/
 ├── app2/                    # 기존 웹앱 (React + Capacitor)
 │   └── src/
-│       ├── components/      # UI 컴포넌트 (40+ 폴더)
+│       ├── components/      # UI 컴포넌트 (138개 파일, 27개 폴더)
 │       ├── contexts/        # Context Providers (6개)
-│       ├── hooks/           # Custom Hooks (20+)
+│       ├── hooks/           # Custom Hooks (70개)
 │       ├── stores/          # Zustand Stores (5개)
-│       ├── pages/           # 페이지 컴포넌트 (20+)
-│       ├── services/        # 비즈니스 로직 (20+)
-│       ├── utils/           # 유틸리티 함수 (50+)
-│       ├── types/           # TypeScript 타입 정의
-│       ├── schemas/         # Zod 검증 스키마
+│       ├── pages/           # 페이지 컴포넌트 (50개)
+│       ├── services/        # 비즈니스 로직 (13개)
+│       ├── utils/           # 유틸리티 함수 (69개)
+│       ├── types/           # TypeScript 타입 정의 (41개)
+│       ├── schemas/         # Zod 검증 스키마 (8개)
 │       └── config/          # 설정 파일
 ├── uniqn-mobile/            # 신규 모바일앱 (React Native + Expo) ⭐
 │   ├── app/                 # Expo Router (파일 기반 라우팅)
 │   └── src/                 # 소스 코드
-├── specs/                   # 스펙 문서
+├── specs/                   # 스펙 문서 (153개)
 │   └── react-native-app/    # RN 앱 스펙 (23개 문서)
-├── functions/               # Firebase Functions
-└── docs/                    # 운영 문서 (46개)
+├── functions/               # Firebase Functions (24개 소스 파일)
+└── docs/                    # 운영 문서 (47개)
 ```
 
 ### 기술 스택
@@ -654,13 +654,13 @@ perf: 리스트 렌더링 최적화 (React.memo 적용)
 | 카테고리 | 파일 수 | 설명 |
 |---------|--------|------|
 | **Routes (app/)** | 61 | Expo Router 라우트 파일 |
-| **Components** | 192 | UI 34개 + 기능별 158개 |
-| **Hooks** | 33 | 커스텀 훅 |
-| **Services** | 31 | 비즈니스 로직 서비스 |
+| **Components** | 199 | UI 34개 + 기능별 165개 |
+| **Hooks** | 34 | 커스텀 훅 |
+| **Services** | 34 | 비즈니스 로직 서비스 |
 | **Stores** | 7 | Zustand 전역 상태 |
 | **Types** | 24 | TypeScript 타입 정의 |
 | **Schemas** | 18 | Zod 검증 스키마 |
-| **전체 TypeScript** | **423** | src + app 합계 |
+| **전체 TypeScript** | **374** | src + app 합계 |
 
 ### 기술 스택 (실제 버전)
 
@@ -729,7 +729,7 @@ uniqn-mobile/
 │       └── stats/                # 통계
 │
 ├── src/
-│   ├── components/               # 192개 (22개 폴더)
+│   ├── components/               # 199개 (19개 폴더)
 │   │   ├── ui/                   # 기본 UI (34개)
 │   │   ├── auth/                 # 인증 (7개)
 │   │   ├── jobs/                 # 구인공고 (17개)
@@ -739,8 +739,8 @@ uniqn-mobile/
 │   │   ├── notifications/        # 알림 (6개)
 │   │   ├── admin/                # 관리자 (6개)
 │   │   └── ...                   # 기타
-│   ├── hooks/                    # 33개 커스텀 훅
-│   ├── services/                 # 31개 비즈니스 서비스
+│   ├── hooks/                    # 34개 커스텀 훅
+│   ├── services/                 # 34개 비즈니스 서비스
 │   ├── stores/                   # 7개 Zustand 스토어
 │   ├── types/                    # 24개 타입 정의
 │   ├── schemas/                  # 18개 Zod 스키마
@@ -763,13 +763,13 @@ uniqn-mobile/
 │  Presentation Layer (app/, components/)                     │
 │  └─ UI 렌더링만, 비즈니스 로직/Firebase 직접 호출 금지        │
 ├─────────────────────────────────────────────────────────────┤
-│  Hooks Layer (33개 커스텀 훅)                               │
+│  Hooks Layer (34개 커스텀 훅)                               │
 │  └─ 상태와 서비스 연결, 로딩/에러 상태 관리                   │
 ├─────────────────────────────────────────────────────────────┤
 │  State Layer (Zustand 7개 + TanStack Query)                 │
 │  └─ Zustand: UI/세션 상태  |  Query: 서버 데이터 캐싱        │
 ├─────────────────────────────────────────────────────────────┤
-│  Service Layer (31개 서비스)                                │
+│  Service Layer (34개 서비스)                                │
 │  └─ 비즈니스 로직, Firebase Modular API, 에러 처리           │
 ├─────────────────────────────────────────────────────────────┤
 │  Firebase Layer (Auth, Firestore, Storage, Functions)       │
@@ -836,7 +836,7 @@ inAppMessageStore (239줄):
   - 영구 이력 저장
 ```
 
-### 서비스 레이어 (31개)
+### 서비스 레이어 (34개)
 
 ```yaml
 Core (7개):
@@ -861,7 +861,7 @@ Admin (4개):
   - tournamentApprovalService: 대회공고 승인
   - inquiryService: 문의 관리
 
-Infrastructure (15개):
+Infrastructure (18개):
   - pushNotificationService: FCM 토큰 관리
   - eventQRService: QR 생성/검증 (3분 유효)
   - deepLinkService: 딥링크 라우팅
@@ -876,9 +876,10 @@ Infrastructure (15개):
   - inAppMessageService: 인앱 메시지
   - applicantConversionService: 지원자 변환
   - jobPostingMigration: 공고 마이그레이션
+  - versionCheckService: 앱 버전 확인/강제 업데이트
 ```
 
-### 커스텀 훅 (33개)
+### 커스텀 훅 (34개)
 
 ```yaml
 App (2):
@@ -1259,5 +1260,87 @@ eas build --platform android    # Android 빌드
 
 ---
 
-*마지막 업데이트: 2025-01-18*
+## Firebase Cloud Functions (functions/)
+
+> ⚠️ **중요**: 이 섹션은 Firebase Cloud Functions 개발에 적용됩니다.
+
+### 기술 스택
+
+```yaml
+Runtime:
+  - Node.js: 20 (LTS)
+  - TypeScript: 4.9.0
+  - Firebase Admin: 12.0.0
+  - Firebase Functions: 5.1.1
+```
+
+### 함수 구조 (24개 소스 파일)
+
+```
+functions/src/
+├── account/                # 계정 관련 (2개)
+│   ├── loginNotification.ts    # 로그인 알림
+│   └── scheduledDeletion.ts    # 계정 삭제 예약
+├── api/                    # HTTP API (3개)
+│   ├── approveJobPosting.ts    # 공고 승인
+│   ├── rejectJobPosting.ts     # 공고 거절
+│   └── resubmitJobPosting.ts   # 공고 재제출
+├── auth/                   # 인증 (1개)
+│   └── phoneVerification.ts    # 휴대폰 인증
+├── email/                  # 이메일 (1개)
+│   └── sendReceipt.ts          # 영수증 발송
+├── notifications/          # 푸시 알림 (9개)
+│   ├── applicationStatusChanged.ts
+│   ├── applicationSubmitted.ts
+│   ├── checkInOut.ts
+│   ├── jobPostingUpdated.ts
+│   ├── scheduleChanged.ts
+│   ├── workTimeChanged.ts
+│   ├── jobPostingAnnouncement.ts
+│   ├── systemAnnouncement.ts
+│   └── broadcastNewJobPosting.ts
+├── scheduled/              # 스케줄드 함수 (2개)
+│   ├── cleanupRateLimits.ts    # Rate limit 정리
+│   └── expireFixedPostings.ts  # 고정공고 만료 처리
+├── triggers/               # Firestore 트리거 (2개)
+│   ├── onFixedPostingExpired.ts
+│   └── onTournamentApprovalChange.ts
+├── middleware/             # 미들웨어 (1개)
+│   └── rateLimiter.ts          # Rate limiting
+├── migrations/             # 마이그레이션 (1개)
+│   └── addPostingType.ts       # postingType 필드 추가
+└── utils/                  # 유틸리티 (1개)
+    └── sentry.ts               # Sentry 에러 추적
+```
+
+### 함수 유형별 분류
+
+| 유형 | 개수 | 설명 |
+|------|------|------|
+| **HTTP Callable** | 3 | API 엔드포인트 (승인/거절/재제출) |
+| **Firestore Trigger** | 9+ | 문서 변경 시 푸시 알림 발송 |
+| **Scheduled** | 2 | 주기적 정리 작업 |
+| **Auth Trigger** | 1 | 휴대폰 인증 |
+
+### 개발 명령어
+
+```bash
+cd functions
+
+# 개발
+npm run build           # TypeScript 컴파일
+npm run serve           # 로컬 에뮬레이터
+npm run shell           # Functions Shell
+
+# 배포
+npm run deploy          # 전체 배포
+npm run deploy:api      # API 함수만 배포
+
+# 로그
+firebase functions:log  # 로그 확인
+```
+
+---
+
+*마지막 업데이트: 2026-01-20*
 *프로젝트 버전: v1.0.0*
