@@ -18,6 +18,7 @@ export { FocusablePressable, type FocusablePressableProps } from './FocusablePre
 export { Badge, type BadgeProps } from './Badge';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Divider } from './Divider';
+export { InfoRow, type InfoRowProps } from './InfoRow';
 export {
   Accordion,
   AccordionItem,

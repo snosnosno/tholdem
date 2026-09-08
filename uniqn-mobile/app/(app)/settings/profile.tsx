@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StackHeader } from '@/components/headers';
-import { Card, Loading, GenderSegment, type GenderValue } from '@/components/ui';
+import { Card, Loading, GenderSegment, InfoRow, type GenderValue } from '@/components/ui';
 import { ProfileImagePicker } from '@/components/profile';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
@@ -31,6 +31,7 @@ import { updateProfileSchema, type UpdateProfileData } from '@/schemas/user.sche
 import { logger } from '@/utils/logger';
 import { formatBirthDate } from '@/utils/formatters';
 import { formatE164ToDisplay } from '@/utils/phone';
+import { USER_ROLE_LABELS } from '@/types/role';
 import type { UserProfile } from '@/types';
 import type { AuthUser } from '@/stores/authStore';
 import { saveFailed } from '@/constants/messages';
@@ -233,108 +234,103 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
           contentContainerClassName="p-4"
           keyboardShouldPersistTaps="handled"
         >
-          {/* 프로필 이미지 */}
-          <Card className="mb-4 items-center py-6">
-            <ProfileImagePicker
-              currentImageUrl={profile.photoURL ?? null}
-              currentImageBlurhash={profile.photoURLBlurhash ?? null}
-              name={profile.name ?? user?.displayName ?? '사용자'}
-              onImageUpdated={handleImageUpdated}
-              size="xl"
-            />
-            <Text className="mt-3 text-sm text-content-muted font-sans">
-              프로필 사진을 탭하여 변경
-            </Text>
-          </Card>
-
-          {/* 기본 정보 (이름·생년월일·휴대폰은 본인인증 결과로 수정 불가, 성별은 본인인증 누락 시 최초 1회 입력 가능) */}
-          <Card className="mb-4">
-            <Text className="text-micro uppercase tracking-wider text-content-muted font-sans-bold mb-3">
+          {/* 신원 + 기본 정보 — 사진 카드와 읽기 전용 카드를 한 장으로 합친다.
+              사진·이름·역할은 "나는 누구인가" 한 덩어리인데 카드가 갈라져 있었고,
+              읽기 전용 값마다 입력창 모양 박스를 세로로 쌓아 다섯 필드가 380px 을 먹었다.
+              값은 오른쪽으로 보내 한 줄씩(44px) 접는다. */}
+          <Card className="mb-3" padding="md">
+            <Text className="text-micro uppercase tracking-wider text-content-muted font-sans-bold mb-2">
               기본 정보
             </Text>
-
-            {/* 이름 (읽기 전용 - 회원가입 Step2) */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">이름</Text>
-              <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                <Text className="text-content-primary font-sans">{profile.name ?? '-'}</Text>
-              </View>
-            </View>
-
-            {/* 이메일 (읽기 전용) */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">이메일</Text>
-              <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                <Text className="text-content-primary font-sans">
-                  {profile.email ?? user?.email ?? '-'}
+            <View className="flex-row items-center">
+              <ProfileImagePicker
+                currentImageUrl={profile.photoURL ?? null}
+                currentImageBlurhash={profile.photoURLBlurhash ?? null}
+                name={profile.name ?? user?.displayName ?? '사용자'}
+                onImageUpdated={handleImageUpdated}
+                size="lg"
+              />
+              <View className="ml-3 flex-1">
+                {/* 이름은 라벨-값 행이 아니라 신원 헤더의 제목이다 — 라벨 '이름' 을 따로
+                    두지 않으므로 E2E 는 testID 로 잡는다(profile-edit.page.ts 참조). */}
+                <Text
+                  className="text-lg font-display-semibold text-content-primary dark:text-off-white"
+                  numberOfLines={1}
+                  testID="profile-identity-name"
+                >
+                  {profile.name ?? '-'}
                 </Text>
-                {(profile.email ?? user?.email ?? '').endsWith('@privaterelay.apple.com') && (
-                  <Text className="text-xs text-content-placeholder mt-1 font-sans">
-                    (Apple 비공개 이메일)
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {/* 전화번호 (읽기 전용 - 회원가입 Step2) */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">전화번호</Text>
-              <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                <Text className="text-content-primary font-sans">
-                  {profile.phone ? formatE164ToDisplay(profile.phone) : '-'}
+                <Text
+                  className="mt-0.5 text-sm text-content-secondary font-sans"
+                  testID="profile-identity-role"
+                >
+                  {USER_ROLE_LABELS[profile.role] ?? '-'}
+                </Text>
+                <Text className="mt-1 text-xs text-content-muted font-sans">
+                  사진을 탭하여 변경
                 </Text>
               </View>
             </View>
 
-            {/* 생년월일 (읽기 전용 - 회원가입 Step2) */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">생년월일</Text>
-              <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                <Text className="text-content-primary font-sans">
-                  {formatBirthDate(profile.birthDate)}
-                </Text>
-              </View>
-            </View>
+            <View className="mt-3 h-px bg-secondary-100 dark:bg-surface-overlay" />
+
+            {/* 이름·생년월일·휴대폰은 본인인증 결과라 수정 불가 — 입력창 모양을 주지 않는다. */}
+            <InfoRow
+              label="이메일"
+              value={profile.email ?? user?.email ?? '-'}
+              hint={
+                (profile.email ?? user?.email ?? '').endsWith('@privaterelay.apple.com')
+                  ? '(Apple 비공개 이메일)'
+                  : null
+              }
+            />
+            <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
+            <InfoRow
+              label="전화번호"
+              value={profile.phone ? formatE164ToDisplay(profile.phone) : '-'}
+            />
+            <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
+            <InfoRow label="생년월일" value={formatBirthDate(profile.birthDate)} />
+            <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
 
             {/* 성별 — 본인인증 결과 또는 set-once 보완 입력. 한 번 저장되면 read-only 로 고정 */}
-            <View>
-              <Text className="mb-1 text-sm text-content-muted font-sans">성별</Text>
-              {canEditGender ? (
-                <View>
-                  <Text className="mb-2 text-xs text-content-muted dark:text-secondary-400 font-sans">
-                    본인인증에서 자동 확인되지 않아 직접 선택이 필요합니다. 선택 후에는 변경할 수
-                    없습니다.
-                  </Text>
-                  <GenderSegment
-                    value={pendingGender}
-                    onChange={setPendingGender}
-                    ariaLabel="성별 (최초 1회 입력)"
-                    ariaHint="본인인증에서 자동 확인되지 않아 직접 선택이 필요합니다. 선택 후에는 변경할 수 없습니다."
-                  />
-                </View>
-              ) : (
-                <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                  <Text className="text-content-primary font-sans">
-                    {profile.gender === 'male'
-                      ? '남성'
-                      : profile.gender === 'female'
-                        ? '여성'
-                        : '-'}
-                  </Text>
-                </View>
-              )}
-            </View>
+            {canEditGender ? (
+              <View className="pt-2">
+                <Text className="mb-1 text-sm text-content-muted dark:text-secondary-400 font-sans">
+                  성별
+                </Text>
+                <Text className="mb-2 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                  본인인증에서 자동 확인되지 않아 직접 선택이 필요합니다. 선택 후에는 변경할 수
+                  없습니다.
+                </Text>
+                <GenderSegment
+                  value={pendingGender}
+                  onChange={setPendingGender}
+                  ariaLabel="성별 (최초 1회 입력)"
+                  ariaHint="본인인증에서 자동 확인되지 않아 직접 선택이 필요합니다. 선택 후에는 변경할 수 없습니다."
+                />
+              </View>
+            ) : (
+              <InfoRow
+                label="성별"
+                value={
+                  profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : '-'
+                }
+              />
+            )}
           </Card>
 
           {/* 추가 정보 */}
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Text className="text-micro uppercase tracking-wider text-content-muted font-sans-bold mb-3">
               추가 정보
             </Text>
 
             {/* 닉네임 */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">닉네임</Text>
+            <View className="mb-3">
+              <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                닉네임
+              </Text>
               <Controller
                 control={control}
                 name="nickname"
@@ -363,7 +359,7 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
                 )}
               />
               {errors.nickname && (
-                <Text className="mt-1 text-sm text-error-500 font-sans">
+                <Text className="mt-1 text-xs text-error-500 font-sans">
                   {errors.nickname.message}
                 </Text>
               )}
@@ -374,72 +370,80 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
               )}
             </View>
 
-            {/* 지역 */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">지역</Text>
-              <Controller
-                control={control}
-                name="region"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className={`rounded-lg border px-4 py-3 text-content-primary ${
-                      errors.region
-                        ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
-                        : 'border-divider bg-surface-card dark:bg-surface-elevated'
-                    }`}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="예: 서울 강남구"
-                    placeholderTextColor={SECONDARY_PALETTE[400]}
-                    autoCapitalize="none"
-                    maxLength={50}
-                  />
-                )}
-              />
-              {errors.region && (
-                <Text className="mt-1 text-sm text-error-500 font-sans">
-                  {errors.region.message}
+            {/* 지역 + 경력 — 지역은 짧은 한 줄, 경력은 두 자리 숫자다. 각자 한 행을 쓰면
+                입력한 글자보다 빈 가로가 더 넓다. 2:1 로 나눠 한 줄에 앉힌다. */}
+            <View className="mb-3 flex-row gap-3">
+              <View className="flex-[2]">
+                <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                  지역
                 </Text>
-              )}
-            </View>
+                <Controller
+                  control={control}
+                  name="region"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      className={`min-h-[44px] rounded-lg border px-4 py-2.5 text-content-primary ${
+                        errors.region
+                          ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
+                          : 'border-divider bg-surface-card dark:bg-surface-elevated'
+                      }`}
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="예: 서울 강남구"
+                      placeholderTextColor={SECONDARY_PALETTE[400]}
+                      autoCapitalize="none"
+                      maxLength={50}
+                    />
+                  )}
+                />
+                {errors.region && (
+                  <Text className="mt-1 text-xs text-error-500 font-sans">
+                    {errors.region.message}
+                  </Text>
+                )}
+              </View>
 
-            {/* 경력 */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">경력 (년)</Text>
-              <Controller
-                control={control}
-                name="experienceYears"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className={`rounded-lg border px-4 py-3 text-content-primary ${
-                      errors.experienceYears
-                        ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
-                        : 'border-divider bg-surface-card dark:bg-surface-elevated'
-                    }`}
-                    value={value?.toString() ?? ''}
-                    onChangeText={(text) => {
-                      const num = parseInt(text, 10);
-                      onChange(isNaN(num) ? undefined : num);
-                    }}
-                    onBlur={onBlur}
-                    placeholder="예: 3"
-                    placeholderTextColor={SECONDARY_PALETTE[400]}
-                    keyboardType="number-pad"
-                    maxLength={2}
-                  />
-                )}
-              />
-              {errors.experienceYears && (
-                <Text className="mt-1 text-sm text-error-500 font-sans">
-                  {errors.experienceYears.message}
+              <View className="flex-1">
+                <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                  경력 (년)
                 </Text>
-              )}
+                <Controller
+                  control={control}
+                  name="experienceYears"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      className={`min-h-[44px] rounded-lg border px-4 py-2.5 text-content-primary ${
+                        errors.experienceYears
+                          ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
+                          : 'border-divider bg-surface-card dark:bg-surface-elevated'
+                      }`}
+                      value={value?.toString() ?? ''}
+                      onChangeText={(text) => {
+                        const num = parseInt(text, 10);
+                        onChange(isNaN(num) ? undefined : num);
+                      }}
+                      onBlur={onBlur}
+                      placeholder="예: 3"
+                      placeholderTextColor={SECONDARY_PALETTE[400]}
+                      keyboardType="number-pad"
+                      maxLength={2}
+                    />
+                  )}
+                />
+                {errors.experienceYears && (
+                  <Text className="mt-1 text-xs text-error-500 font-sans">
+                    {errors.experienceYears.message}
+                  </Text>
+                )}
+              </View>
             </View>
 
             {/* 이력 */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">이력</Text>
+            <View className="mb-3">
+              <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                이력
+              </Text>
               <Controller
                 control={control}
                 name="career"
@@ -458,21 +462,23 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
                     multiline
                     numberOfLines={4}
                     textAlignVertical="top"
-                    style={{ minHeight: 100 }}
+                    style={{ minHeight: 84 }}
                     maxLength={500}
                   />
                 )}
               />
               {errors.career && (
-                <Text className="mt-1 text-sm text-error-500 font-sans">
+                <Text className="mt-1 text-xs text-error-500 font-sans">
                   {errors.career.message}
                 </Text>
               )}
             </View>
 
             {/* 기타사항 */}
-            <View className="mb-4">
-              <Text className="mb-1 text-sm text-content-muted font-sans">기타사항</Text>
+            <View>
+              <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
+                기타사항
+              </Text>
               <Controller
                 control={control}
                 name="note"
@@ -491,30 +497,14 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
                     multiline
                     numberOfLines={3}
                     textAlignVertical="top"
-                    style={{ minHeight: 80 }}
+                    style={{ minHeight: 72 }}
                     maxLength={300}
                   />
                 )}
               />
               {errors.note && (
-                <Text className="mt-1 text-sm text-error-500 font-sans">{errors.note.message}</Text>
+                <Text className="mt-1 text-xs text-error-500 font-sans">{errors.note.message}</Text>
               )}
-            </View>
-
-            {/* 역할 (읽기 전용) */}
-            <View>
-              <Text className="mb-1 text-sm text-content-muted font-sans">역할</Text>
-              <View className="rounded-lg bg-surface-card px-4 py-3 dark:bg-surface-elevated">
-                <Text className="text-content-primary font-sans">
-                  {profile.role === 'admin'
-                    ? '관리자'
-                    : profile.role === 'employer'
-                      ? '구인자'
-                      : profile.role === 'staff'
-                        ? '스태프'
-                        : '-'}
-                </Text>
-              </View>
             </View>
           </Card>
 

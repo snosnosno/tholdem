@@ -52,9 +52,22 @@ export class ProfileEditPage extends BasePage {
     await this.saveButton.click();
   }
 
-  /** 읽기 전용 필드 확인 */
+  /**
+   * 읽기 전용 필드 확인.
+   *
+   * '이름'은 라벨-값 행이 아니라 신원 헤더의 제목이라 라벨 텍스트가 없다 — testID 로 잡는다.
+   * (라벨 텍스트로 찾으면 '닉네임'이 '이름'을 부분 문자열로 포함해 엉뚱한 노드를 집는다.)
+   */
   getReadOnlyField(label: '이름' | '이메일' | '전화번호' | '생년월일' | '성별'): Locator {
-    return this.page.getByText(label).last();
+    if (label === '이름') {
+      return this.page.getByTestId('profile-identity-name');
+    }
+    return this.page.getByText(label, { exact: true }).last();
+  }
+
+  /** 역할 표시(신원 헤더) */
+  getRole(): Locator {
+    return this.page.getByTestId('profile-identity-role');
   }
 
   /** 섹션 확인 */

@@ -925,14 +925,14 @@ export default function ScheduleScreen() {
           경고를 버리면 근무 일부가 빠진 캘린더를 정상으로 오인하므로 명시 노출한다. */}
       {warning && (
         <View
-          className="mx-4 mt-2 rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-700 dark:bg-warning-900/20"
+          className="mx-4 mt-2 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 dark:border-warning-700 dark:bg-warning-900/20"
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
         >
-          <Text className="text-sm font-sans-semibold text-warning-700 dark:text-warning-300">
+          <Text className="text-xs font-sans-semibold text-warning-700 dark:text-warning-300">
             {warning}
           </Text>
-          <Text className="mt-0.5 text-xs font-sans text-warning-600 dark:text-warning-400">
+          <Text className="text-xs font-sans text-warning-600 dark:text-warning-400">
             당겨서 새로고침해 주세요.
           </Text>
         </View>
@@ -943,14 +943,14 @@ export default function ScheduleScreen() {
           확정이 취소된 근무를 살아있는 것으로 믿고 현장에 나가게 된다. */}
       {isOffline && groupedByApplication.length > 0 && (
         <View
-          className="mx-4 mt-2 rounded-md border border-secondary-200 bg-secondary-50 px-4 py-3 dark:border-surface-overlay dark:bg-surface-overlay"
+          className="mx-4 mt-2 rounded-md border border-secondary-200 bg-secondary-50 px-3 py-2 dark:border-surface-overlay dark:bg-surface-overlay"
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
         >
-          <Text className="text-sm font-sans-semibold text-content-secondary">
+          <Text className="text-xs font-sans-semibold text-content-secondary">
             오프라인 상태예요
           </Text>
-          <Text className="mt-0.5 text-xs font-sans text-content-muted dark:text-secondary-400">
+          <Text className="text-xs font-sans text-content-muted dark:text-secondary-400">
             지금 보이는 일정은 이전에 받아둔 정보예요. 연결되면 자동으로 최신화됩니다.
           </Text>
         </View>
@@ -960,15 +960,15 @@ export default function ScheduleScreen() {
           근무 당일 확정 여부를 확인하러 당긴 사용자가 옛 데이터를 최신으로 믿게 된다. */}
       {refreshError && !isRefreshing && (
         <View
-          className="mx-4 mt-2 flex-row items-center rounded-md border border-warning-200 bg-warning-50 px-4 py-3 dark:border-warning-700 dark:bg-warning-900/20"
+          className="mx-4 mt-2 flex-row items-center rounded-md border border-warning-200 bg-warning-50 px-3 py-2 dark:border-warning-700 dark:bg-warning-900/20"
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
         >
           <View className="flex-1">
-            <Text className="text-sm font-sans-semibold text-warning-700 dark:text-warning-300">
+            <Text className="text-xs font-sans-semibold text-warning-700 dark:text-warning-300">
               {loadFailed('최신 정보')}
             </Text>
-            <Text className="mt-0.5 text-xs font-sans text-warning-600 dark:text-warning-400">
+            <Text className="text-xs font-sans text-warning-600 dark:text-warning-400">
               지금 보이는 내용은 이전에 받아둔 정보예요.
             </Text>
           </View>
@@ -976,41 +976,31 @@ export default function ScheduleScreen() {
             onPress={refresh}
             hitSlop={8}
             focusRingRadius={6}
-            className="ml-3 rounded-md px-3 py-2 active:bg-warning-100 dark:active:bg-warning-900/40"
+            className="ml-2 min-h-[44px] shrink-0 justify-center rounded-md px-2 active:bg-warning-100 dark:active:bg-warning-900/40"
             accessibilityRole="button"
             accessibilityLabel="스케줄 다시 불러오기"
           >
-            <Text className="text-sm font-sans-semibold text-warning-700 dark:text-warning-300">
+            <Text className="text-xs font-sans-semibold text-warning-700 dark:text-warning-300">
               다시 시도
             </Text>
           </FocusablePressable>
         </View>
       )}
 
-      {isLoadingCancellationTarget && (
+      {/* 취소 흐름 진행 표시 — 조회 중과 처리 중은 같은 흐름의 두 단계라 띠 하나를 공유한다.
+          띠를 둘로 나눠 두면 연속 진행 시 배너가 두 줄로 겹쳐 쌓이고, 리스트가 그만큼 밀린다.
+          낙관 갱신으로 카드는 이미 사라지므로, 아무 표시도 없으면 다시 누르게 된다. */}
+      {(isLoadingCancellationTarget || isCancelling) && (
         <View
-          className="mx-4 mt-2 rounded-md bg-secondary-100 px-4 py-2 dark:bg-surface-overlay"
+          className="mx-4 mt-2 rounded-md bg-secondary-100 px-3 py-1.5 dark:bg-surface-overlay"
           accessibilityRole="progressbar"
-          accessibilityLabel="취소 요청 정보를 불러오고 있어요"
+          accessibilityLabel={
+            isCancelling ? '지원 취소를 처리하고 있어요' : '취소 요청 정보를 불러오고 있어요'
+          }
           accessibilityLiveRegion="polite"
         >
-          <Text className="text-sm font-sans-medium text-content-secondary">
-            취소 요청 정보를 불러오고 있어요…
-          </Text>
-        </View>
-      )}
-
-      {/* 취소 처리 중 — 낙관 갱신으로 카드는 이미 사라지지만, 아무 표시도 없으면
-          "정말 취소된 건가" 싶어 다시 누르게 된다. 서버 확정 전까지 진행 상황을 밝힌다. */}
-      {isCancelling && (
-        <View
-          className="mx-4 mt-2 rounded-md bg-secondary-100 px-4 py-2 dark:bg-surface-overlay"
-          accessibilityRole="progressbar"
-          accessibilityLabel="지원 취소를 처리하고 있어요"
-          accessibilityLiveRegion="polite"
-        >
-          <Text className="text-sm font-sans-medium text-content-secondary">
-            지원 취소를 처리하고 있어요…
+          <Text className="text-xs font-sans-medium text-content-secondary">
+            {isCancelling ? '지원 취소를 처리하고 있어요…' : '취소 요청 정보를 불러오고 있어요…'}
           </Text>
         </View>
       )}
