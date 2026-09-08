@@ -193,26 +193,29 @@ function ActionCard({
             ) : null}
           </View>
 
-          {/* 아이콘 타일 48 → 36. 제목·설명이 쓸 수 있는 가로가 늘어 설명이 한 줄에 앉는다. */}
+          {/* 제목·설명 좌 / 골드 버튼 우 — 한 줄이다.
+              풀폭 골드 바는 자기 줄(44px)과 위 여백(10px)을 통째로 썼는데, 카드 전체가 이미
+              같은 곳으로 가는 Pressable 이라 그 바는 두 번째 탭 타깃이 아니라 라벨이었다.
+              라벨이라면 제목 옆자리로 충분하다. 아이콘 타일도 뺀다 — 골드가 이 카드의
+              시선 고정점이 된 이상 타일은 장식만 남는다. */}
           <View className="mt-2 flex-row items-center">
-            <View className="mr-2.5 h-9 w-9 items-center justify-center rounded-sm bg-primary-50 dark:bg-primary-900/30">
-              {icon}
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-display-semibold text-content-primary dark:text-off-white">
+            <View className="mr-3 flex-1">
+              <Text
+                className="text-base font-display-semibold text-content-primary dark:text-off-white"
+                numberOfLines={2}
+              >
                 {resolvedTitle}
               </Text>
               <Text className="mt-0.5 text-xs text-content-secondary font-sans" numberOfLines={2}>
                 {resolvedDescription}
               </Text>
             </View>
-          </View>
-
-          {/* 골드는 이 버튼에만 쓴다 — 강조가 여러 곳이면 아무것도 강조되지 않는다. */}
-          <View className="mt-2.5 min-h-[44px] items-center justify-center rounded-md bg-primary-600">
-            <Text className="text-base font-sans-semibold text-content-onGold">
-              {actionLabel ?? '바로 가기'}
-            </Text>
+            {/* 골드는 이 버튼에만 쓴다 — 강조가 여러 곳이면 아무것도 강조되지 않는다. */}
+            <View className="min-h-[44px] shrink-0 justify-center rounded-md bg-primary-600 px-3">
+              <Text className="text-sm font-sans-semibold text-content-onGold">
+                {actionLabel ?? '바로 가기'}
+              </Text>
+            </View>
           </View>
         </Card>
       </Pressable>
@@ -1009,7 +1012,10 @@ export default function JobPostingDetailScreen() {
 
             {/* 숫자는 목적지다 — 종전에는 "대기중 3"을 보고도 지원자 화면에 들어가 필터를
                 다시 골라야 했다. 세 숫자가 각자 자기 목록으로 데려간다. */}
-            <View className="rounded-lg bg-surface-page dark:bg-surface px-3 py-2">
+            {/* 카드 안에 또 카드를 넣지 않는다(디자인 룰 6) — 채운 박스 대신 헤어라인으로
+                끊는다. 다크에서 이 박스는 페이지 배경과 같은 값이라 어차피 테두리 없는
+                네모로만 보였고, 카드 안에서 한 단계 더 파인 면이 위계 노이즈였다. */}
+            <View className="border-t border-secondary-100 pt-2 dark:border-surface-overlay">
               <View className="flex-row justify-around">
                 <StatColumn
                   value={totalApplicants}
@@ -1187,34 +1193,34 @@ export default function JobPostingDetailScreen() {
               padding="md"
               className="border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-900/20"
             >
-              <View className="mb-3 flex-row items-start">
-                <XCircleIcon size={20} color={STATUS_COLORS.error} />
-                <Text className="ml-2 text-base font-sans-semibold text-error-700 dark:text-error-400">
+              <View className="mb-2 flex-row items-center">
+                <XCircleIcon size={18} color={STATUS_COLORS.error} />
+                <Text className="ml-2 text-sm font-sans-semibold text-error-700 dark:text-error-400">
                   승인 반려되었습니다
                 </Text>
               </View>
 
               {posting.tournamentConfig.rejectionReason ? (
-                <View className="mb-4 rounded-lg bg-white p-3 dark:bg-surface">
-                  <Text className="mb-1 text-sm font-sans-medium text-secondary-500 dark:text-secondary-400">
+                <View className="mb-3 border-t border-error-200 pt-3 dark:border-error-800">
+                  <Text className="mb-1 text-xs font-sans-medium text-secondary-500 dark:text-secondary-400">
                     반려 사유
                   </Text>
-                  <Text className="text-base text-content-secondary font-sans">
+                  <Text className="text-sm text-content-secondary font-sans">
                     {posting.tournamentConfig.rejectionReason}
                   </Text>
                 </View>
               ) : null}
 
-              <Text className="mb-4 text-sm text-content-muted dark:text-secondary-400 font-sans">
+              <Text className="mb-3 text-xs text-content-muted dark:text-secondary-400 font-sans">
                 공고 내용을 수정한 뒤 다시 제출하면 재심사가 진행됩니다.
               </Text>
 
               <View className="flex-row">
                 <Pressable
                   onPress={handleEdit}
-                  className="mr-2 flex-1 items-center justify-center rounded-md border border-primary-600 py-3 dark:border-primary-500"
+                  className="mr-2 min-h-[44px] flex-1 items-center justify-center rounded-md border border-primary-600 dark:border-primary-500"
                 >
-                  <Text className="text-base font-sans-medium text-primary-600 dark:text-primary-400">
+                  <Text className="text-sm font-sans-semibold text-primary-600 dark:text-primary-400">
                     수정하기
                   </Text>
                 </Pressable>

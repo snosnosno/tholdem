@@ -326,118 +326,116 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
               추가 정보
             </Text>
 
-            {/* 닉네임 */}
-            <View className="mb-3">
-              <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
-                닉네임
-              </Text>
+            {/* 닉네임 · 지역 · 경력 — 기본 정보와 같은 "라벨 좌 / 값 우" 한 행 리듬.
+                라벨을 입력창 위에 얹으면 한 필드가 64px 이고, 카드 두 장이 서로 다른
+                리듬으로 읽힌다. 같은 화면에서 같은 성격의 정보는 같은 모양이어야 한다.
+                입력창은 44px 터치 타깃을 지키되 행 자체의 세로 여백을 없앤다(dense). */}
+            <InfoRow label="닉네임" dense>
               <Controller
                 control={control}
                 name="nickname"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View className="flex-row items-center">
-                    <View className="flex-1">
-                      <TextInput
-                        className={`rounded-lg border px-4 py-3 text-content-primary ${
-                          errors.nickname
-                            ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
-                            : 'border-divider bg-surface-card dark:bg-surface-elevated'
-                        }`}
-                        value={value}
-                        onChangeText={(text) => handleNicknameChange(onChange, text)}
-                        onBlur={() => handleNicknameBlur(onBlur)}
-                        placeholder="닉네임을 입력해주세요 (2-15자)"
-                        placeholderTextColor={SECONDARY_PALETTE[400]}
-                        autoCapitalize="none"
-                        maxLength={15}
-                      />
-                    </View>
+                    <TextInput
+                      className={`min-h-[44px] flex-1 rounded-lg border px-3 py-2 text-content-primary ${
+                        errors.nickname
+                          ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
+                          : 'border-divider bg-surface-card dark:bg-surface-elevated'
+                      }`}
+                      value={value}
+                      onChangeText={(text) => handleNicknameChange(onChange, text)}
+                      onBlur={() => handleNicknameBlur(onBlur)}
+                      placeholder="2-15자"
+                      placeholderTextColor={SECONDARY_PALETTE[400]}
+                      autoCapitalize="none"
+                      maxLength={15}
+                      accessibilityLabel="닉네임"
+                    />
                     {nicknameStatus === 'checking' && (
                       <ActivityIndicator size="small" className="ml-2" />
                     )}
                   </View>
                 )}
               />
-              {errors.nickname && (
-                <Text className="mt-1 text-xs text-error-500 font-sans">
-                  {errors.nickname.message}
-                </Text>
-              )}
-              {nicknameStatus === 'available' && !errors.nickname && (
-                <Text className="mt-1 text-xs text-success-600 dark:text-success-400 font-sans">
-                  사용 가능한 닉네임입니다
-                </Text>
-              )}
-            </View>
+            </InfoRow>
+            {errors.nickname && (
+              <Text className="mb-1 text-right text-xs text-error-500 font-sans">
+                {errors.nickname.message}
+              </Text>
+            )}
+            {nicknameStatus === 'available' && !errors.nickname && (
+              <Text className="mb-1 text-right text-xs text-success-600 dark:text-success-400 font-sans">
+                사용 가능한 닉네임입니다
+              </Text>
+            )}
 
-            {/* 지역 + 경력 — 지역은 짧은 한 줄, 경력은 두 자리 숫자다. 각자 한 행을 쓰면
-                입력한 글자보다 빈 가로가 더 넓다. 2:1 로 나눠 한 줄에 앉힌다. */}
-            <View className="mb-3 flex-row gap-3">
-              <View className="flex-[2]">
-                <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
-                  지역
-                </Text>
-                <Controller
-                  control={control}
-                  name="region"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      className={`min-h-[44px] rounded-lg border px-4 py-2.5 text-content-primary ${
-                        errors.region
-                          ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
-                          : 'border-divider bg-surface-card dark:bg-surface-elevated'
-                      }`}
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      placeholder="예: 서울 강남구"
-                      placeholderTextColor={SECONDARY_PALETTE[400]}
-                      autoCapitalize="none"
-                      maxLength={50}
-                    />
-                  )}
-                />
-                {errors.region && (
-                  <Text className="mt-1 text-xs text-error-500 font-sans">
-                    {errors.region.message}
-                  </Text>
-                )}
-              </View>
+            <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
 
-              <View className="flex-1">
-                <Text className="mb-1 text-xs text-content-muted dark:text-secondary-400 font-sans">
-                  경력 (년)
-                </Text>
-                <Controller
-                  control={control}
-                  name="experienceYears"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      className={`min-h-[44px] rounded-lg border px-4 py-2.5 text-content-primary ${
-                        errors.experienceYears
-                          ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
-                          : 'border-divider bg-surface-card dark:bg-surface-elevated'
-                      }`}
-                      value={value?.toString() ?? ''}
-                      onChangeText={(text) => {
-                        const num = parseInt(text, 10);
-                        onChange(isNaN(num) ? undefined : num);
-                      }}
-                      onBlur={onBlur}
-                      placeholder="예: 3"
-                      placeholderTextColor={SECONDARY_PALETTE[400]}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                  )}
-                />
-                {errors.experienceYears && (
-                  <Text className="mt-1 text-xs text-error-500 font-sans">
-                    {errors.experienceYears.message}
-                  </Text>
+            <InfoRow label="지역" dense>
+              <Controller
+                control={control}
+                name="region"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    className={`min-h-[44px] rounded-lg border px-3 py-2 text-content-primary ${
+                      errors.region
+                        ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
+                        : 'border-divider bg-surface-card dark:bg-surface-elevated'
+                    }`}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="예: 서울 강남구"
+                    placeholderTextColor={SECONDARY_PALETTE[400]}
+                    autoCapitalize="none"
+                    maxLength={50}
+                    accessibilityLabel="지역"
+                  />
                 )}
-              </View>
-            </View>
+              />
+            </InfoRow>
+            {errors.region && (
+              <Text className="mb-1 text-right text-xs text-error-500 font-sans">
+                {errors.region.message}
+              </Text>
+            )}
+
+            <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
+
+            <InfoRow label="경력 (년)" dense>
+              <Controller
+                control={control}
+                name="experienceYears"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    className={`min-h-[44px] rounded-lg border px-3 py-2 text-content-primary ${
+                      errors.experienceYears
+                        ? 'border-error-500 bg-error-50 dark:bg-error-900/20'
+                        : 'border-divider bg-surface-card dark:bg-surface-elevated'
+                    }`}
+                    value={value?.toString() ?? ''}
+                    onChangeText={(text) => {
+                      const num = parseInt(text, 10);
+                      onChange(isNaN(num) ? undefined : num);
+                    }}
+                    onBlur={onBlur}
+                    placeholder="예: 3"
+                    placeholderTextColor={SECONDARY_PALETTE[400]}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    accessibilityLabel="경력 연수"
+                  />
+                )}
+              />
+            </InfoRow>
+            {errors.experienceYears && (
+              <Text className="mb-1 text-right text-xs text-error-500 font-sans">
+                {errors.experienceYears.message}
+              </Text>
+            )}
+
+            {/* 이력·기타사항은 여러 줄이라 행에 못 앉는다 — 라벨을 위에 두는 유일한 예외 */}
+            <View className="mt-3" />
 
             {/* 이력 */}
             <View className="mb-3">
@@ -515,7 +513,7 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
           <Pressable
             onPress={handleSubmit(onSubmit)}
             disabled={isSaveDisabled}
-            className={`rounded-lg py-4 ${
+            className={`min-h-[48px] items-center justify-center rounded-md ${
               isSaveDisabled
                 ? 'bg-secondary-300 dark:bg-surface-elevated'
                 : 'bg-primary-600 active:bg-primary-700'

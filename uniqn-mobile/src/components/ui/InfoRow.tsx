@@ -21,8 +21,10 @@ export interface InfoRowProps {
   value?: string | null;
   /** 값 아래 덧붙는 보조 설명 (예: Apple 비공개 이메일) */
   hint?: string | null;
-  /** 값 대신 그릴 커스텀 노드 (배지 등) */
+  /** 값 대신 오른쪽 칸을 채울 노드 (배지·입력창 등). 주면 `value`/`hint` 는 무시된다. */
   children?: React.ReactNode;
+  /** 세로 여백을 없애 자식 높이가 행 높이가 되게 한다 (44px 입력창을 넣을 때) */
+  dense?: boolean;
   testID?: string;
 }
 
@@ -32,18 +34,23 @@ export interface InfoRowProps {
  * 값이 길면(이메일 등) 라벨을 밀어내지 않고 값 쪽에서 줄바꿈한다 — `shrink-0` 라벨 +
  * `flex-1` 값. 라벨이 줄어들면 스캔 기준선이 무너진다.
  */
-export function InfoRow({ label, value, hint, children, testID }: InfoRowProps) {
+export function InfoRow({ label, value, hint, children, dense = false, testID }: InfoRowProps) {
+  // 🔑 자식이 있으면 컨테이너에 `accessible` 을 걸지 않는다. Pressable/TextInput 같은
+  //    상호작용 자식이 들어오는 자리인데, 부모가 accessible 이면 스크린리더가 행 전체를
+  //    한 덩어리로 삼켜 자식에 초점이 가지 않는다 — 입력창이 음성으로 사라진다.
+  const isPlainValue = !children;
+
   return (
     <View
-      className="min-h-[44px] flex-row items-center justify-between py-2"
+      className={`min-h-[44px] flex-row items-center justify-between ${dense ? '' : 'py-2'}`}
       testID={testID}
-      accessible
-      accessibilityLabel={children ? label : `${label} ${value || '없음'}`}
+      accessible={isPlainValue}
+      accessibilityLabel={isPlainValue ? `${label} ${value || '없음'}` : undefined}
     >
       <Text className="mr-3 shrink-0 text-sm text-content-muted dark:text-secondary-400 font-sans">
         {label}
       </Text>
-      {children ?? (
+      {isPlainValue ? (
         <View className="flex-1 items-end">
           <Text className="text-right text-sm text-content-primary dark:text-off-white font-sans">
             {value || '-'}
@@ -54,6 +61,8 @@ export function InfoRow({ label, value, hint, children, testID }: InfoRowProps) 
             </Text>
           ) : null}
         </View>
+      ) : (
+        <View className="flex-1">{children}</View>
       )}
     </View>
   );
