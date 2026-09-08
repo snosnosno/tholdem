@@ -6,7 +6,9 @@
  *
  * 고정하는 계약 여섯.
  *  1. 손해가 가장 큰 신호 하나만 "지금 할 일"로 크게 낸다. 없으면 그 자리도 없다.
- *  2. 승격된 카드는 목록에서 빠진다 — 같은 testID 가 두 번 나오면 무엇을 누른 건지 모호해진다.
+ *  2. 🚨 승격돼도 "관리" 목록에서는 빠지지 않는다 — 빠지면 정산 대기 1건에 '스태프 관리/정산'
+ *     진입점이 목록에서 통째로 사라져 사장이 "메뉴가 없어졌다"고 읽는다(실사고 제보).
+ *     승격 카드는 전용 testID(job-posting-primary-action)로 타일과 구분한다.
  *  3. 우선순위가 실제로 지켜진다(취소 요청 > 대기 지원자).
  *  4. 같은 카드라도 무엇 때문에 올라왔는지에 따라 다른 말을 한다(미출근 ≠ 정산).
  *  5. 🚨 라이브 운영은 연결된 대회가 있으면 목록 **맨 위** 고정 — 빈도로 강등하면
@@ -231,17 +233,26 @@ describe('JobPostingDetailScreen — 카드 위계', () => {
     const { getByText, getByTestId } = render(<JobPostingDetailScreen />);
 
     expect(getByText('지금 할 일')).toBeTruthy();
-    expect(getByTestId('job-posting-manage-applicants').props.accessibilityLabel).toContain(
-      '지금 할 일'
-    );
+    const primaryLabel = getByTestId('job-posting-primary-action').props.accessibilityLabel;
+    expect(primaryLabel).toContain('지금 할 일');
+    expect(primaryLabel).toContain('지원자 관리');
   });
 
-  it('승격된 카드는 목록에 중복으로 남지 않는다', () => {
-    mockApplicantStats.mockReturnValue(stats({ applied: 2 }));
+  // 🚨 실사고 제보 — 정산 대기가 생기자 '스태프 관리/정산' 이 "관리" 에서 사라졌다.
+  //    승격은 알림 한 장을 **더** 내는 것이지 목록에서 진입점을 빼는 것이 아니다.
+  it('승격돼도 "관리" 목록의 진입점은 그대로 남는다', () => {
+    mockWorkLogs.mockReturnValue([
+      { payrollStatus: 'pending', status: 'completed', date: '2026-01-05' },
+    ]);
 
-    const { getAllByTestId } = render(<JobPostingDetailScreen />);
+    const { getAllByTestId, getByTestId } = render(<JobPostingDetailScreen />);
 
-    expect(getAllByTestId('job-posting-manage-applicants')).toHaveLength(1);
+    // 목록 타일은 승격 여부와 무관하게 정확히 한 장, 늘 같은 자리에 있다.
+    expect(getAllByTestId('job-posting-manage-settlements')).toHaveLength(1);
+    // 승격 카드는 타일의 testID 를 물려받지 않는다 — 둘을 구분할 수 있어야 한다.
+    expect(getByTestId('job-posting-primary-action').props.accessibilityLabel).toContain(
+      '스태프 관리/정산'
+    );
   });
 
   it('취소 요청은 대기 지원자보다 먼저 승격된다', () => {
@@ -249,9 +260,10 @@ describe('JobPostingDetailScreen — 카드 위계', () => {
 
     const { getByTestId } = render(<JobPostingDetailScreen />);
 
-    expect(
-      getByTestId('job-posting-manage-cancellation-requests').props.accessibilityLabel
-    ).toContain('지금 할 일');
+    const primaryLabel = getByTestId('job-posting-primary-action').props.accessibilityLabel;
+    expect(primaryLabel).toContain('취소 요청 관리');
+    expect(primaryLabel).not.toContain('지원자 관리');
+    // 목록 타일은 알림이 아니다 — "지금 할 일" 접두사는 승격 카드에만 붙는다.
     expect(getByTestId('job-posting-manage-applicants').props.accessibilityLabel).not.toContain(
       '지금 할 일'
     );
@@ -279,7 +291,7 @@ describe('JobPostingDetailScreen — 카드 위계', () => {
 
     const { getByText, getByTestId } = render(<JobPostingDetailScreen />);
 
-    const label = getByTestId('job-posting-manage-settlements').props.accessibilityLabel;
+    const label = getByTestId('job-posting-primary-action').props.accessibilityLabel;
     expect(label).toContain('오늘 출근 확인');
     expect(label).toContain('1명');
     expect(getByText('출근 현황 보기')).toBeTruthy();
@@ -296,7 +308,7 @@ describe('JobPostingDetailScreen — 카드 위계', () => {
 
     const { getByText, getByTestId } = render(<JobPostingDetailScreen />);
 
-    expect(getByTestId('job-posting-manage-settlements').props.accessibilityLabel).toContain(
+    expect(getByTestId('job-posting-primary-action').props.accessibilityLabel).toContain(
       '정산할 근무가 2건'
     );
     expect(getByText('정산하러 가기')).toBeTruthy();
@@ -311,8 +323,8 @@ describe('JobPostingDetailScreen — 카드 위계', () => {
 
     const { getByTestId, getAllByRole } = render(<JobPostingDetailScreen />);
 
-    expect(getByTestId('job-posting-manage-applicants').props.accessibilityLabel).toContain(
-      '지금 할 일'
+    expect(getByTestId('job-posting-primary-action').props.accessibilityLabel).toContain(
+      '지원자 관리'
     );
 
     const labels = buttonLabels(getAllByRole);
