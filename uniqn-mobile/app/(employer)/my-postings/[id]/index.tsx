@@ -118,6 +118,15 @@ function StatColumn({
   );
 }
 
+/**
+ * "지금 할 일" 카드 전용 testID.
+ *
+ * 승격 카드는 목록 타일과 같은 목적지를 가리키지만 **다른 자리**다 — 타일의
+ * `job-posting-manage-*` 를 그대로 물려주면 같은 testID 가 화면에 둘이 되어
+ * 테스트가 무엇을 눌렀는지 구분하지 못한다.
+ */
+const PRIMARY_ACTION_TEST_ID = 'job-posting-primary-action';
+
 interface ActionCardProps {
   icon: React.ReactNode;
   title: string;
@@ -782,12 +791,15 @@ export default function JobPostingDetailScreen() {
   const actionItems = allActionItems.filter((item) => item.visible);
 
   const primaryItem = actionItems.find((item) => item.key === primaryCardKey);
-  // 승격된 카드는 목록에서 뺀다 — 같은 testID 가 두 번 나오면 무엇을 누른 건지도 모호해진다.
-  const rowItems = actionItems.filter((item) => item.key !== primaryItem?.key);
+  // 🚨 승격돼도 목록에서 빼지 않는다. 빼면 진입점 자리가 신호에 따라 움직인다 — 정산 대기가
+  //    한 건이라도 생기는 순간 '스태프 관리/정산' 이 "관리" 에서 통째로 사라져, 사장은 늘 있던
+  //    자리를 훑고는 "메뉴가 없어졌다" 고 읽는다(실사고 제보). "지금 할 일" 은 알림이고 "관리"
+  //    는 진입점 목록이라 역할이 다르므로, 같은 목적지가 둘 다 있는 편이 맞다.
+  //    종전 제외 사유였던 testID 중복은 승격 카드에 전용 testID 를 줘서 끊는다.
   // 2열 그리드 — flex-wrap 대신 두 개씩 끊어 행을 만든다. wrap 은 칸마다 폭을 고정해야
   // 하는데(flex-1 이 무력해짐) 긴 제목에서 줄이 밀리고, 행으로 끊으면 flex-1 두 칸이
   // 언제나 정확히 반반을 나눠 갖는다.
-  const tileRows = rowItems.reduce<PostingActionItem[][]>((rows, item, index) => {
+  const tileRows = actionItems.reduce<PostingActionItem[][]>((rows, item, index) => {
     if (index % 2 === 0) {
       rows.push([item]);
     } else {
@@ -1136,15 +1148,15 @@ export default function JobPostingDetailScreen() {
               description={primaryItem.description}
               badge={primaryItem.badge}
               onPress={primaryItem.onPress}
-              testID={primaryItem.testID}
+              testID={PRIMARY_ACTION_TEST_ID}
               emphasis="primary"
               {...primaryOverride}
             />
           </View>
         ) : null}
 
-        {/* 관리 — 나머지는 2열 그리드 타일로 강등한다. 목록 순서(라이브 운영이 맨 앞)는
-            좌→우, 위→아래로 그대로 읽히므로 우선순위 표현이 깨지지 않는다. */}
+        {/* 관리 — 진입점 **전체**를 2열 그리드 타일로 낸다(승격된 카드 포함). 목록 순서
+            (라이브 운영이 맨 앞)는 좌→우, 위→아래로 그대로 읽히므로 우선순위 표현이 깨지지 않는다. */}
         <View className="px-4 pb-4 pt-5">
           <Text className="mb-2 text-base font-display-semibold text-content-primary dark:text-off-white">
             관리
