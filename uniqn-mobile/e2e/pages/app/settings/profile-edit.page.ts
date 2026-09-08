@@ -15,7 +15,10 @@ export class ProfileEditPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.nicknameInput = page.getByPlaceholder('닉네임을 입력해주세요 (2-15자)');
+    // 🔑 placeholder 가 아니라 testID 로 잡는다. 라벨이 입력창 왼쪽으로 나가면서
+    //    placeholder 가 '2-15자' 로 짧아졌고, 문구에 결합돼 있던 이 셀렉터가 깨졌다.
+    //    placeholder 는 카피라 언제든 또 바뀐다.
+    this.nicknameInput = page.getByTestId('profile-nickname-input');
     this.regionInput = page.getByPlaceholder('예: 서울 강남구');
     this.experienceInput = page.getByPlaceholder('예: 3');
     this.careerInput = page.getByPlaceholder('경력 및 이력을 입력해주세요');

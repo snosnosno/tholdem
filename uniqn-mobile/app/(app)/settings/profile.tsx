@@ -350,6 +350,10 @@ function ProfileEditForm({ profile, user }: { profile: UserProfile; user: AuthUs
                       autoCapitalize="none"
                       maxLength={15}
                       accessibilityLabel="닉네임"
+                      // 라벨이 왼쪽으로 나가면서 placeholder 를 '닉네임을 입력해주세요 (2-15자)'
+                      // 에서 줄였다. E2E 가 placeholder 문구를 셀렉터로 쓰고 있어 한 번 깨졌으므로
+                      // (PR #484, CI red) 문구가 아니라 testID 로 잡게 한다.
+                      testID="profile-nickname-input"
                     />
                     {nicknameStatus === 'checking' && (
                       <ActivityIndicator size="small" className="ml-2" />
