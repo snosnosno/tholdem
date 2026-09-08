@@ -20,7 +20,6 @@ import { HeaderQRAction, JobTitleSuffix, useJobDetailContext } from './_layout';
 import {
   BanknotesIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   ChevronUpIcon,
   ClockIcon,
   CurrencyDollarIcon,
@@ -129,16 +128,24 @@ interface ActionCardProps {
   onPress: () => void;
   testID?: string;
   /**
-   * 'row'(기본) = 강등된 목록 행 / 'primary' = "지금 할 일" 한 장.
+   * 'tile'(기본) = 2열 그리드 한 칸 / 'primary' = "지금 할 일" 한 장.
    *
    * 카드 6장이 전부 같은 크기라 우선순위 표현이 0이었다 — 사장이 매번 여섯 장을 읽고
    * 무엇이 급한지 스스로 판단해야 했다. 위계는 **크기와 골드**로만 준다.
    */
-  emphasis?: 'row' | 'primary';
+  emphasis?: 'tile' | 'primary';
   /** primary 일 때 골드 버튼에 쓸 라벨 */
   actionLabel?: string;
 }
 
+/**
+ * 관리 진입점 하나.
+ *
+ * 종전 'row' 는 한 칸이 세로 70px 을 먹었고(제목 + 설명 두 줄), 여섯 개면 420px —
+ * 화면 한 장을 목록이 통째로 차지했다. 설명문 대부분이 "지원자 목록을 확인합니다." 같은
+ * 제목의 되풀이라, **화면에서는 지우고 접근성 라벨에만 남긴다**(스크린리더는 제목만으로
+ * 목적지를 판단하기 어렵다). 남은 세로는 2열 그리드로 다시 절반이 된다.
+ */
 function ActionCard({
   icon,
   title,
@@ -148,7 +155,7 @@ function ActionCard({
   badge,
   onPress,
   testID,
-  emphasis = 'row',
+  emphasis = 'tile',
   actionLabel,
 }: ActionCardProps) {
   const resolvedTitle = displayTitle ?? title;
@@ -171,37 +178,44 @@ function ActionCard({
       >
         <Card
           variant="elevated"
-          padding="md"
+          padding="sm"
           className="border border-primary-200 dark:border-primary-800"
         >
-          <Text className="mb-2 text-xs font-sans-semibold text-primary-600 dark:text-primary-400">
-            지금 할 일
-          </Text>
-          <View className="flex-row items-center">
-            <View className="mr-3 h-12 w-12 items-center justify-center rounded-sm bg-primary-50 dark:bg-primary-900/30">
-              {icon}
-            </View>
-            <View className="flex-1">
-              <View className="flex-row items-center">
-                <Text className="mr-2 text-lg font-display-semibold text-content-primary dark:text-off-white">
-                  {resolvedTitle}
-                </Text>
-                {badge ? (
-                  <Badge variant={badge.variant} size="sm">
-                    {badge.label}
-                  </Badge>
-                ) : null}
-              </View>
-              <Text className="mt-1 text-sm text-content-secondary font-sans">
+          {/* 머리글과 배지를 한 줄에 둔다 — 종전에는 머리글·제목·배지가 세 줄을 먹었다. */}
+          <View className="flex-row items-center justify-between">
+            <Text className="text-xs font-sans-semibold text-primary-600 dark:text-primary-400">
+              지금 할 일
+            </Text>
+            {badge ? (
+              <Badge variant={badge.variant} size="sm">
+                {badge.label}
+              </Badge>
+            ) : null}
+          </View>
+
+          {/* 제목·설명 좌 / 골드 버튼 우 — 한 줄이다.
+              풀폭 골드 바는 자기 줄(44px)과 위 여백(10px)을 통째로 썼는데, 카드 전체가 이미
+              같은 곳으로 가는 Pressable 이라 그 바는 두 번째 탭 타깃이 아니라 라벨이었다.
+              라벨이라면 제목 옆자리로 충분하다. 아이콘 타일도 뺀다 — 골드가 이 카드의
+              시선 고정점이 된 이상 타일은 장식만 남는다. */}
+          <View className="mt-2 flex-row items-center">
+            <View className="mr-3 flex-1">
+              <Text
+                className="text-base font-display-semibold text-content-primary dark:text-off-white"
+                numberOfLines={2}
+              >
+                {resolvedTitle}
+              </Text>
+              <Text className="mt-0.5 text-xs text-content-secondary font-sans" numberOfLines={2}>
                 {resolvedDescription}
               </Text>
             </View>
-          </View>
-          {/* 골드는 이 버튼에만 쓴다 — 강조가 여러 곳이면 아무것도 강조되지 않는다. */}
-          <View className="mt-4 min-h-[44px] items-center justify-center rounded-md bg-primary-600 py-3">
-            <Text className="text-base font-sans-semibold text-content-onGold">
-              {actionLabel ?? '바로 가기'}
-            </Text>
+            {/* 골드는 이 버튼에만 쓴다 — 강조가 여러 곳이면 아무것도 강조되지 않는다. */}
+            <View className="min-h-[44px] shrink-0 justify-center rounded-md bg-primary-600 px-3">
+              <Text className="text-sm font-sans-semibold text-content-onGold">
+                {actionLabel ?? '바로 가기'}
+              </Text>
+            </View>
           </View>
         </Card>
       </Pressable>
@@ -211,31 +225,28 @@ function ActionCard({
   return (
     <Pressable
       onPress={onPress}
-      className="min-h-[56px] flex-row items-center px-4 py-3 active:bg-secondary-50 dark:active:bg-surface-overlay"
+      className="min-h-[60px] flex-1 justify-center rounded-lg bg-surface-card px-2.5 py-2.5 dark:bg-surface-elevated active:opacity-70"
       accessibilityRole="button"
       testID={testID}
       accessibilityLabel={accessibilityLabel}
     >
-      {/* 강등된 행의 아이콘 배경은 중립이다. 골드를 여기까지 쓰면 "지금 할 일"이 묻힌다. */}
-      <View className="mr-3 h-9 w-9 items-center justify-center rounded-sm bg-secondary-100 dark:bg-surface-overlay">
+      <View className="flex-row items-center">
         {icon}
-      </View>
-      <View className="flex-1">
-        <View className="flex-row items-center">
-          <Text className="mr-2 text-base font-sans-medium text-content-primary dark:text-off-white">
-            {resolvedTitle}
-          </Text>
-          {badge ? (
-            <Badge variant={badge.variant} size="sm">
-              {badge.label}
-            </Badge>
-          ) : null}
-        </View>
-        <Text className="mt-0.5 text-xs text-secondary-500 dark:text-secondary-400 font-sans">
-          {resolvedDescription}
+        {/* 반 폭에서 "스태프 관리/정산"(9자)은 한 줄에 못 앉는다 — 자르지 말고 두 줄을 준다.
+            같은 행의 두 칸은 flex 로 높이가 맞춰지므로 줄 수가 달라도 어긋나지 않는다. */}
+        <Text
+          className="ml-1.5 flex-1 text-sm font-sans-medium text-content-primary dark:text-off-white"
+          numberOfLines={2}
+        >
+          {resolvedTitle}
         </Text>
       </View>
-      <ChevronRightIcon size={20} color={SECONDARY_PALETTE[400]} />
+      {/* 배지가 있는 칸만 두 줄이 된다 — 처리할 일이 있는 칸이 자연히 커 보이는 위계다. */}
+      {badge ? (
+        <Badge variant={badge.variant} size="sm" className="mt-1.5 self-start">
+          {badge.label}
+        </Badge>
+      ) : null}
     </Pressable>
   );
 }
@@ -665,7 +676,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'liveOps',
       visible: isLiveOpsVisible,
-      icon: <UsersIcon size={20} color={STATUS_COLORS.info} />,
+      icon: <UsersIcon size={18} color={STATUS_COLORS.info} />,
       title:
         opsTournaments.length > 0 ? `라이브 운영 (${opsTournaments.length})` : '라이브 운영 시작',
       description:
@@ -685,7 +696,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'applicants',
       visible: true,
-      icon: <UsersIcon size={20} color={SECONDARY_PALETTE[500]} />,
+      icon: <UsersIcon size={18} color={SECONDARY_PALETTE[500]} />,
       title: '지원자 관리',
       description:
         pendingApplicants > 0
@@ -699,7 +710,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'cancellationRequests',
       visible: !isFixed,
-      icon: <XCircleIcon size={20} color={STATUS_COLORS.error} />,
+      icon: <XCircleIcon size={18} color={STATUS_COLORS.error} />,
       title: '취소 요청 관리',
       description: '스태프의 취소 요청을 검토합니다.',
       badge:
@@ -712,7 +723,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'settlements',
       visible: !isFixed,
-      icon: <BanknotesIcon size={20} color={STATUS_COLORS.success} />,
+      icon: <BanknotesIcon size={18} color={STATUS_COLORS.success} />,
       title: '스태프 관리/정산',
       description: '배정된 스태프 관리와 정산을 진행합니다.',
       badge:
@@ -725,7 +736,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'edit',
       visible: true,
-      icon: <EditIcon size={20} color={SECONDARY_PALETTE[500]} />,
+      icon: <EditIcon size={18} color={SECONDARY_PALETTE[500]} />,
       title: '공고 수정',
       description: '공고 내용을 수정합니다.',
       badge:
@@ -740,7 +751,7 @@ export default function JobPostingDetailScreen() {
       // 🔑 상시 노출한다. 예전엔 "지원자 0명" 빈 상태 카드 안에만 있어서 **첫 지원자가
       //    들어오는 순간 사라졌다** — 정작 더 모으고 싶을 때 진입점이 없어지는 셈이었다.
       visible: true,
-      icon: <ShareIcon size={20} color={SECONDARY_PALETTE[500]} />,
+      icon: <ShareIcon size={18} color={SECONDARY_PALETTE[500]} />,
       title: '지원 QR',
       // 🚨 '지원'을 앞에 둔다 — '공고 QR' 이라고만 하면 출퇴근 QR 과 구분되지 않는다.
       description: '매장·홍보물에 붙이면 찍는 사람에게 공고가 바로 열립니다.',
@@ -751,7 +762,7 @@ export default function JobPostingDetailScreen() {
       key: 'announce',
       // 배정된 스태프가 있어야 보낼 대상이 있다 — 0명일 때 띄우면 눌러 봐야 빈 화면이다.
       visible: filledPositions > 0,
-      icon: <UsersIcon size={20} color={SECONDARY_PALETTE[500]} />,
+      icon: <UsersIcon size={18} color={SECONDARY_PALETTE[500]} />,
       title: '스태프 공지',
       description: '확정된 스태프 전원에게 한 번에 안내를 보냅니다.',
       onPress: handleAnnounce,
@@ -760,7 +771,7 @@ export default function JobPostingDetailScreen() {
     {
       key: 'collaborators',
       visible: true,
-      icon: <UserPlusIcon size={20} color={SECONDARY_PALETTE[500]} />,
+      icon: <UserPlusIcon size={18} color={SECONDARY_PALETTE[500]} />,
       title: '함께 관리할 사람',
       description: '이 공고를 함께 관리할 사람을 추가하거나 제거합니다.',
       onPress: handleCollaborators,
@@ -773,6 +784,17 @@ export default function JobPostingDetailScreen() {
   const primaryItem = actionItems.find((item) => item.key === primaryCardKey);
   // 승격된 카드는 목록에서 뺀다 — 같은 testID 가 두 번 나오면 무엇을 누른 건지도 모호해진다.
   const rowItems = actionItems.filter((item) => item.key !== primaryItem?.key);
+  // 2열 그리드 — flex-wrap 대신 두 개씩 끊어 행을 만든다. wrap 은 칸마다 폭을 고정해야
+  // 하는데(flex-1 이 무력해짐) 긴 제목에서 줄이 밀리고, 행으로 끊으면 flex-1 두 칸이
+  // 언제나 정확히 반반을 나눠 갖는다.
+  const tileRows = rowItems.reduce<PostingActionItem[][]>((rows, item, index) => {
+    if (index % 2 === 0) {
+      rows.push([item]);
+    } else {
+      rows[rows.length - 1].push(item);
+    }
+    return rows;
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-surface-page dark:bg-surface" edges={['top', 'bottom']}>
@@ -899,17 +921,17 @@ export default function JobPostingDetailScreen() {
 
             {isInfoExpanded ? (
               <>
-                <View className="mb-3 flex-row items-center">
-                  <MapPinIcon size={18} color={PRIMARY_COLORS[600]} />
-                  <Text className="ml-2 text-base text-content-secondary font-sans">
+                <View className="mb-2.5 flex-row items-center">
+                  <MapPinIcon size={16} color={PRIMARY_COLORS[600]} />
+                  <Text className="ml-2 flex-1 text-sm text-content-secondary font-sans">
                     {locationLabel}
                   </Text>
                 </View>
 
-                <View className="mb-4">
-                  <View className="mb-2 flex-row items-center">
-                    <ClockIcon size={18} color={PRIMARY_COLORS[600]} />
-                    <Text className="ml-2 text-base font-sans-medium text-content-secondary">
+                <View className="mb-3">
+                  <View className="mb-1.5 flex-row items-center">
+                    <ClockIcon size={16} color={PRIMARY_COLORS[600]} />
+                    <Text className="ml-2 text-sm font-sans-medium text-content-secondary">
                       근무 일정
                     </Text>
                   </View>
@@ -930,10 +952,10 @@ export default function JobPostingDetailScreen() {
                   </View>
                 </View>
 
-                <View className="mb-4">
-                  <View className="mb-2 flex-row items-center">
-                    <CurrencyDollarIcon size={18} color={PRIMARY_COLORS[600]} />
-                    <Text className="ml-2 text-base font-sans-medium text-content-secondary">
+                <View className="mb-3">
+                  <View className="mb-1.5 flex-row items-center">
+                    <CurrencyDollarIcon size={16} color={PRIMARY_COLORS[600]} />
+                    <Text className="ml-2 text-sm font-sans-medium text-content-secondary">
                       급여
                     </Text>
                   </View>
@@ -949,7 +971,7 @@ export default function JobPostingDetailScreen() {
                 </View>
 
                 {allowanceItems.length > 0 ? (
-                  <View className="mb-4 ml-6 flex-row flex-wrap">
+                  <View className="mb-2 ml-6 flex-row flex-wrap">
                     {allowanceItems.map((item, index) => (
                       <Badge
                         key={`${item}-${index}`}
@@ -963,21 +985,26 @@ export default function JobPostingDetailScreen() {
                   </View>
                 ) : null}
 
-                {managementView.taxLabel ? (
-                  <View className="mb-4 flex-row items-center">
-                    <CurrencyDollarIcon size={18} color={PRIMARY_COLORS[600]} />
-                    <Text className="ml-2 text-base text-content-secondary font-sans">
-                      {managementView.taxLabel}
-                    </Text>
-                  </View>
-                ) : null}
-
-                {questionCount > 0 ? (
-                  <View className="mb-4 flex-row items-center">
-                    <DocumentIcon size={18} color={PRIMARY_COLORS[600]} />
-                    <Text className="ml-2 text-base text-content-secondary font-sans">
-                      사전질문 {questionCount}개 설정됨
-                    </Text>
+                {/* 세금·사전질문 — 각자 아이콘 달린 한 줄을 쓰던 보조 메타 둘을 한 줄에 묶는다.
+                    둘 다 "설정 확인"용이라 스캔 순서에서 나란히 읽히는 편이 오히려 낫다. */}
+                {managementView.taxLabel || questionCount > 0 ? (
+                  <View className="mb-2 flex-row flex-wrap items-center">
+                    {managementView.taxLabel ? (
+                      <View className="mr-3 flex-row items-center">
+                        <CurrencyDollarIcon size={16} color={PRIMARY_COLORS[600]} />
+                        <Text className="ml-1.5 text-sm text-content-secondary font-sans">
+                          {managementView.taxLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {questionCount > 0 ? (
+                      <View className="flex-row items-center">
+                        <DocumentIcon size={16} color={PRIMARY_COLORS[600]} />
+                        <Text className="ml-1.5 text-sm text-content-secondary font-sans">
+                          사전질문 {questionCount}개
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
                 ) : null}
               </>
@@ -985,7 +1012,10 @@ export default function JobPostingDetailScreen() {
 
             {/* 숫자는 목적지다 — 종전에는 "대기중 3"을 보고도 지원자 화면에 들어가 필터를
                 다시 골라야 했다. 세 숫자가 각자 자기 목록으로 데려간다. */}
-            <View className="rounded-lg bg-surface-page dark:bg-surface px-3 pb-2 pt-3">
+            {/* 카드 안에 또 카드를 넣지 않는다(디자인 룰 6) — 채운 박스 대신 헤어라인으로
+                끊는다. 다크에서 이 박스는 페이지 배경과 같은 값이라 어차피 테두리 없는
+                네모로만 보였고, 카드 안에서 한 단계 더 파인 면이 위계 노이즈였다. */}
+            <View className="border-t border-secondary-100 pt-2 dark:border-surface-overlay">
               <View className="flex-row justify-around">
                 <StatColumn
                   value={totalApplicants}
@@ -1016,7 +1046,7 @@ export default function JobPostingDetailScreen() {
 
               {/* 좌석(work_logs) 축 — 위 3숫자(applications 축)와 다른 축이라 표기를 분리한다.
                   지원자 화면도 같은 컴포넌트를 써서 같은 값이 같은 이름으로 보인다. */}
-              <View className="mt-2">
+              <View className="mt-1.5">
                 <SeatFillSummary filled={filledPositions} total={totalPositions} />
               </View>
             </View>
@@ -1035,18 +1065,18 @@ export default function JobPostingDetailScreen() {
         {/* 지원자 0명 — "0명이 대기중입니다"는 상태 보고일 뿐 다음 행동이 없다.
             사장이 여기서 할 수 있는 유일한 일(공유)을 실제 크기의 CTA 로 준다. */}
         {totalApplicants === 0 ? (
-          <View className="px-4 pt-4">
-            <Card variant="outlined" padding="md">
-              <Text className="mb-1 text-base font-sans-semibold text-content-primary dark:text-off-white">
+          <View className="px-4 pt-3">
+            <Card variant="outlined" padding="sm">
+              <Text className="text-sm font-sans-semibold text-content-primary dark:text-off-white">
                 아직 지원자가 없어요
               </Text>
-              <Text className="mb-4 text-sm text-content-secondary font-sans">
+              <Text className="mb-2.5 mt-0.5 text-xs text-content-secondary font-sans">
                 공고 링크를 단톡방이나 아는 분들께 보내면 지원이 훨씬 빨리 붙어요.
               </Text>
               <Pressable
                 onPress={handleShare}
                 disabled={isSharing}
-                className={`min-h-[44px] flex-row items-center justify-center rounded-md bg-primary-600 py-3 active:bg-primary-700 ${
+                className={`min-h-[44px] flex-row items-center justify-center rounded-md bg-primary-600 active:bg-primary-700 ${
                   isSharing ? 'opacity-40' : ''
                 }`}
                 accessibilityRole="button"
@@ -1069,32 +1099,37 @@ export default function JobPostingDetailScreen() {
             처음부터 다시 입력하고 있었다. 채운 골드는 "지금 할 일" 버튼과 공유 CTA 두 곳뿐이라
             여기는 테두리 버튼으로 둔다. */}
         {isPostingRepostable(posting.status) ? (
-          <View className="px-4 pt-4">
-            <Card variant="outlined" padding="md">
-              <Text className="mb-1 text-base font-sans-semibold text-content-primary dark:text-off-white">
-                이 공고는 끝났어요
-              </Text>
-              <Text className="mb-4 text-sm text-content-secondary font-sans">
-                같은 조건으로 다시 올리면 날짜만 새로 고르면 돼요.
-              </Text>
-              <Pressable
-                onPress={handleRepost}
-                className="min-h-[44px] items-center justify-center rounded-md border border-primary-600 py-3 active:bg-primary-50 dark:border-primary-500 dark:active:bg-primary-900/30"
-                accessibilityRole="button"
-                accessibilityLabel="같은 조건으로 공고 다시 올리기"
-                testID="job-posting-repost"
-              >
-                <Text className="text-base font-sans-semibold text-primary-600 dark:text-primary-400">
-                  같은 조건으로 다시 올리기
-                </Text>
-              </Pressable>
+          <View className="px-4 pt-3">
+            {/* 안내 두 줄과 버튼을 한 줄로 나란히 — 세로로 쌓으면 이 카드 하나가 150px 이었다. */}
+            <Card variant="outlined" padding="sm">
+              <View className="flex-row items-center">
+                <View className="mr-3 flex-1">
+                  <Text className="text-sm font-sans-semibold text-content-primary dark:text-off-white">
+                    이 공고는 끝났어요
+                  </Text>
+                  <Text className="mt-0.5 text-xs text-content-secondary font-sans">
+                    같은 조건으로 다시 올리면 날짜만 새로 고르면 돼요.
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={handleRepost}
+                  className="min-h-[44px] shrink-0 justify-center rounded-md border border-primary-600 px-3 active:bg-primary-50 dark:border-primary-500 dark:active:bg-primary-900/30"
+                  accessibilityRole="button"
+                  accessibilityLabel="같은 조건으로 공고 다시 올리기"
+                  testID="job-posting-repost"
+                >
+                  <Text className="text-sm font-sans-semibold text-primary-600 dark:text-primary-400">
+                    다시 올리기
+                  </Text>
+                </Pressable>
+              </View>
             </Card>
           </View>
         ) : null}
 
         {/* 지금 할 일 — 손해가 가장 큰 신호 하나만 크게 낸다. 처리할 일이 없으면 이 자리도 없다. */}
         {primaryItem ? (
-          <View className="px-4 pt-4">
+          <View className="px-4 pt-3">
             <ActionCard
               icon={primaryItem.icon}
               title={primaryItem.title}
@@ -1108,38 +1143,41 @@ export default function JobPostingDetailScreen() {
           </View>
         ) : null}
 
-        {/* 관리 — 나머지는 행으로 강등한다. 섹션 사이를 넉넉히 띄워 덩어리를 구분한다. */}
-        <View className="px-4 pb-4 pt-8">
-          <Text className="mb-2 text-lg font-display-semibold text-content-primary dark:text-off-white">
+        {/* 관리 — 나머지는 2열 그리드 타일로 강등한다. 목록 순서(라이브 운영이 맨 앞)는
+            좌→우, 위→아래로 그대로 읽히므로 우선순위 표현이 깨지지 않는다. */}
+        <View className="px-4 pb-4 pt-5">
+          <Text className="mb-2 text-base font-display-semibold text-content-primary dark:text-off-white">
             관리
           </Text>
 
-          <View className="overflow-hidden rounded-lg bg-white dark:bg-surface">
-            {rowItems.map((item, index) => (
-              <React.Fragment key={item.key}>
-                {index > 0 ? (
-                  <View className="h-px bg-secondary-100 dark:bg-surface-overlay" />
-                ) : null}
-                <ActionCard
-                  icon={item.icon}
-                  title={item.title}
-                  description={item.description}
-                  badge={item.badge}
-                  onPress={item.onPress}
-                  testID={item.testID}
-                />
-              </React.Fragment>
+          <View className="gap-2">
+            {tileRows.map((row, rowIndex) => (
+              <View key={row[0]?.key ?? `tile-row-${rowIndex}`} className="flex-row gap-2">
+                {row.map((item) => (
+                  <ActionCard
+                    key={item.key}
+                    icon={item.icon}
+                    title={item.title}
+                    description={item.description}
+                    badge={item.badge}
+                    onPress={item.onPress}
+                    testID={item.testID}
+                  />
+                ))}
+                {/* 홀수 개일 때 마지막 칸이 가로를 다 먹지 않도록 빈 칸을 채운다. */}
+                {row.length === 1 ? <View className="flex-1" /> : null}
+              </View>
             ))}
           </View>
         </View>
 
         {posting.description && String(posting.description).length > 0 ? (
-          <View className="px-4 pb-6">
-            <Text className="mb-3 text-lg font-display-semibold text-content-primary dark:text-off-white">
+          <View className="px-4 pb-5">
+            <Text className="mb-2 text-base font-display-semibold text-content-primary dark:text-off-white">
               공고 내용
             </Text>
-            <Card variant="outlined" padding="md">
-              <Text className="text-base leading-6 text-content-secondary font-sans">
+            <Card variant="outlined" padding="sm">
+              <Text className="text-sm leading-5 text-content-secondary dark:leading-[1.375rem] font-sans">
                 {String(posting.description)}
               </Text>
             </Card>
@@ -1155,34 +1193,34 @@ export default function JobPostingDetailScreen() {
               padding="md"
               className="border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-900/20"
             >
-              <View className="mb-3 flex-row items-start">
-                <XCircleIcon size={20} color={STATUS_COLORS.error} />
-                <Text className="ml-2 text-base font-sans-semibold text-error-700 dark:text-error-400">
+              <View className="mb-2 flex-row items-center">
+                <XCircleIcon size={18} color={STATUS_COLORS.error} />
+                <Text className="ml-2 text-sm font-sans-semibold text-error-700 dark:text-error-400">
                   승인 반려되었습니다
                 </Text>
               </View>
 
               {posting.tournamentConfig.rejectionReason ? (
-                <View className="mb-4 rounded-lg bg-white p-3 dark:bg-surface">
-                  <Text className="mb-1 text-sm font-sans-medium text-secondary-500 dark:text-secondary-400">
+                <View className="mb-3 border-t border-error-200 pt-3 dark:border-error-800">
+                  <Text className="mb-1 text-xs font-sans-medium text-secondary-500 dark:text-secondary-400">
                     반려 사유
                   </Text>
-                  <Text className="text-base text-content-secondary font-sans">
+                  <Text className="text-sm text-content-secondary font-sans">
                     {posting.tournamentConfig.rejectionReason}
                   </Text>
                 </View>
               ) : null}
 
-              <Text className="mb-4 text-sm text-content-muted dark:text-secondary-400 font-sans">
+              <Text className="mb-3 text-xs text-content-muted dark:text-secondary-400 font-sans">
                 공고 내용을 수정한 뒤 다시 제출하면 재심사가 진행됩니다.
               </Text>
 
               <View className="flex-row">
                 <Pressable
                   onPress={handleEdit}
-                  className="mr-2 flex-1 items-center justify-center rounded-md border border-primary-600 py-3 dark:border-primary-500"
+                  className="mr-2 min-h-[44px] flex-1 items-center justify-center rounded-md border border-primary-600 dark:border-primary-500"
                 >
-                  <Text className="text-base font-sans-medium text-primary-600 dark:text-primary-400">
+                  <Text className="text-sm font-sans-semibold text-primary-600 dark:text-primary-400">
                     수정하기
                   </Text>
                 </Pressable>
@@ -1199,11 +1237,11 @@ export default function JobPostingDetailScreen() {
           </View>
         ) : null}
 
-        <View className="border-t border-secondary-200 px-4 pb-8 pt-4 dark:border-surface-overlay">
+        <View className="border-t border-secondary-200 px-4 pb-8 pt-3 dark:border-surface-overlay">
           <Pressable
             onPress={handleDeletePress}
             disabled={isDeleting || !canDelete}
-            className={`flex-row items-center justify-center rounded-md bg-error-50 py-4 active:bg-error-50 dark:bg-error-900/20 dark:active:bg-error-900/30 ${
+            className={`min-h-[44px] flex-row items-center justify-center rounded-md bg-error-50 active:bg-error-50 dark:bg-error-900/20 dark:active:bg-error-900/30 ${
               !canDelete ? 'opacity-40' : ''
             }`}
             accessibilityRole="button"

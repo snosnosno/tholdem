@@ -84,9 +84,9 @@ export const NextShiftCard = memo(function NextShiftCard({
         schedule.date
       )}`}
       testID="schedule-next-shift-card"
-      className="mx-4 mt-3 rounded-md bg-surface-card px-4 py-3 active:bg-secondary-100 dark:bg-surface-elevated dark:active:bg-secondary-700"
+      className="mx-4 mt-2.5 rounded-md bg-surface-card px-4 py-2.5 active:bg-secondary-100 dark:bg-surface-elevated dark:active:bg-secondary-700"
     >
-      <View className="mb-2 flex-row items-center justify-between">
+      <View className="mb-1 flex-row items-center justify-between">
         <Text className="text-xs text-content-muted dark:text-secondary-400 font-sans">
           내 다음 근무
         </Text>
@@ -96,7 +96,7 @@ export const NextShiftCard = memo(function NextShiftCard({
       </View>
 
       <Text
-        className="mb-2 text-base font-sans-semibold text-content-primary dark:leading-base-dark"
+        className="mb-1.5 text-base font-sans-semibold text-content-primary dark:leading-base-dark"
         numberOfLines={1}
       >
         {schedule.jobPostingName}
@@ -148,7 +148,7 @@ export const NextShiftCard = memo(function NextShiftCard({
           accessibilityRole="button"
           accessibilityLabel={isWorking ? 'QR 코드로 퇴근하기' : 'QR 코드로 출근하기'}
           testID="schedule-next-shift-qr-button"
-          className={`mt-3 flex-row items-center justify-center rounded-md py-2.5 ${
+          className={`mt-2.5 min-h-[44px] flex-row items-center justify-center rounded-md ${
             isWorking
               ? 'bg-secondary-100 active:bg-secondary-200 dark:bg-surface-overlay dark:active:bg-secondary-700'
               : 'bg-primary-600 active:bg-primary-700'
