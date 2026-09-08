@@ -385,8 +385,11 @@ export default function ScheduleScreen() {
   }, [filteredSchedules, todayStr]);
 
   // sticky 헤더 위치 — 섹션마다 [헤더, 카드묶음] 2개 자식을 밀어넣으므로 짝수 인덱스가 헤더다.
+  // 🔑 `+ 1` 은 ScrollView 첫 자식으로 들어간 '내 다음 근무' 히어로 한 칸이다.
+  // 이 오프셋이 어긋나면 sticky 가 섹션 헤더가 아니라 카드 묶음을 가리켜, 카드 전체가
+  // 상단에 고정되고 그 아래 콘텐츠에 영영 닿지 못한다(아래 렌더 주석과 같은 함정).
   const listStickyIndices = useMemo(
-    () => listSections.map((_, index) => index * 2),
+    () => listSections.map((_, index) => index * 2 + 1),
     [listSections]
   );
 
@@ -880,13 +883,11 @@ export default function ScheduleScreen() {
       {/* 헤더 */}
       <TabHeader title="내 스케줄" />
 
-      {/* 내 다음 근무 — 이 탭을 여는 1순위 질문에 먼저 답한다. 월 집계는 그 아래로. */}
-      <NextShiftCard
-        schedule={nextShift}
-        onPress={() => nextShift && handleOpenDetailSheet(nextShift)}
-        onQRScan={handleQRScan}
-        overlapWarning={nextShift ? formatOverlapWarning(overlapMap.get(nextShift.id) ?? []) : null}
-      />
+      {/* 🔑 '내 다음 근무' 히어로는 **스크롤 안**으로 내려갔다(아래 두 ScrollView 의 첫 자식).
+          헤더·히어로·월 네비게이터·요약 밴드가 전부 스크롤 밖에 고정돼 있어서,
+          812pt 기기에서 리스트가 실제로 쓸 수 있는 세로는 350px 남짓이었다 — 내용이 긴 게
+          아니라 **내용을 보는 창이 좁았다.** 히어로는 조작 도구가 아니라 콘텐츠라
+          스크롤과 함께 밀려나야 한다. 월 네비게이터와 필터만 고정으로 남긴다. */}
 
       {/* 월 네비게이터 — 통계보다 먼저 와야 '어느 달의 숫자인지'가 먼저 읽힌다. */}
       <MonthNavigator
@@ -1054,7 +1055,8 @@ export default function ScheduleScreen() {
           contentContainerStyle={{ paddingBottom: bottomPadding }}
           // impeccable §24 — 선택 날짜 헤더를 sticky로: 스크롤해도 현재 컨텍스트 유지.
           // 선택 날짜 스케줄이 있을 때만 sticky 활성 (index 1 = 헤더).
-          stickyHeaderIndices={filteredSelectedDateSchedules.length > 0 ? [1] : undefined}
+          // 자식이 [0: 히어로, 1: 캘린더, 2: 날짜 헤더, 3: 카드] 로 하나씩 밀렸다.
+          stickyHeaderIndices={filteredSelectedDateSchedules.length > 0 ? [2] : undefined}
           refreshControl={
             <RefreshControl
               refreshing={pullRefreshing}
@@ -1063,7 +1065,23 @@ export default function ScheduleScreen() {
             />
           }
         >
-          {/* 0: 캘린더 — MonthNavigator border-b 바로 아래 붙임 */}
+          {/* 0: 내 다음 근무 — 이 탭을 여는 1순위 질문에 먼저 답하되, 스크롤과 함께 밀려난다.
+              🚨 View 로 감싸는 게 핵심이다. NextShiftCard 는 다음 근무가 없으면 **null 을
+              반환**하는데, React.Children.toArray 는 null 을 버린다 — 그러면 자식이 한 칸씩
+              당겨져 stickyHeaderIndices 가 헤더가 아니라 카드 묶음을 가리키고, 카드 전체가
+              상단에 고정돼 그 아래로 스크롤이 되지 않는다. 빈 View 는 높이 0 이라 무해하다. */}
+          <View>
+            <NextShiftCard
+              schedule={nextShift}
+              onPress={() => nextShift && handleOpenDetailSheet(nextShift)}
+              onQRScan={handleQRScan}
+              overlapWarning={
+                nextShift ? formatOverlapWarning(overlapMap.get(nextShift.id) ?? []) : null
+              }
+            />
+          </View>
+
+          {/* 1: 캘린더 */}
           <View>
             {/* lazy chunk 최초 로드용 fallback 도 실제 캘린더와 같은 마진을 쓴다 —
                 edge-to-edge 로 두면 로드 직후 폭이 한 번 튄다. */}
@@ -1094,7 +1112,7 @@ export default function ScheduleScreen() {
             // 가리킨다. 그러면 카드 묶음 전체가 상단에 고정돼 스크롤해도 밀려나지 않고, 그 아래
             // 콘텐츠에 영영 도달할 수 없다(카드가 많아질수록 증상이 커진다).
             [
-              // 1: sticky 헤더 — 배경 solid로 아래 콘텐츠 가림
+              // 2: sticky 헤더 — 배경 solid로 아래 콘텐츠 가림
               <View
                 key="selected-date-header"
                 className="bg-surface-page dark:bg-surface px-4 pt-3 pb-2 border-b border-divider"
@@ -1103,7 +1121,7 @@ export default function ScheduleScreen() {
                   {formatSingleDate(selectedDate)} 스케줄 ({filteredSelectedDateSchedules.length}건)
                 </Text>
               </View>,
-              // 2: 카드 리스트
+              // 3: 카드 리스트
               <View key="selected-date-cards" className="px-4 pt-3">
                 {filteredSelectedDateSchedules.map(renderScheduleItem)}
               </View>,
@@ -1155,6 +1173,19 @@ export default function ScheduleScreen() {
             />
           }
         >
+          {/* 0: 내 다음 근무 — 캘린더 뷰와 같은 자리. listStickyIndices 가 이 한 칸을 센다.
+              View 래퍼가 필요한 이유는 캘린더 뷰 쪽 주석 참고(null 이면 인덱스가 밀린다). */}
+          <View>
+            <NextShiftCard
+              schedule={nextShift}
+              onPress={() => nextShift && handleOpenDetailSheet(nextShift)}
+              onQRScan={handleQRScan}
+              overlapWarning={
+                nextShift ? formatOverlapWarning(overlapMap.get(nextShift.id) ?? []) : null
+              }
+            />
+          </View>
+
           {isLoading && schedules.length === 0 ? (
             <View className="p-4">
               <ScreenSkeleton type="scheduleList" count={4} />
