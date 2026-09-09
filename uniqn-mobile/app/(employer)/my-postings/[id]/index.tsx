@@ -840,7 +840,7 @@ export default function JobPostingDetailScreen() {
             </Pressable>
             {/* 고정 공고는 QR 진입점을 노출하지 않는다 (work_log 행 수명 미해결 — _layout.tsx 주석 참고).
                 판정은 컨텍스트 하나 — 형제 화면 4곳과 같은 값을 쓰므로 탭을 옮겨도 버튼이 깜빡이지 않는다. */}
-            {!isFixed ? <HeaderQRAction onPress={handleShowQR} /> : null}
+            <HeaderQRAction onPress={handleShowQR} />
           </View>
         }
       />

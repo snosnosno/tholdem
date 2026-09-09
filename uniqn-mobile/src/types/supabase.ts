@@ -2254,7 +2254,9 @@ export type Database = {
         Row: {
           application_id: string | null;
           assignment_group_id: string | null;
+          check_in_scanned_at: string | null;
           check_in_ts: string | null;
+          check_out_scanned_at: string | null;
           check_out_ts: string | null;
           created_at: string | null;
           custom_allowances: Json | null;
@@ -2291,7 +2293,9 @@ export type Database = {
         Insert: {
           application_id?: string | null;
           assignment_group_id?: string | null;
+          check_in_scanned_at?: string | null;
           check_in_ts?: string | null;
+          check_out_scanned_at?: string | null;
           check_out_ts?: string | null;
           created_at?: string | null;
           custom_allowances?: Json | null;
@@ -2328,7 +2332,9 @@ export type Database = {
         Update: {
           application_id?: string | null;
           assignment_group_id?: string | null;
+          check_in_scanned_at?: string | null;
           check_in_ts?: string | null;
+          check_out_scanned_at?: string | null;
           check_out_ts?: string | null;
           created_at?: string | null;
           custom_allowances?: Json | null;
@@ -3254,6 +3260,14 @@ export type Database = {
           p_job_posting_id: string;
           p_staff_id: string;
           p_work_log_id: string;
+        };
+        Returns: Json;
+      };
+      process_posting_qr_attendance: {
+        Args: {
+          p_job_posting_id: string;
+          p_selected_work_log_id?: string;
+          p_staff_id: string;
         };
         Returns: Json;
       };

@@ -40,11 +40,10 @@ export default function ApplicantsScreen() {
   // (딥링크·수기 URL 로 아무 문자열이나 올 수 있다).
   const { id: jobPostingId, filter } = useLocalSearchParams<{ id: string; filter?: string }>();
   const initialFilter = useMemo(() => toApplicantFilter(filter), [filter]);
-  const { job, isFixed, handleShowQR } = useJobDetailContext();
+  const { job, handleShowQR } = useJobDetailContext();
   const addToast = useToastStore((s) => s.addToast);
   const headerBackHref = `/(employer)/my-postings/${jobPostingId ?? ''}`;
-  // 고정 공고는 QR 진입점을 노출하지 않는다 (work_log 행 수명 미해결 — _layout.tsx 주석 참고).
-  const headerRightAction = !isFixed ? <HeaderQRAction onPress={handleShowQR} /> : null;
+  const headerRightAction = <HeaderQRAction onPress={handleShowQR} />;
   const headerTitleSuffix = <JobTitleSuffix jobTitle={job?.title ?? null} />;
 
   // 정원 현황 스트립 — 관리 허브(index.tsx)의 "배정 현황" 계산과 동일 소스(job) 재사용, 추가 fetch 없음

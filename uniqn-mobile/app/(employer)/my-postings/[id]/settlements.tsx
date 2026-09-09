@@ -49,10 +49,9 @@ export default function StaffSettlementsScreen() {
   const { addToast } = useToastStore();
   // 공고 데이터는 레이아웃이 realtime 구독과 함께 한 번만 조회한다 — 화면마다 useJobDetail 을
   // 다시 부르면 같은 id 로 훅 인스턴스가 늘어난다(구독·오프라인 캐시 계산이 인스턴스마다 돈다).
-  const { job: posting, isFixed, refresh: refreshJobDetail, handleShowQR } = useJobDetailContext();
+  const { job: posting, refresh: refreshJobDetail, handleShowQR } = useJobDetailContext();
   const headerBackHref = `/(employer)/my-postings/${jobPostingId ?? ''}`;
-  // 고정 공고는 QR 진입점을 노출하지 않는다 (work_log 행 수명 미해결 — _layout.tsx 주석 참고).
-  const headerRightAction = !isFixed ? <HeaderQRAction onPress={handleShowQR} /> : null;
+  const headerRightAction = <HeaderQRAction onPress={handleShowQR} />;
 
   // 탭 상태 (진입 동기 대부분이 "누가 왔나 확인" — 정산은 근무 종료 후 업무)
   const [activeTab, setActiveTab] = useState<TabType>('staff');

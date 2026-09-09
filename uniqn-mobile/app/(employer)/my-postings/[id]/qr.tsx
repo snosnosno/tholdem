@@ -16,7 +16,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { StackHeader } from '@/components/headers';
 import { ErrorState, Loading } from '@/components';
 import { buildVenueQRString } from '@/services/work/eventQRService';
-import { JobTitleSuffix, useJobDetailContext } from './_layout';
+import { useJobDetailContext } from './_layout';
 import { loadFailed, notFound } from '@/constants/messages';
 
 /** QR 최대 변 길이 — 큰 화면에서 과하게 커지지 않도록 상한을 둔다. */
@@ -37,13 +37,11 @@ function NotFoundBody({ message }: { message: string }) {
 
 export default function JobPostingQRScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { job, isFixed, isLoading, error, refresh } = useJobDetailContext();
+  const { job, isLoading, error, refresh } = useJobDetailContext();
   const { width } = useWindowDimensions();
 
   const qrValue = useMemo(() => (id ? buildVenueQRString(id) : ''), [id]);
   const qrSize = Math.min(MAX_QR_SIZE, Math.max(200, width - QR_HORIZONTAL_INSET));
-
-  const headerTitleSuffix = <JobTitleSuffix jobTitle={job?.title ?? null} />;
 
   // job 이 없는데 QR 을 그리면 제목 없는 QR 이 나온다. 권한 없는(또는 존재하지 않는) 공고 ID 로
   // 딥링크했을 때가 그렇다 — 실제 권한은 RPC 의 auth.uid() + 배정 존재가 강제하므로 보안 결함은
@@ -78,12 +76,6 @@ export default function JobPostingQRScreen() {
       return <NotFoundBody message={notFound('공고')} />;
     }
 
-    // 고정 공고는 QR 진입점이 모두 숨겨져 있지만 이 라우트는 딥링크로 직접 열릴 수 있다.
-    // 진입점만 막고 도착지를 열어두면 우회 경로가 남는다 (사유는 _layout.tsx 주석 참고).
-    if (isFixed) {
-      return <NotFoundBody message="고정 공고는 아직 QR 출퇴근을 지원하지 않아요" />;
-    }
-
     return null;
   })();
 
@@ -91,14 +83,17 @@ export default function JobPostingQRScreen() {
     // StackHeader 는 상단 인셋을 스스로 처리하지 않는다 — 'top' 을 빼면 제목이 상태바
     // (시계·배터리) 아래로 파고든다. 회귀 가드: app/__tests__/stack-header-safe-area.test.ts
     <SafeAreaView className="flex-1 bg-surface-page dark:bg-surface" edges={['top', 'bottom']}>
-      <StackHeader
-        title="출퇴근 QR"
-        titleSuffix={headerTitleSuffix}
-        fallbackHref={`/(employer)/my-postings/${id ?? ''}`}
-      />
+      <StackHeader title="출퇴근 QR" fallbackHref={`/(employer)/my-postings/${id ?? ''}`} />
 
       {body ?? (
         <View className="flex-1 items-center justify-center px-4">
+          <Text
+            className="mb-5 max-w-full text-center text-lg font-display-semibold text-content-primary dark:text-off-white"
+            numberOfLines={2}
+            accessibilityRole="header"
+          >
+            {job?.title ?? ''}
+          </Text>
           {/* QR 배경은 스캔 대비를 위해 다크모드에서도 흰색을 유지한다 (dark:bg-white 의도적) */}
           <View
             className="rounded-lg bg-white p-6 dark:bg-white"
