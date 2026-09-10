@@ -3267,6 +3267,7 @@ export type Database = {
         Args: {
           p_job_posting_id: string;
           p_selected_work_log_id?: string;
+          p_selection_token?: string;
           p_staff_id: string;
         };
         Returns: Json;

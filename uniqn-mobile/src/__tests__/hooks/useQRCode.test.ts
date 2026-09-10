@@ -155,6 +155,7 @@ describe('useQRCode Hooks', () => {
         .mockResolvedValueOnce({
           success: false,
           requiresSelection: true,
+          selectionToken: 'selection-token',
           candidates: [
             { workLogId: 'wl-1', date: '2026-09-10', timeSlot: '18:00', action: 'checkIn' },
             { workLogId: 'wl-2', date: '2026-09-10', timeSlot: '19:00', action: 'checkIn' },
@@ -176,7 +177,8 @@ describe('useQRCode Hooks', () => {
       expect(mockProcessQRCheckIn).toHaveBeenLastCalledWith(
         scanResult.qrString,
         'test-user-id',
-        'wl-2'
+        'wl-2',
+        'selection-token'
       );
     });
 

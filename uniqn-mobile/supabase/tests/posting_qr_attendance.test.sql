@@ -14,6 +14,8 @@ DECLARE
   v_today text := to_char(clock_timestamp() AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD');
   v_slot text := to_char(clock_timestamp() AT TIME ZONE 'Asia/Seoul', 'HH24:MI');
   v_result jsonb;
+  v_selection_token uuid;
+  v_initial_scanned_at timestamptz;
 BEGIN
   INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
   VALUES
@@ -49,11 +51,19 @@ BEGIN
      OR jsonb_array_length(v_result->'candidates') <> 2 THEN
     RAISE EXCEPTION 'selection contract failed: %', v_result;
   END IF;
+  v_selection_token := (v_result->>'selection_token')::uuid;
+  SELECT scanned_at INTO v_initial_scanned_at
+  FROM public.qr_attendance_selections WHERE token = v_selection_token;
 
   -- 선택한 행만 출근하며 서버 원본/15분 적용 시각이 함께 남는다.
-  v_result := public.process_posting_qr_attendance(v_posting, v_staff, v_first);
+  v_result := public.process_posting_qr_attendance(
+    v_posting, v_staff, v_first, v_selection_token
+  );
   IF NOT (v_result->>'success')::boolean OR v_result->>'action' <> 'checkIn' THEN
     RAISE EXCEPTION 'selected check-in failed: %', v_result;
+  END IF;
+  IF (v_result->>'scanned_at')::timestamptz IS DISTINCT FROM v_initial_scanned_at THEN
+    RAISE EXCEPTION 'initial server scan timestamp was not preserved: %', v_result;
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM public.work_logs
@@ -63,6 +73,25 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'raw/applied check-in invariant failed';
   END IF;
+
+  -- nullable payroll_status is still unsettled and must remain QR-eligible.
+  UPDATE public.work_logs
+  SET status = 'checked_out'
+  WHERE id = v_first;
+  UPDATE public.work_logs
+  SET payroll_status = NULL
+  WHERE id = v_second;
+  v_result := public.process_posting_qr_attendance(v_posting, v_staff, NULL, NULL);
+  IF NOT (v_result->>'success')::boolean
+     OR v_result->>'work_log_id' <> v_second::text THEN
+    RAISE EXCEPTION 'nullable payroll status was excluded: %', v_result;
+  END IF;
+
+  -- A pre-existing invalid row must permit unrelated repairs/settlement updates.
+  ALTER TABLE public.work_logs DISABLE TRIGGER work_logs_checkout_after_checkin;
+  UPDATE public.work_logs SET check_out_ts = check_in_ts WHERE id = v_first;
+  ALTER TABLE public.work_logs ENABLE TRIGGER work_logs_checkout_after_checkin;
+  UPDATE public.work_logs SET notes = 'legacy row remains editable' WHERE id = v_first;
 
   -- 같은 적용 슬롯에서 즉시 퇴근하면 0시간 기록 대신 차단한다.
   v_result := public.process_posting_qr_attendance(v_posting, v_staff, NULL);

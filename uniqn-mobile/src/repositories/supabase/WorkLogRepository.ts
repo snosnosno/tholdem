@@ -625,9 +625,15 @@ export class SupabaseWorkLogRepository implements IWorkLogRepository {
   async processPostingQRAttendance(
     jobPostingId: string,
     staffId: string,
-    selectedWorkLogId?: string
+    selectedWorkLogId?: string,
+    selectionToken?: string
   ): Promise<QRProcessResult> {
-    return executeProcessPostingQRAttendance(jobPostingId, staffId, selectedWorkLogId);
+    return executeProcessPostingQRAttendance(
+      jobPostingId,
+      staffId,
+      selectedWorkLogId,
+      selectionToken
+    );
   }
 
   // 슬롯 편집(B2) — 구현은 WorkLogRepositoryVenue 로 분리(800줄 하드캡). 검증/동작 무변경 위임.

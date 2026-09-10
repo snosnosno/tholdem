@@ -298,6 +298,7 @@ describe('executeProcessPostingQRAttendance — 서버 자동 판별', () => {
         success: false,
         error: 'selection_required',
         requires_selection: true,
+        selection_token: 'selection-token',
         candidates,
       },
       error: null,
@@ -306,6 +307,7 @@ describe('executeProcessPostingQRAttendance — 서버 자동 판별', () => {
     await expect(executeProcessPostingQRAttendance(JOB_POSTING_ID, STAFF_ID)).resolves.toEqual({
       success: false,
       requiresSelection: true,
+      selectionToken: 'selection-token',
       candidates,
     });
   });
@@ -322,11 +324,17 @@ describe('executeProcessPostingQRAttendance — 서버 자동 판별', () => {
       error: null,
     });
 
-    await executeProcessPostingQRAttendance(JOB_POSTING_ID, STAFF_ID, WORK_LOG_ID);
+    await executeProcessPostingQRAttendance(
+      JOB_POSTING_ID,
+      STAFF_ID,
+      WORK_LOG_ID,
+      'selection-token'
+    );
     expect(mockRpc).toHaveBeenCalledWith('process_posting_qr_attendance', {
       p_job_posting_id: JOB_POSTING_ID,
       p_staff_id: STAFF_ID,
       p_selected_work_log_id: WORK_LOG_ID,
+      p_selection_token: 'selection-token',
     });
   });
 

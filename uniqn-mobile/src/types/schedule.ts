@@ -599,4 +599,6 @@ export type QRProcessResult =
       success: false;
       requiresSelection: true;
       candidates: QRWorkCandidate[];
+      /** 최초 서버 스캔 시각과 후보 집합을 묶는 단기 일회성 토큰 */
+      selectionToken: string;
     };

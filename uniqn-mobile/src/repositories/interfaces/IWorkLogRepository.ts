@@ -377,7 +377,8 @@ export interface IWorkLogRepository {
   processPostingQRAttendance(
     jobPostingId: string,
     staffId: string,
-    selectedWorkLogId?: string
+    selectedWorkLogId?: string,
+    selectionToken?: string
   ): Promise<QRProcessResult>;
 
   /**

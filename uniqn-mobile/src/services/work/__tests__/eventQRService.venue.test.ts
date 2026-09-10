@@ -46,7 +46,12 @@ describe('processQRCheckIn — 공고 QR 서버 자동 판별', () => {
       message: '출근이 기록되었습니다.',
     });
     const result = await processQRCheckIn(VENUE_QR, 'staff-1');
-    expect(mockProcessPostingQRAttendance).toHaveBeenCalledWith('posting-1', 'staff-1', undefined);
+    expect(mockProcessPostingQRAttendance).toHaveBeenCalledWith(
+      'posting-1',
+      'staff-1',
+      undefined,
+      undefined
+    );
     expect(result).toMatchObject({ success: true, action: 'checkIn' });
     if (result.success) expect(result.message).toContain('18:15');
     expect(mockTrackCheckIn).toHaveBeenCalled();
@@ -60,11 +65,13 @@ describe('processQRCheckIn — 공고 QR 서버 자동 판별', () => {
     mockProcessPostingQRAttendance.mockResolvedValue({
       success: false,
       requiresSelection: true,
+      selectionToken: 'selection-token',
       candidates,
     });
     await expect(processQRCheckIn(VENUE_QR, 'staff-1')).resolves.toEqual({
       success: false,
       requiresSelection: true,
+      selectionToken: 'selection-token',
       candidates,
     });
     expect(mockTrackCheckIn).not.toHaveBeenCalled();
@@ -82,8 +89,13 @@ describe('processQRCheckIn — 공고 QR 서버 자동 판별', () => {
       appliedTime: APPLIED_AT,
       message: '퇴근이 기록되었습니다.',
     });
-    const result = await processQRCheckIn(VENUE_QR, 'staff-1', 'wl-2');
-    expect(mockProcessPostingQRAttendance).toHaveBeenCalledWith('posting-1', 'staff-1', 'wl-2');
+    const result = await processQRCheckIn(VENUE_QR, 'staff-1', 'wl-2', 'selection-token');
+    expect(mockProcessPostingQRAttendance).toHaveBeenCalledWith(
+      'posting-1',
+      'staff-1',
+      'wl-2',
+      'selection-token'
+    );
     expect(result).toMatchObject({ success: true, action: 'checkOut' });
     expect(mockTrackCheckOut).toHaveBeenCalled();
   });

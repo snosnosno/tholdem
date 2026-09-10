@@ -110,7 +110,8 @@ function formatAppliedTime(value: Date): string {
 export async function processQRCheckIn(
   qrString: string,
   staffId: string,
-  selectedWorkLogId?: string
+  selectedWorkLogId?: string,
+  selectionToken?: string
 ): Promise<QRProcessResult> {
   const venueData = parseVenueQRData(qrString);
 
@@ -134,7 +135,8 @@ export async function processQRCheckIn(
     const result = await workLogRepository.processPostingQRAttendance(
       jobPostingId,
       staffId,
-      selectedWorkLogId
+      selectedWorkLogId,
+      selectionToken
     );
     if (!result.success) return result;
 

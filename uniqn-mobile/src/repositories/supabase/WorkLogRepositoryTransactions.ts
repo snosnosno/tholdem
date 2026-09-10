@@ -43,6 +43,7 @@ interface PostingQRAttendanceRpcResult {
   success: boolean;
   error?: string;
   requires_selection?: boolean;
+  selection_token?: string;
   candidates?: QRWorkCandidate[];
   work_log_id?: string;
   assignment_group_id?: string | null;
@@ -164,7 +165,8 @@ function mapPostingQRErrorToException(errorCode: string): never {
 export async function executeProcessPostingQRAttendance(
   jobPostingId: string,
   staffId: string,
-  selectedWorkLogId?: string
+  selectedWorkLogId?: string,
+  selectionToken?: string
 ): Promise<QRProcessResult> {
   try {
     logger.info('공고 QR 자동 출퇴근 (RPC)', { jobPostingId, staffId, selectedWorkLogId });
@@ -172,6 +174,7 @@ export async function executeProcessPostingQRAttendance(
       p_job_posting_id: jobPostingId,
       p_staff_id: staffId,
       ...(selectedWorkLogId ? { p_selected_work_log_id: selectedWorkLogId } : {}),
+      ...(selectionToken ? { p_selection_token: selectionToken } : {}),
     };
     const { data, error } = await supabase.rpc('process_posting_qr_attendance', params);
     if (error) {
@@ -185,10 +188,16 @@ export async function executeProcessPostingQRAttendance(
       });
     }
     if (!result.success && result.requires_selection) {
+      if (!result.selection_token) {
+        throw new BusinessError(ERROR_CODES.BUSINESS_INVALID_WORKLOG, {
+          userMessage: '근무 선택 정보를 확인할 수 없습니다',
+        });
+      }
       return {
         success: false,
         requiresSelection: true,
         candidates: result.candidates ?? [],
+        selectionToken: result.selection_token,
       };
     }
     if (!result.success) mapPostingQRErrorToException(result.error ?? 'unknown');

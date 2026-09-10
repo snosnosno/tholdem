@@ -50,6 +50,7 @@ export function useQRCodeScanner(options: UseQRCodeScannerOptions) {
   const [lastError, setLastError] = useState<QRScanError | null>(null);
   const [pendingCandidates, setPendingCandidates] = useState<QRWorkCandidate[]>([]);
   const pendingQRStringRef = useRef<string | null>(null);
+  const pendingSelectionTokenRef = useRef<string | null>(null);
   const lastScanTimeRef = useRef(0);
   const QR_SCAN_THROTTLE_MS = 5000; // 5초 throttle
 
@@ -75,6 +76,7 @@ export function useQRCodeScanner(options: UseQRCodeScannerOptions) {
       });
       setPendingCandidates([]);
       pendingQRStringRef.current = null;
+      pendingSelectionTokenRef.current = null;
     },
     [onSuccess]
   );
@@ -145,6 +147,7 @@ export function useQRCodeScanner(options: UseQRCodeScannerOptions) {
           finishSuccess(scanResult);
         } else if (scanResult.requiresSelection) {
           pendingQRStringRef.current = qrString;
+          pendingSelectionTokenRef.current = scanResult.selectionToken;
           setPendingCandidates(scanResult.candidates);
         } else {
           releaseThrottle();
@@ -189,13 +192,15 @@ export function useQRCodeScanner(options: UseQRCodeScannerOptions) {
   const selectCandidate = useCallback(
     async (workLogId: string) => {
       const qrString = pendingQRStringRef.current;
-      if (!qrString || !user?.uid) return;
+      const selectionToken = pendingSelectionTokenRef.current;
+      if (!qrString || !selectionToken || !user?.uid) return;
       try {
         setIsProcessing(true);
         requireOnlineForMutation('useQRCodeScanner.selectCandidate');
-        const result = await processQRCheckIn(qrString, user.uid, workLogId);
+        const result = await processQRCheckIn(qrString, user.uid, workLogId, selectionToken);
         if (!result.success) {
           pendingQRStringRef.current = qrString;
+          pendingSelectionTokenRef.current = result.selectionToken;
           setPendingCandidates(result.candidates);
           return;
         }
@@ -224,6 +229,7 @@ export function useQRCodeScanner(options: UseQRCodeScannerOptions) {
   const cancelCandidateSelection = useCallback(() => {
     setPendingCandidates([]);
     pendingQRStringRef.current = null;
+    pendingSelectionTokenRef.current = null;
     lastScanTimeRef.current = 0;
   }, []);
 
