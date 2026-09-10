@@ -40,7 +40,6 @@ export default function EditJobPostingScreen() {
   // 낙관적 잠금 baseline 의 전제 — 아래 useOptimisticLockBaseline 주석 — 는 그대로 유지된다).
   const {
     job: existingJob,
-    isFixed: contextIsFixed,
     isLoading: isJobLoading,
     error: jobError,
     handleShowQR,
@@ -48,8 +47,7 @@ export default function EditJobPostingScreen() {
   const headerBackHref = `/(employer)/my-postings/${id ?? ''}`;
   const headerJobTitle = existingJob?.title ?? null;
   const headerTitleSuffix = <JobTitleSuffix jobTitle={headerJobTitle} />;
-  // 고정 공고는 QR 진입점을 노출하지 않는다 (work_log 행 수명 미해결 — _layout.tsx 주석 참고).
-  const headerRightAction = !contextIsFixed ? <HeaderQRAction onPress={handleShowQR} /> : null;
+  const headerRightAction = <HeaderQRAction onPress={handleShowQR} />;
 
   const [isDirty, setIsDirty] = useState(false);
   // 연쇄 전환 딤 위임(B1) — OrderSheetScreen 내부 딤은 형제인 StackHeader 를 못 덮는다.
