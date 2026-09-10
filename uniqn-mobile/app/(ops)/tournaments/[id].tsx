@@ -22,7 +22,7 @@ import { loadFailed } from '@/constants/messages';
 
 /**
  * 참가 등록 확장 FAB(L7) — 참가 탭에서만 셸 fab 슬롯에 주입.
- * 포지셔닝은 셸이 아닌 FAB 자체(absolute) — BoardWriteFab 선례. 56px(≥44px 터치 타깃).
+ * 포지셔닝은 셸이 아닌 FAB 자체(absolute). 56px(≥44px 터치 타깃).
  */
 function OpsRegisterFab({ onPress }: { onPress: () => void }) {
   const insets = useSafeAreaInsets();

@@ -613,45 +613,6 @@ export type Database = {
           },
         ];
       };
-      board_votes: {
-        Row: {
-          created_at: string | null;
-          id: string;
-          post_id: string;
-          type: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string | null;
-          id?: string;
-          post_id: string;
-          type: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string | null;
-          id?: string;
-          post_id?: string;
-          type?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'board_votes_post_id_fkey';
-            columns: ['post_id'];
-            isOneToOne: false;
-            referencedRelation: 'board_posts';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'board_votes_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       employer_applications: {
         Row: {
           agreements_snapshot: Json;
@@ -3337,10 +3298,6 @@ export type Database = {
         }[];
       };
       sync_schedule_board: { Args: { p_job_posting_id: string }; Returns: Json };
-      toggle_board_post_vote: {
-        Args: { p_post_id: string; p_user_id: string; p_vote_type: string };
-        Returns: Json;
-      };
       toggle_comment_reaction: {
         Args: {
           p_comment_id: string;

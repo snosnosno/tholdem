@@ -1,5 +1,12 @@
 import { useCallback } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -34,7 +41,6 @@ export default function BoardPostDetailScreen() {
     canInteract,
     canManagePost,
     canReportPost,
-    isVoteSubmitting,
     isReportSubmitting,
     isReportSubmitDisabled,
     postFallbackHref,
@@ -58,13 +64,13 @@ export default function BoardPostDetailScreen() {
     imageViewerState,
     setImageViewerState,
     openImageViewer,
-    voteMutation,
     handleReply,
     handleEdit,
     handleDeleteComment,
     handleHideComment,
     handleTogglePin,
     handleToggleReaction,
+    handleToggleReplies,
     setReportTarget,
   } = useBoardPostDetailScreen();
 
@@ -90,6 +96,21 @@ export default function BoardPostDetailScreen() {
 
       if (item.type === 'composer') {
         return <InlineComposerRow item={item} />;
+      }
+
+      if (item.type === 'reply-toggle') {
+        return (
+          <Pressable
+            onPress={() => handleToggleReplies(item.parentCommentId)}
+            accessibilityRole="button"
+            accessibilityLabel={`답글 ${item.replyCount}개 ${item.expanded ? '접기' : '보기'}`}
+            className="mb-3 ml-4 self-start rounded-lg px-3 py-2 active:bg-secondary-100 dark:active:bg-surface-elevated"
+          >
+            <Text className="text-sm font-sans-semibold text-primary-700 dark:text-primary-300">
+              {item.expanded ? '답글 접기' : `답글 ${item.replyCount}개 보기`}
+            </Text>
+          </Pressable>
+        );
       }
 
       return (
@@ -127,6 +148,7 @@ export default function BoardPostDetailScreen() {
       handleReply,
       handleTogglePin,
       handleToggleReaction,
+      handleToggleReplies,
       isAdmin,
       openImageViewer,
       user?.uid,
@@ -137,11 +159,11 @@ export default function BoardPostDetailScreen() {
   if (!postId) {
     return (
       <SafeAreaView className="flex-1 bg-surface-page dark:bg-surface" edges={['top']}>
-        <StackHeader title="게시글" fallbackHref="/(app)/(tabs)/board" />
+        <StackHeader title="소통" fallbackHref="/(app)/(tabs)/board" />
         <View className="flex-1 items-center justify-center p-4">
           <ErrorState
-            title={notFound('게시글')}
-            message="잘못된 게시글 경로예요."
+            title={notFound('소통 내용')}
+            message="잘못된 소통 경로예요."
             onRetry={() => router.replace('/(app)/(tabs)/board')}
           />
         </View>
@@ -152,7 +174,7 @@ export default function BoardPostDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-surface-page dark:bg-surface" edges={['top']}>
-        <StackHeader title="게시글" fallbackHref={postFallbackHref} />
+        <StackHeader title="소통" fallbackHref={postFallbackHref} />
         <BoardPostDetailSkeleton />
       </SafeAreaView>
     );
@@ -161,11 +183,11 @@ export default function BoardPostDetailScreen() {
   if (error || !post || !data) {
     return (
       <SafeAreaView className="flex-1 bg-surface-page dark:bg-surface" edges={['top']}>
-        <StackHeader title="게시글" fallbackHref={postFallbackHref} />
+        <StackHeader title="소통" fallbackHref={postFallbackHref} />
         <View className="flex-1 items-center justify-center p-4">
           <ErrorState
-            title={loadFailed('게시글')}
-            message={error?.message ?? '게시글 정보가 없어요.'}
+            title={loadFailed('소통 내용')}
+            message={error?.message ?? '소통 내용을 찾을 수 없어요.'}
             onRetry={refetch}
           />
         </View>
@@ -199,17 +221,13 @@ export default function BoardPostDetailScreen() {
             ListHeaderComponent={
               <PostHeader
                 post={post}
-                data={data}
                 canManagePost={canManagePost}
                 isAdmin={isAdmin}
                 canReportPost={canReportPost}
-                canInteract={canInteract}
-                isVoteSubmitting={isVoteSubmitting}
                 postCreatedAtLabel={postCreatedAtLabel}
                 postLastActivityLabel={postLastActivityLabel}
                 onPressMenu={() => setPostMenuVisible(true)}
                 onPressImage={openImageViewer}
-                onVote={voteMutation.mutate}
               />
             }
           />

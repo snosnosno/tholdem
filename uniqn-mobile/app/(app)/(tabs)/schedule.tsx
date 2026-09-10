@@ -36,7 +36,6 @@ import { pickNextShift } from '@/components/schedule/helpers/nextShift';
 import { useOpsHubEnabled } from '@/hooks/useOpsHubEnabled';
 import { useManualRefresh } from '@/hooks/useManualRefresh';
 import { useTabBarBottomPadding } from '@/hooks/useTabBarBottomPadding';
-import { useAuthStore } from '@/stores/authStore';
 import { usePendingReviews } from '@/hooks/useReviews';
 import ReviewPromptBanner from '@/components/review/ReviewPromptBanner';
 import { useToastStore } from '@/stores/toastStore';
@@ -72,11 +71,6 @@ import {
   type ScheduleStatusFilter,
 } from '@/utils/scheduleGrouping';
 import type { Application, ScheduleEvent, GroupedScheduleEvent } from '@/types';
-import {
-  buildSubstitutePostBody,
-  buildSubstitutePostTitle,
-} from '@/services/board/boardSubstituteService';
-import type { BoardAuthorRole, BoardJobSummary } from '@/types/board';
 import { isGroupedScheduleEvent } from '@/types/schedule';
 import { loadFailed } from '@/constants/messages';
 
@@ -205,8 +199,6 @@ function MonthNavigator({
 
 export default function ScheduleScreen() {
   const addToast = useToastStore((state) => state.addToast);
-  const { user, profile } = useAuthStore();
-
   // URL 파라미터 (알림 딥링크 — applicationId, cancelApplicationId)
   const searchParams = useLocalSearchParams<{
     applicationId?: string;
@@ -510,58 +502,20 @@ export default function ScheduleScreen() {
     [addToast]
   );
 
-  // 대타 구인 글의 원본 데이터 — 미리보기와 실제 게시물이 같은 값을 쓰도록 한 곳에서 만든다.
-  const cancellationJobSummary = useMemo<BoardJobSummary | null>(() => {
-    if (!cancellationApp) return null;
-    return {
-      jobPostingId: cancellationApp.jobPostingId,
-      title: cancellationApp.jobPostingTitle ?? cancellationApp.jobPosting?.title ?? '',
-      workDate: cancellationApp.jobPostingDate ?? cancellationApp.jobPosting?.workDate ?? '',
-      workDates: cancellationApp.jobPosting?.workDates,
-      locationName: cancellationApp.jobPosting?.location?.name,
-    };
-  }, [cancellationApp]);
-
-  const substitutePreview = useMemo(
-    () =>
-      cancellationJobSummary
-        ? {
-            title: buildSubstitutePostTitle(cancellationJobSummary),
-            body: buildSubstitutePostBody(cancellationJobSummary),
-          }
-        : undefined,
-    [cancellationJobSummary]
-  );
-
   // 취소 요청 제출 핸들러
   const handleSubmitCancellation = useCallback(
-    (applicationId: string, reason: string, wantsSubstitutePost: boolean) => {
-      const applicantContext =
-        user && cancellationJobSummary
-          ? {
-              name: profile?.name || profile?.nickname || user.displayName || '익명',
-              role: (profile?.role ?? 'staff') as BoardAuthorRole,
-              jobSummary: cancellationJobSummary,
-            }
-          : undefined;
-
+    (applicationId: string, reason: string) => {
       requestCancellation(
-        { applicationId, reason, wantsSubstitutePost, applicantContext },
+        { applicationId, reason },
         {
-          onSuccess: (result) => {
+          onSuccess: () => {
             setCancellationApp(null);
             refresh();
-            if (result?.substitutePost === 'failed') {
-              addToast({
-                type: 'warning',
-                message: '대타 구인 글 생성에 실패했습니다. 게시판에서 수동으로 작성해 주세요.',
-              });
-            }
           },
         }
       );
     },
-    [user, profile, cancellationJobSummary, requestCancellation, refresh, addToast]
+    [requestCancellation, refresh]
   );
 
   const handleCloseCancellationSheet = useCallback(() => {
@@ -1229,7 +1183,6 @@ export default function ScheduleScreen() {
           isSubmitting={isRequestingCancellation}
           onSubmit={handleSubmitCancellation}
           onClose={handleCloseCancellationSheet}
-          substitutePreview={substitutePreview}
         />
       )}
 
