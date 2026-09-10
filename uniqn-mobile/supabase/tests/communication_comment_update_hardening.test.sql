@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(9);
+SELECT plan(14);
 
 SELECT ok(
   has_column_privilege('authenticated', 'public.board_comments', 'body', 'UPDATE'),
@@ -98,10 +98,43 @@ SELECT lives_ok(
   'the schedule owner can moderate a participant comment');
 
 SELECT throws_ok(
+  $$ UPDATE public.board_comments SET pinned_at = NULL
+     WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
+  '42501', 'PERMISSION_DENIED: pinned comments require pin metadata',
+  'a pinned comment cannot lose required metadata');
+
+SELECT lives_ok(
+  $$ UPDATE public.board_comments
+     SET is_pinned = false, pinned_at = NULL, pinned_by = NULL
+     WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
+  'the schedule owner can consistently unpin a comment');
+
+SELECT throws_ok(
+  $$ UPDATE public.board_comments SET pinned_at = now()
+     WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
+  '42501', 'PERMISSION_DENIED: unpinned comments cannot retain pin metadata',
+  'an unpinned comment cannot retain pin metadata');
+
+SELECT throws_ok(
   $$ UPDATE public.board_comments SET body = 'owner rewrite'
      WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
   '42501', 'PERMISSION_DENIED: post authors cannot edit comment content',
   'the schedule owner cannot rewrite participant comment content');
+
+SELECT lives_ok(
+  $$ UPDATE public.board_comments
+     SET status = 'hidden', body = '관리자에 의해 숨김된 댓글입니다.',
+         image_attachments = '[]'::jsonb, mentioned_user_ids = '{}'::text[],
+         is_pinned = false, pinned_at = NULL, pinned_by = NULL
+     WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
+  'the schedule owner can hide a participant comment consistently');
+
+SELECT throws_ok(
+  $$ UPDATE public.board_comments
+     SET is_pinned = true, pinned_at = now(), pinned_by = 'd1000000-0000-4000-8000-000000000001'
+     WHERE id = 'd1000000-0000-4000-8000-000000000030' $$,
+  '42501', 'PERMISSION_DENIED: inactive comments cannot be pinned',
+  'the schedule owner cannot repin a hidden comment');
 
 RESET ROLE;
 
