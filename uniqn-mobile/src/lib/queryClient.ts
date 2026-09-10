@@ -429,14 +429,6 @@ export const queryKeys = {
 
   boards: {
     all: ['boards'] as const,
-    home: (userId?: string, role?: string, isAdmin?: boolean) =>
-      [
-        ...queryKeys.boards.all,
-        'home',
-        userId ?? 'anonymous',
-        role ?? 'unknown',
-        isAdmin ?? false,
-      ] as const,
     list: (
       boardType: string,
       userId?: string,
